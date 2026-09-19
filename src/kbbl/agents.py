@@ -46,7 +46,19 @@ not a truncated message quietly passed on."""
 EXCHANGES_EACH_WAY = 3
 """§5.1. Either side may spend fewer by exiting early."""
 
-MIN_MESSAGE = 200
+WORDS = 40
+"""About how long one Exchange should be, said to an Agent as a number of words.
+
+Asked for "two or three short paragraphs", live Agents wrote a median of 80 words a message
+and a Transcript nobody wants to read closely — which is the one thing §8 asks of a
+Transcript. Asked for "three or four sentences" they wrote the same 80 words in longer
+sentences, because a sentence has no length. A word count is the only version of this
+instruction that has ever changed the output.
+
+It is guidance, not a ceiling: nothing rejects a message for running over, because an Exchange
+a few words long is the negotiation and an aborted Run over a word count would not be."""
+
+MIN_MESSAGE = 60
 """How short a message has to be before it is a malfunction rather than a terse Exchange.
 
 Live Agents kept returning stubs — `"Let's be clear on what "` (23 characters), `", let me
@@ -54,15 +66,19 @@ just write.}"` (21), and a bare `""` — after spending hundreds of thinking tok
 The second kind is worse than a crash: the other side read the fragment as the opening of a
 sentence and wrote the rest of it, so a malfunction became a turn of the negotiation.
 
-Every one of those came back while the message was being decoded *inside a JSON string*, which
-is the shape ticket 02 recorded as unsafe and this ticket removed: prose is now the reply's
-ordinary text and only the enumerated fields go through a tool call. The floor stays anyway.
-It costs nothing, the failure it catches is silent rather than loud, and a run of clean
-Exchanges is not evidence that the decoder cannot slip again.
+**This is a stub-catcher, not a length policy.** It sat at 200 while the persona asked for two
+or three paragraphs, which made it look like one. The persona now asks for three or four
+sentences, and a leader who says "Not at +1. Make it +3 and we can talk, or we are done" has
+said something deliberate and complete in 60-odd characters — a floor anywhere near prose
+length would reject exactly the terseness the negotiation wants.
 
-The shortest message an Agent has written on purpose is 549 characters, and the persona asks
-for two or three paragraphs, so this sits far below anything deliberate and far above every
-stub seen."""
+So it sits just above the stubs instead: nearly three times the longest one ever seen, and
+below anything a Party might say on purpose.
+
+Every stub came back while the message was being decoded *inside a JSON string*, the shape
+ticket 02 recorded as unsafe and ticket 04 removed. The floor stays anyway. It costs nothing,
+the failure it catches is silent rather than loud, and a run of clean Exchanges is not evidence
+that a decoder cannot slip again."""
 
 MEET = "meet"
 """The tool a Formateur books a Round's Bilateral with.
@@ -411,8 +427,8 @@ def _which_round(spent: list[str], others: tuple[Party, ...]) -> str:
     lines.extend(
         [
             "",
-            "Who do you meet, and why? Say it in your own words — a short paragraph is "
-            "enough — and call `meet` in the same reply to book the room.",
+            f"Who do you meet, and why? About {WORDS // 2} words in your own words, then "
+            "call `meet` in the same reply to book the room.",
         ]
     )
     return "\n".join(lines)
@@ -481,7 +497,8 @@ def _the_rules() -> str:
     the asymmetry is in what they know, never in what they are told the rules are."""
     return (
         f"You each have up to {EXCHANGES_EACH_WAY} messages. Write yours as an ordinary "
-        "reply, in your own voice. Either of you may end the meeting early — by saying you "
+        f"reply, in your own voice, and keep it to about {WORDS} words. Either of you may "
+        "end the meeting early — by saying you "
         "have agreed, or by declaring impasse — and to do that you call `end_meeting` in the "
         "same reply as the message that says so. Ending it closes it at once: the other side "
         "gets no reply. Otherwise it ends when the messages run out."
@@ -590,8 +607,10 @@ def _how_you_negotiate() -> str:
             "nothing you actually want, say so plainly.",
             "  - Concede when the price is right. Refusing everything is as useless as "
             "agreeing to everything.",
-            "  - Speak like a politician in a room, not like a memo. Two or three short "
-            "paragraphs at most.",
+            f"  - Be short: about {WORDS} words, one paragraph, never more. Name what you "
+            "want, say what you will pay for it, and stop. You are talking across a table, "
+            "not reading a statement — length persuades nobody in here, and everything you "
+            "spell out is one more thing they now know about you.",
         ]
     )
 

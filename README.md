@@ -48,23 +48,26 @@ Round 3 of 5 — NP meets GV
 --------------------------
 
 Why NP chose GV
-    FF will not move on economic and MI is already close enough to wait. GV is the only
-    abstention left that I can still afford, and I would rather find out what it costs
-    now than in the last round.
+    MI deal secures NP+MI at exactly 175, mathematically safe against any No coalition.
+    Now I want insurance — test whether GV will abstain or offer outside support
+    cheaply, padding my margin without touching my core platform.
 
 NP:
-    Here's my opening position: any government I lead needs a credible economic platform
-    — firmly market-oriented, not the muddled centre. ...
+    I'm gauging the field before committing to a shape. Would GV consider abstaining on
+    a government led by NP, rather than voting it down? What would make that worthwhile
+    for you, without asking you to join cabinet or back us outright?
 
 GV:
-    A 'firmly market-oriented' economic platform is not something I can sell to my people
-    as a compromise; it's a surrender, and they would see it as one within a week. ...
+    Abstention is on the table if the platform sets environment at +2 or higher — that's
+    my floor for staying out of your way without owning your programme. Below that, I've
+    no reason not to vote you down.
 
-Ended: NP agreed, after 5 Exchanges.
+    ...
+
+Ended: NP declared impasse, after 5 Exchanges.
 ```
 
-That block is the shape of a Round rather than a recording of one — `cassettes/` is empty
-until a Run is recorded, and what the Agents actually say is theirs, not this README's.
+That is an excerpt from the committed Cassettes — `--replay` prints the whole of it.
 
 **Information is asymmetric, and that asymmetry is the game.** The Formateur carries
 everything it hears from one room into the next. Every other Party knows only its own
@@ -87,10 +90,9 @@ Replay needs no credentials at all: the API client is only built on the live pat
 persona, a briefing or the model changes the request, so `--replay` will miss and say so — a
 miss is the honest answer, not a bug.
 
-That is also why `cassettes/` is currently empty: giving the Formateur its own choice of whom
-to meet re-keyed every recording ticket 02 made, and a Cassette that cannot replay is not
-worth keeping. Record a fresh Attempt with the live command above — one Run is about 35 calls
-— and `--replay` is free from then on.
+A whole Attempt is 24 calls, and `cassettes/four-party/` holds one. Changing a persona, a
+briefing or the schema re-keys every one of them, so the recording is replaced rather than
+patched: delete the drawer and run live again.
 
 ## Development
 
@@ -100,6 +102,6 @@ uv run mypy
 ```
 
 The test suite makes zero API calls. Tests that need a Bilateral record one against a scripted
-stand-in and replay it. Two tests replay the committed Cassettes instead — including one that
-audits a real Run for whether any Party was ever shown a Bilateral it was not in — and they
-skip, saying so, while none are recorded.
+stand-in and replay it. Two replay the committed Cassettes instead, one of them auditing the
+requests of a real Run for whether any Party was ever shown a Bilateral it was not in; both
+skip, saying so, if the drawer is empty.

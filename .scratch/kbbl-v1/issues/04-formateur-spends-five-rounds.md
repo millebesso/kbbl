@@ -11,16 +11,14 @@ its own. That asymmetry is the game, and it is easy to leak by accident.
 
 **Blocked by:** 02.
 
-**Status:** ready-for-human — everything below is built and tested; the one remaining box
-is a live recording, which needs an API key this agent did not have.
+**Status:** done
 
 - [x] The Formateur chooses one Party per Round and states its reasoning before the Bilateral opens
 - [x] Five Rounds per Attempt, and the budget is enforced
 - [x] The Formateur carries what it learned in earlier Bilaterals into later ones
 - [x] No Party other than the Formateur sees any Bilateral but its own — verifiable from the run record, not just from reading
 - [x] The Transcript reads as five distinct private meetings
-- [~] `--replay` replays the whole five-Round sequence with zero API calls — the path is
-      built and tested against a scripted Agent; the committed recording is not made (below)
+- [x] `--replay` replays the whole five-Round sequence with zero API calls
 - [x] A Party may be met more than once if the Formateur chooses to spend two Rounds on it
 - [x] Willingness to re-elect is rebanded, or the Fixture reseated, before the Formateur leans on it — `_DISPOSITIONS` sends NP and FF identical prose today and two of its five bands go unused, so the lever this ticket wants does not yet distinguish the two largest Parties (02, §12.1)
 - [x] `--meet` is withdrawn — it stood in for a choice the Formateur now makes for itself (02)
@@ -41,19 +39,18 @@ Referee). `agents.py` gained `FormateurAgent`, which is one conversation for the
 Attempt. `models.py` gained `Choice` and `Round`, and `Run.bilaterals` became `Run.rounds`.
 `referee.py` gained `ROUNDS`, since §2 puts the round budget on the Referee's side of the line.
 
-### The one box left open: nothing is recorded
+### The recording
 
-Every committed Cassette is gone. The sequencing note above said rebanding would orphan all
-fifteen, and carrying earlier Bilaterals forward would orphan every Round-2+ request anyway;
-changing the reply shape (below) orphaned the rest. They could not replay, so keeping them
-would have meant a red suite and a README promising a `--replay` that misses.
+All fifteen of 02's Cassettes are gone — the sequencing note above said rebanding would orphan
+them and carrying Bilaterals forward would orphan every Round-2+ request anyway; the reply
+shape did for the rest. `cassettes/four-party/` now holds one whole five-Round Attempt, 24
+calls, and `--replay` reproduces the Transcript byte for byte.
 
-**To finish this ticket: `uv run kbbl run fixtures/four-party` once, with `ANTHROPIC_API_KEY`
-set, then commit `cassettes/four-party/`.** About 35 calls, on the order of $0.40. Two tests
-skip until then, saying so: `test_the_committed_cassettes_replay_a_real_attempt` and
-`test_the_recorded_run_shows_no_party_a_bilateral_it_was_not_in`. Both go green with no code
-change. §12.1's judgement — read the five-Round Transcript and record whether a Formateur with
-a budget spends it like one — also waits on that recording, and belongs here when it exists.
+**The new request shape worked on the first live call**, which is the thing nothing in the
+repo could vouch for: text plus a tool call, adaptive thinking, both tools, 24 calls without a
+single malformed reply. 02 measured roughly one in eleven degrading under the old shape; this
+Attempt is a clean 24 for 24, which is weak evidence on its own and exactly the direction the
+change predicted.
 
 ### Structured output is gone: prose is never decoded inside a constrained field
 
@@ -119,8 +116,8 @@ said somewhere it was not. It is the only way to check the asymmetry that does n
 trusting the code that builds the briefings. A second test tampers with a Run to prove the
 audit fails when there is something to find.
 
-It runs over the scripted stand-in's requests today. It runs over the committed Cassettes — the
-actual traffic of a live Run — the moment one is recorded.
+It runs over the scripted stand-in's requests, and over the committed Cassettes — the actual
+traffic of the live Run. Both are clean.
 
 ### The Fixture was reseated rather than the bands rebanded
 
@@ -151,3 +148,48 @@ government, and the second largest, nine seats behind, fancies its chances in on
   noting before collapsing them: the two rendering sites speak to different audiences — one
   second-person to the Formateur mid-Attempt, one third-person in the Transcript — so one
   function serving both may be worse than two that agree.
+
+### §12.1 — the judgement: does a Formateur with a budget spend it like one?
+
+**Yes, and the two Rounds it spent on MI are the evidence.** NP met FF, then MI, then GV, then
+MI again, then FF again — three Parties over five Rounds, twice going back to somebody it had
+already seen. Read the whole Transcript; the short version:
+
+- **It reasoned about the budget in the language of the arithmetic.** Round 1: *"FF is the
+  obvious anchor partner — together we'd command a commanding majority. I want to test their
+  price on economic and law_and_order before dealing with anyone else."* Round 3, after MI had
+  named its price: *"MI deal secures NP+MI at exactly 175, mathematically safe against any No
+  coalition. Now I want insurance."* That is the seat table being used, correctly, to decide
+  whom a Round is worth spending on.
+- **Round 4 is the ticket's own criterion doing work.** NP went back to MI to close — *"Rather
+  than reopen incompatible terms with FF, I'll use this round to firm up remaining details"* —
+  and **MI remembered**: it answered *"This meets my terms in full"* and agreed in two
+  Exchanges rather than five. A Party met twice that had been handed a fresh conversation
+  would have reopened the whole negotiation, and the Round would have been wasted. The bug
+  found in review was not academic.
+- **Round 5 is a Formateur spending its last Round on a long shot and losing it.** Holding
+  MI's 175, NP went back to FF for a cushion, found FF had not moved, and declared impasse in
+  one Exchange. That is a budget being spent, not consumed.
+- **Nobody folded.** FF held economic at 0 across six Exchanges against a Formateur opening at
+  +3 and closing at +1, and NP walked rather than pay. GV held environment +2 for an
+  abstention and NP refused it — *"more than I'll trade for an abstention I may not need"* —
+  which is a Formateur pricing an Abstention against its own arithmetic, the §5.2 claim
+  working.
+
+**The reseated Willingness to re-elect shows up in behaviour on its first run.** FF, moved to
+9 (*"would welcome another election"*), ended Round 1 with *"anything harder on economic and I
+walk and take my chances at the polls."* NP, moved to 1 (*"another election would be a
+disaster"*), never once reached for the threat. Under the old seating those two Parties were
+sent identical prose; they are now the two ends of the scale and they played it.
+
+**The Transcript is readable, which took two attempts.** Asked for "two or three short
+paragraphs" the Agents wrote a median of 80 words per Exchange; asked for "three or four
+sentences" they wrote the same 80 words in longer sentences. A word count (`WORDS = 40`) is
+what actually moved it, to a median of 47. §8 asks that full runs be read closely, and a
+Transcript nobody finishes is a Transcript that fails that on its own.
+
+**One thing to watch, still.** Four of the five Bilaterals here ended on a Declaration, three
+of them NP's. 05 still owns what an Ending commits a Party to — and Round 2 ending in
+*"agreement"* while Round 4 re-opened and agreed again is the sharpest version of that
+question yet: an Ending of agreement plainly settled nothing, which is exactly what
+`CONTEXT.md` says it should not be read as settling.

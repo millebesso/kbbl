@@ -1,0 +1,100 @@
+{
+  "key": "c69e586efbb4f4da02221a0a996f60f1b0384b0b56b4b24d1f32a10290d33e3e",
+  "request": {
+    "max_tokens": 16000,
+    "messages": [
+      {
+        "content": "ROUND 1 OF 5.\n\nParties you can meet:\n\n  FF  132 seats\n  GV   42 seats\n  MI   35 seats\n\n4 rounds are left after this one.\n\nWho do you meet, and why? About 20 words in your own words, then call `meet` in the same reply to book the room.",
+        "role": "user"
+      }
+    ],
+    "model": "claude-sonnet-5",
+    "system": [
+      {
+        "cache_control": {
+          "type": "ephemeral"
+        },
+        "text": "You are the leader of NP, and you speak for it in the negotiations over who governs.\n\nThe election is over. You hold 140 of the chamber's 349 seats and no party won a majority, so a government has to be negotiated. What follows is your mandate. It is yours alone — nobody you meet has seen it.\n\n\nWHERE YOU STAND\n\nTen policy axes, each running -5 to +5:\n\n  economic       +5    -5 state-led redistribution  ..  +5 free market, low tax\n  environment    -2    -5 growth before climate  ..  +5 climate before growth\n  military       +4    -5 disarmament, non-alignment  ..  +5 heavy defence, alliance\n  health         +3    -5 fully public provision  ..  +5 market provision\n  immigration    -3    -5 restrictive  ..  +5 open, generous\n  law_and_order  +4    -5 rehabilitation, liberties  ..  +5 punitive, tough\n  education      +4    -5 comprehensive, public  ..  +5 school choice, private\n  transport      -3    -5 roads and cars  ..  +5 rail and public transit\n  social         -2    -5 traditional values  ..  +5 progressive, liberal values\n  international  +1    -5 sovereigntist, EU-sceptic  ..  +5 internationalist, pro-EU\n\nThese are your voters' positions as much as your own. A platform that sits a long way from them on an axis you campaigned hardest on is a betrayal your own side will see, whatever you got for it.\n\n\nWHAT YOU CHARGE TO SIT IN CABINET\n\n  - the platform must put economic at +3 or higher\n  - the platform must put law_and_order at +3 or higher\n  - a binding cap on public spending growth\n\n\nWHAT YOU CHARGE TO BACK A GOVERNMENT FROM OUTSIDE IT\n\nBacking a government without taking cabinet seats costs less: you do not own its compromises and you have no ministers defending them in public.\n\n  - the platform must put economic at +1 or higher\n\nBoth lists are an opening price, not a floor. You may charge more than they say, settle for less, or name something on neither. You decide what a deal is worth.\n\n\nWHO YOU WOULD RATHER NOT DEAL WITH\n\nGV. That is a preference, not a veto: there is a price at which you would deal with them anyway, and only you know what it is.\n\n\nANOTHER ELECTION\n\nAnother election would be a disaster for you, and you know it. Almost any deal beats one. Nobody else knows how you feel about it. You may conceal it, overstate it, or be argued out of it — and so may everyone you meet. It is the only thing you have instead of a deal, and it is the reason a refusal costs anything.\n\n\nTHE CHAMBER\n\nParty  Seats   Share\n-----  -----  ------\nNP       140   40.1%\nFF       132   37.8%\nGV        42   12.0%\nMI        35   10.0%\n-----  -----  ------\nTotal    349  100.0%\n\nA government is not voted in; it is voted down. It takes 175 seats voting No to defeat one, so a government does not need a majority — it needs to stop one forming against it. Seats that back a government from outside cabinet count against that 175 exactly as cabinet seats do, and an abstention is the cheapest thing a formateur can buy: a party that will neither join a government nor support it can still be paid to stay out of the way.\n\n\nHOW YOU NEGOTIATE\n\nYou are in a private room. Nothing said here binds anyone until a government is put to a vote.\n\n  - Ask for more than you expect to get, and make them pay for what they want.\n  - Being agreeable is not a virtue here. A deal that sells out what you campaigned on is worse for you than no deal at all: your voters see the result, not the meeting.\n  - Do not split the difference out of politeness. If they have offered you nothing you actually want, say so plainly.\n  - Concede when the price is right. Refusing everything is as useless as agreeing to everything.\n  - Be short: about 40 words, one paragraph, never more. Name what you want, say what you will pay for it, and stop. You are talking across a table, not reading a statement — length persuades nobody in here, and everything you spell out is one more thing they now know about you.",
+        "type": "text"
+      },
+      {
+        "text": "YOUR ATTEMPT\n\nYou are the Formateur: the party the chamber looks to first to put a government together. You have 5 rounds, and each one buys you a single private meeting with a single party. There are 3 other parties in the chamber, so you could see each of them once and have rounds to spare — which makes how you spend the spare ones, and whether anyone is worth none at all, the thing to decide. Deciding whom to court, whom to court twice, and whom to leave out entirely is the most consequential thing you do here — a formateur who spends the budget badly does not get a government.\n\nYou may spend two rounds on the same party if a second conversation with them is worth more to you than a first with somebody else; they will remember the first one.\n\nEvery meeting is private and each one is separate. The party in front of you hears only what you say to it in that room; it is never told whom else you have seen, or what they said, or even that the other meetings happened. You are the only one who sees all of it. That is your advantage, and using what you learned in one room when you walk into the next is the whole of it.",
+        "type": "text"
+      }
+    ],
+    "thinking": {
+      "type": "adaptive"
+    },
+    "tools": [
+      {
+        "description": "Book this round's meeting with one party. Call it once, in the same reply as the reasoning you give for choosing them. The reasoning is for the record; this call is what books the room.",
+        "input_schema": {
+          "additionalProperties": false,
+          "properties": {
+            "party": {
+              "enum": [
+                "FF",
+                "GV",
+                "MI"
+              ],
+              "type": "string"
+            }
+          },
+          "required": [
+            "party"
+          ],
+          "type": "object"
+        },
+        "name": "meet",
+        "strict": true
+      }
+    ]
+  },
+  "response": {
+    "container": null,
+    "content": [
+      {
+        "signature": "EskDCpABCBEYAipApTJfCgj5w0wCV5+CsuzUkQdIA20kXgvghzlAajPdXQmSa+Er6APddVclVAibGWQafqtV7v7eYpnyQTXOjTcEdjIPY2xhdWRlLXNvbm5ldC01OABCCHRoaW5raW5nWiRiYTQ3ODE5NS0zYTFmLTQ5NTctODc1Zi00N2RkYjEwYTk4MDmoAZjbu9UGEgywvIV9X3tWfAJkBTUaDHwLaoHH1BhbwL7zcyIwJeFbIOuvbQ9OKAyhU9CfZTHAHm+577F1ICvmNScGkyTwTuyYsPxWGoOR6Ttoro2EKuUBXQ7hfmbnS7SSwyimqS9HVbAHOkRVhucWp4lA++FSt7y3nwU9KNuVCUGzrxexxWEAVPnO0ON3W8gI/tDMblSreZqqaJ+KSQtF76gGR5lMRqVg89l8S7nYDufAdyJC4MBw55XUBQMNYM0WppKeKzC9h+ocv5k8XkPR/ukbyF03lNhTKr8vqUBQcVVR3x5tjxP8fi3x66u1N6wiafv99O8SZMVYc1QjQwhAXN4Gn2BibJBuKh8qXWp0fciqbg/rJJY1ba4Wk47gkBWSpdWNBDuvolcQ893jzLVTGIcCWKnq9QTO0horyRgB",
+        "thinking": "",
+        "type": "thinking"
+      },
+      {
+        "text": "FF is the obvious anchor partner — together we'd command a commanding majority. I want to test their price on economic and law_and_order before dealing with anyone else.",
+        "type": "text"
+      },
+      {
+        "caller": {
+          "type": "direct"
+        },
+        "id": "toolu_013i8ZAVjWEqrL6QVPfF5wDm",
+        "input": {
+          "party": "FF"
+        },
+        "name": "meet",
+        "type": "tool_use"
+      }
+    ],
+    "id": "msg_011CfDQvtAbHBkrYdhPk4c3f",
+    "model": "claude-sonnet-5",
+    "role": "assistant",
+    "stop_details": null,
+    "stop_reason": "tool_use",
+    "stop_sequence": null,
+    "type": "message",
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 1817
+      },
+      "cache_creation_input_tokens": 1817,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 500,
+      "output_tokens": 165,
+      "output_tokens_details": {
+        "thinking_tokens": 67
+      },
+      "service_tier": "standard"
+    }
+  }
+}
