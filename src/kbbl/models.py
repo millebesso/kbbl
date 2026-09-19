@@ -257,22 +257,24 @@ class Proposal(Strict):
         return self
 
     @property
-    def backers(self) -> tuple[str, ...]:
-        """Every Party behind this Proposal — in cabinet or backing it from outside.
+    def base(self) -> tuple[str, ...]:
+        """This Proposal's Base: every Party behind it, in cabinet or backing it from outside.
 
         They are one list here because §4 gives them one arithmetic: Support-only seats
         count toward the Blocking minority exactly as Government seats do, and without that
-        the distinction between the two is decorative.
+        the distinction between the two is decorative. One list is not one promise, though —
+        a Party in the Base is still free to cast a No Ballot on the Proposal it governs under.
         """
         return self.government + self.support_only
 
 
-class Vote(StrEnum):
-    """How one Party votes on a Proposal.
+class Ballot(StrEnum):
+    """One Party's Yes, Abstain or No in a Vote.
 
-    Under Negative parliamentarism only No is load-bearing, which is what makes an
-    Abstention purchasable: a Party that will neither join nor support can still be paid to
-    step out of the way (§5.2).
+    A Ballot is one Party's; the Vote is the Chamber's single decision on a Proposal, and a
+    Run may hold four of those. Only No is load-bearing under Negative parliamentarism, which
+    is what makes an Abstention purchasable: a Party that will neither join nor support can
+    still be paid to step out of the way (§5.2).
     """
 
     YES = "Yes"

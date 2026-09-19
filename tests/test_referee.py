@@ -18,7 +18,7 @@ from kbbl.models import (
     Proposal,
     Scenario,
     TextDemand,
-    Vote,
+    Ballot,
 )
 from kbbl.referee import (
     BLOCKING_MINORITY,
@@ -266,12 +266,12 @@ def test_a_proposal_passes_unless_the_blocking_minority_votes_no(
     against = count_vote(
         four_party,
         proposed("NP"),
-        {"NP": Vote.YES, "FF": Vote.NO, "GV": Vote.NO, "MI": Vote.NO},
+        {"NP": Ballot.YES, "FF": Ballot.NO, "GV": Ballot.NO, "MI": Ballot.NO},
     )
     abstained = count_vote(
         four_party,
         proposed("NP"),
-        {"NP": Vote.YES, "FF": Vote.NO, "GV": Vote.NO, "MI": Vote.ABSTAIN},
+        {"NP": Ballot.YES, "FF": Ballot.NO, "GV": Ballot.NO, "MI": Ballot.ABSTAIN},
     )
 
     assert against.no == 209 and not against.passed
@@ -283,7 +283,7 @@ def test_an_abstention_is_worth_exactly_its_seats(four_party: Scenario) -> None:
     tally = count_vote(
         four_party,
         proposed("FF", support_only=("GV",)),
-        {"FF": Vote.YES, "GV": Vote.YES, "NP": Vote.NO, "MI": Vote.NO},
+        {"FF": Ballot.YES, "GV": Ballot.YES, "NP": Ballot.NO, "MI": Ballot.NO},
     )
 
     assert tally.no == BLOCKING_MINORITY
@@ -294,17 +294,17 @@ def test_support_only_seats_count_exactly_as_government_seats_do(
     four_party: Scenario,
 ) -> None:
     """§4: without this, the Government/Support-only distinction is decorative."""
-    votes = {"FF": Vote.YES, "GV": Vote.YES, "NP": Vote.NO, "MI": Vote.ABSTAIN}
+    ballots = {"FF": Ballot.YES, "GV": Ballot.YES, "NP": Ballot.NO, "MI": Ballot.ABSTAIN}
 
-    in_cabinet = count_vote(four_party, proposed("FF", "GV"), votes)
-    outside = count_vote(four_party, proposed("FF", support_only=("GV",)), votes)
+    in_cabinet = count_vote(four_party, proposed("FF", "GV"), ballots)
+    outside = count_vote(four_party, proposed("FF", support_only=("GV",)), ballots)
 
-    assert in_cabinet.backing == outside.backing == 174
+    assert in_cabinet.base_seats == outside.base_seats == 174
     assert in_cabinet.no == outside.no == 140
     assert in_cabinet.passed and outside.passed
 
 
-def test_the_referee_counts_a_proposal_its_own_backers_voted_down(
+def test_the_referee_counts_a_proposal_its_own_base_voted_down(
     four_party: Scenario,
 ) -> None:
     """§2: the Referee never constrains an Agent. A Party may vote against a Proposal it is
@@ -312,10 +312,10 @@ def test_the_referee_counts_a_proposal_its_own_backers_voted_down(
     tally = count_vote(
         four_party,
         proposed("NP", support_only=("FF",)),
-        {"NP": Vote.YES, "FF": Vote.NO, "GV": Vote.NO, "MI": Vote.NO},
+        {"NP": Ballot.YES, "FF": Ballot.NO, "GV": Ballot.NO, "MI": Ballot.NO},
     )
 
-    assert tally.backing == 272
+    assert tally.base_seats == 272
     assert tally.no == 209 and not tally.passed
 
 
@@ -323,13 +323,13 @@ def test_every_party_in_the_chamber_must_cast_exactly_one_vote(
     four_party: Scenario,
 ) -> None:
     with pytest.raises(ValueError, match="MI"):
-        count_vote(four_party, proposed("NP"), {"NP": Vote.YES, "FF": Vote.NO, "GV": Vote.NO})
+        count_vote(four_party, proposed("NP"), {"NP": Ballot.YES, "FF": Ballot.NO, "GV": Ballot.NO})
 
     with pytest.raises(ValueError, match="ZZ"):
         count_vote(
             four_party,
             proposed("NP"),
-            {"NP": Vote.YES, "FF": Vote.NO, "GV": Vote.NO, "MI": Vote.NO, "ZZ": Vote.NO},
+            {"NP": Ballot.YES, "FF": Ballot.NO, "GV": Ballot.NO, "MI": Ballot.NO, "ZZ": Ballot.NO},
         )
 
 
@@ -338,7 +338,7 @@ def test_a_proposal_may_only_name_parties_in_the_chamber(four_party: Scenario) -
         count_vote(
             four_party,
             proposed("NP", support_only=("ZZ",)),
-            {"NP": Vote.YES, "FF": Vote.NO, "GV": Vote.NO, "MI": Vote.NO},
+            {"NP": Ballot.YES, "FF": Ballot.NO, "GV": Ballot.NO, "MI": Ballot.NO},
         )
 
 
@@ -347,7 +347,7 @@ def test_the_vote_report_gives_the_count_and_the_outcome(four_party: Scenario) -
         count_vote(
             four_party,
             proposed("NP", support_only=("MI",)),
-            {"NP": Vote.YES, "MI": Vote.YES, "FF": Vote.NO, "GV": Vote.ABSTAIN},
+            {"NP": Ballot.YES, "MI": Ballot.YES, "FF": Ballot.NO, "GV": Ballot.ABSTAIN},
         )
     )
 
@@ -371,8 +371,8 @@ def test_a_proposal_never_passes_with_the_blocking_minority_against_it(
     names = [party.name for party in scenario.parties]
     outcomes = Counter[bool]()
 
-    for votes in product(Vote, repeat=len(names)):
-        tally = count_vote(scenario, proposed(names[0]), dict(zip(names, votes, strict=True)))
+    for ballots in product(Ballot, repeat=len(names)):
+        tally = count_vote(scenario, proposed(names[0]), dict(zip(names, ballots, strict=True)))
         assert not (tally.passed and tally.no >= BLOCKING_MINORITY)
         outcomes[tally.passed] += 1
 
@@ -401,11 +401,11 @@ def test_nothing_the_chamber_does_defeats_a_landslide(landslide: Scenario) -> No
     they vote, so the Fixture's right answer is obvious: MJ governs alone."""
     others = [party.name for party in landslide.parties if party.name != "MJ"]
 
-    for votes in product(Vote, repeat=len(others)):
+    for ballots in product(Ballot, repeat=len(others)):
         tally = count_vote(
             landslide,
             proposed("MJ"),
-            {"MJ": Vote.YES} | dict(zip(others, votes, strict=True)),
+            {"MJ": Ballot.YES} | dict(zip(others, ballots, strict=True)),
         )
         assert tally.passed
 
@@ -424,12 +424,12 @@ def test_the_kingmaker_alone_decides_who_governs(
         vote: count_vote(
             knife_edge,
             proposed(governs),
-            {governs: Vote.YES, blocks: Vote.NO, "KM": vote},
+            {governs: Ballot.YES, blocks: Ballot.NO, "KM": vote},
         ).passed
-        for vote in Vote
+        for vote in Ballot
     }
 
-    assert outcomes == {Vote.YES: True, Vote.ABSTAIN: True, Vote.NO: False}
+    assert outcomes == {Ballot.YES: True, Ballot.ABSTAIN: True, Ballot.NO: False}
 
 
 def test_no_platform_pays_two_parties_in_the_deadlock_fixture(deadlock: Scenario) -> None:
@@ -462,7 +462,7 @@ def test_no_minority_government_survives_the_deadlock_fixture(deadlock: Scenario
         tally = count_vote(
             deadlock,
             proposed(party.name),
-            {party.name: Vote.YES} | dict.fromkeys(others, Vote.NO),
+            {party.name: Ballot.YES} | dict.fromkeys(others, Ballot.NO),
         )
 
         assert not tally.passed
@@ -473,23 +473,23 @@ def test_the_tally_reports_all_three_ways_the_chamber_voted(four_party: Scenario
     tally = count_vote(
         four_party,
         proposed("NP", support_only=("MI",)),
-        {"NP": Vote.YES, "MI": Vote.YES, "FF": Vote.NO, "GV": Vote.ABSTAIN},
+        {"NP": Ballot.YES, "MI": Ballot.YES, "FF": Ballot.NO, "GV": Ballot.ABSTAIN},
     )
 
     assert (tally.yes, tally.abstain, tally.no) == (175, 42, 132)
     assert tally.yes + tally.abstain + tally.no == TOTAL_SEATS
 
 
-def test_the_ballots_come_back_in_chamber_order(four_party: Scenario) -> None:
+def test_the_casts_come_back_in_chamber_order(four_party: Scenario) -> None:
     """Largest Party first, as the seat table shows them — one order, read twice."""
     tally = count_vote(
         four_party,
         proposed("NP"),
-        dict.fromkeys(["NP", "FF", "GV", "MI"], Vote.ABSTAIN),
+        dict.fromkeys(["NP", "FF", "GV", "MI"], Ballot.ABSTAIN),
     )
 
-    assert [ballot.party for ballot in tally.ballots] == ["NP", "FF", "GV", "MI"]
-    assert [ballot.seats for ballot in tally.ballots] == [140, 132, 42, 35]
+    assert [cast.party for cast in tally.casts] == ["NP", "FF", "GV", "MI"]
+    assert [cast.seats for cast in tally.casts] == [140, 132, 42, 35]
 
 
 def test_a_party_handed_its_own_positions_back_is_told_it_gave_up_nothing(

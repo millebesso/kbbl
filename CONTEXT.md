@@ -20,8 +20,14 @@ The LLM instance negotiating on behalf of one Party for the length of a Run. Age
 judgement; the Referee holds certainty.
 _Avoid_: bot, player, model, LLM
 
+**Persona**:
+A Party's Mandate as its Agent receives it: everything true of the Party for the length of a
+Run, written as prose it can act on. The Referee never reads a Persona, and nobody an Agent
+meets has seen it.
+_Avoid_: prompt, system prompt, character, briefing
+
 **Party**:
-One of the parliamentary parties, defined by a hand-written mandate: seats, Positions,
+One of the parliamentary parties, defined by a hand-written Mandate: seats, Positions,
 Exclusions and its two price lists.
 _Avoid_: faction, actor, participant
 
@@ -31,6 +37,12 @@ tables a Proposal.
 _Avoid_: leader, PM candidate, convener, initiator
 
 ### The party mandate
+
+**Mandate**:
+Everything one Party is defined by — its seats, Positions, Exclusions and two price lists —
+hand-written before a Run and never changed by one. Two neighbouring senses are not this one:
+a single seat is a *seat*, and a Formateur's commission to try is an *Attempt*.
+_Avoid_: profile, config, party file, spec, definition
 
 **Positions**:
 A Party's own value on each of the ten Axes — what it went to the election on. Distinct from
@@ -77,8 +89,8 @@ _Avoid_: turn, try, mandate, go
 
 **Standing down**:
 A Formateur conceding at the end of its Rounds without tabling a Proposal. It ends the
-Attempt without spending one of the chamber's four votes, so Attempts and failed votes are
-not one-to-one.
+Attempt without spending one of the Chamber's four Votes, so Attempts and Votes are not
+one-to-one.
 _Avoid_: giving up, conceding, forfeiting, passing
 
 **Round**:
@@ -91,6 +103,12 @@ The private meeting with one other Party that a Round buys. *Private* is load-be
 Formateur accumulates what it hears across every Bilateral, while each other Party knows only
 its own. That asymmetry is the game.
 _Avoid_: meeting, talks, session, negotiation
+
+**Counterparty**:
+The Party a Formateur meets in a Bilateral. It sees only its own Bilateral and is never told
+the others happened — the half of the asymmetry that is easy to break by accident, since it is
+kept by what a Party is never shown rather than by anything it is told.
+_Avoid_: the other party, opponent, partner, invitee
 
 **Exchange**:
 One message from one side of a Bilateral. Each side may send up to three, and either side may
@@ -133,13 +151,20 @@ The Parties backing a Proposal from outside cabinet. Their seats count against t
 minority exactly as Government seats do — without that, the distinction is decorative.
 _Avoid_: confidence & supply, backers, partners, supporters
 
+**Base**:
+Every Party behind a Proposal — Government and Support-only together — and the seats they hold
+between them. One noun because they have one arithmetic: both count against the Blocking
+minority alike. A Proposal assigns the role; nobody accepts it. A Party in the Base is free
+to cast a No Ballot on the very Proposal it is named as governing under.
+_Avoid_: backers, bloc, coalition, support base, underlag
+
 **Commitment**:
 A free-text side deal a Proposal carries — a free-text Demand that has been granted. Agents
 interpret Commitments; the Referee never reads them. An Axis Demand is never a Commitment: it
 is granted by the Platform itself.
 _Avoid_: pledge, promise, concession, side letter
 
-### Distance
+### What the Referee reports
 
 **Gap**:
 The distance on one Axis between a Party's Position and a Proposal's Platform. Also used of
@@ -152,15 +177,34 @@ It is feedback, never a constraint — the sole defence against Agents drifting 
 grand coalition.
 _Avoid_: distance table, scorecard, diff
 
+**Price report**:
+The table the Referee shows of one price list against a Platform: which Demands it pays, which
+it leaves outstanding, and which are not the Referee's to read. Like a Gap report it is a
+report and never a verdict — a Party may waive a Demand it named, or walk away over one the
+Referee has just called met.
+_Avoid_: demand check, satisfaction report, price check, scorecard
+
+**Unevaluated**:
+What the Referee says about a free-text Demand. Not unknown for want of trying: it is not the
+Referee's to read, and the only alternative is the Referee inventing a fact for an Agent to
+act on.
+_Avoid_: unknown, unchecked, pending, n/a
+
 ### The vote
 
+**Chamber**:
+The 349 seats a Scenario divides between its Parties, and the body that votes on a Proposal.
+It owns the four Votes a Run may spend — the budget is the Chamber's, never any one
+Formateur's.
+_Avoid_: parliament, house, assembly, legislature
+
 **Negative parliamentarism**:
-The Riksdag's rule that the chamber votes on whether to *reject* a government, not to install
+The Riksdag's rule that the Chamber votes on whether to *reject* a government, not to install
 one. A Proposal passes unless a Blocking minority votes against it.
 _Avoid_: the vote rule, investiture, confidence vote
 
 **Blocking minority**:
-The 175 seats — an absolute majority of 349 — that must vote No to defeat a Proposal.
+The 175 seats — an absolute majority of the Chamber — that must vote No to defeat a Proposal.
 Anything short of it lets the Proposal through.
 _Avoid_: majority, threshold, quorum, 175 rule
 
@@ -172,21 +216,34 @@ can be dropped: they name each kingmaker exactly once, and one of them pairing t
 would rather not deal with each other is the normal case, not a bug.
 _Avoid_: bloc, coalition, alliance, set
 
+**Vote**:
+The Chamber's single decision on one Proposal. A Run may hold four, and only a tabled Proposal
+spends one — which is why Standing down costs the Chamber nothing, and why Attempts and Votes
+are not one-to-one.
+_Avoid_: division, ballot, round of voting, investiture
+
+**Ballot**:
+One Party's Yes, Abstain or No in a Vote. It carries every seat the Party holds — a Party's
+seats are never split — and every Party casts one, including the Parties a Proposal never
+names. It is exactly those Parties whose Abstention is the Formateur's cheapest route to
+power.
+_Avoid_: vote, choice, verdict, position
+
 **Abstention**:
-A vote that is neither Yes nor No. Under Negative parliamentarism it is the cheapest thing a
+A Ballot that is neither Yes nor No. Under Negative parliamentarism it is the cheapest thing a
 Formateur can buy: a Party that will neither join nor support can still be paid to step out of
 the way.
 _Avoid_: pass, neutral, absence, non-vote
 
 **Re-election**:
-The terminal state a Run reaches when the chamber's four votes are spent, or every Party has
+The terminal state a Run reaches when the Chamber's four Votes are spent, or every Party has
 had an Attempt. Nothing after it is modelled.
 _Avoid_: new election, snap election, do-over, failure
 
 ### Running and validating
 
 **Scenario**:
-A complete set of Party mandates whose seats sum to 349. The input to a Run.
+A complete set of Party Mandates whose seats sum to the Chamber's 349. The input to a Run.
 _Avoid_: setup, config, dataset, world
 
 **Fixture**:
@@ -206,6 +263,6 @@ without calling the model.
 _Avoid_: fixture, mock, snapshot, tape, VCR
 
 **Transcript**:
-The human-readable record of a Run — every Bilateral, the Proposal, the vote. Read closely,
+The human-readable record of a Run — every Bilateral, the Proposal, the Vote. Read closely,
 never counted.
 _Avoid_: log, output, report

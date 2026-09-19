@@ -20,12 +20,12 @@ from kbbl.models import (
     Axis,
     AxisDemand,
     Demand,
+    Ballot,
     Party,
     Platform,
     Proposal,
     Scenario,
     TextDemand,
-    Vote,
     signed,
 )
 
@@ -311,40 +311,40 @@ def _demand(demand: Demand) -> str:
     return f"{demand.axis.value} {demand.op} {signed(demand.value)}"
 
 
-class Ballot(NamedTuple):
-    """How one Party voted, and the seats that vote carries."""
+class Cast(NamedTuple):
+    """One Party's Ballot, and the seats it carries."""
 
     party: str
     seats: int
-    vote: Vote
+    ballot: Ballot
 
 
 class Tally(NamedTuple):
     """The chamber's verdict on one Proposal, under Negative parliamentarism."""
 
     proposal: Proposal
-    ballots: tuple[Ballot, ...]
-    backing: int
-    """The seats behind the Proposal — Government and Support-only together (§4). Reported
+    casts: tuple[Cast, ...]
+    base_seats: int
+    """The seats in the Proposal's Base — Government and Support-only together (§4). Reported
     beside the count rather than used in it: what defeats a Proposal is the No seats, and a
-    Party named in a Proposal is still free to vote against it."""
+    Party named in a Proposal is still free to cast a No Ballot on it."""
 
-    def seats_voting(self, vote: Vote) -> int:
+    def seats_casting(self, ballot: Ballot) -> int:
         """The seats cast one way. Named for the question because `seats` is a number
         everywhere else in the Referee, and a `Tally.seats` taking an argument would not be."""
-        return sum(ballot.seats for ballot in self.ballots if ballot.vote is vote)
+        return sum(cast.seats for cast in self.casts if cast.ballot is ballot)
 
     @property
     def yes(self) -> int:
-        return self.seats_voting(Vote.YES)
+        return self.seats_casting(Ballot.YES)
 
     @property
     def abstain(self) -> int:
-        return self.seats_voting(Vote.ABSTAIN)
+        return self.seats_casting(Ballot.ABSTAIN)
 
     @property
     def no(self) -> int:
-        return self.seats_voting(Vote.NO)
+        return self.seats_casting(Ballot.NO)
 
     @property
     def passed(self) -> bool:
@@ -356,44 +356,46 @@ class Tally(NamedTuple):
         return self.no < BLOCKING_MINORITY
 
 
-def count_vote(scenario: Scenario, proposal: Proposal, votes: Mapping[str, Vote]) -> Tally:
-    """Count one chamber vote (§5.2).
+def count_vote(scenario: Scenario, proposal: Proposal, ballots: Mapping[str, Ballot]) -> Tally:
+    """Count one Vote — the Chamber's single decision on one Proposal (§5.2).
 
-    Every Party votes, because every Party holds seats and the count is over seats. A Party
-    the Proposal never mentions still decides whether to abstain or block, which is the whole
-    of the Formateur's cheapest route to power.
+    Every Party casts a Ballot, because every Party holds seats and the count is over seats. A
+    Party the Proposal never mentions still decides whether to abstain or block, which is the
+    whole of the Formateur's cheapest route to power.
     """
     by_seats = {party.name: party.seats for party in scenario.parties}
 
-    unknown = sorted(set(proposal.backers) - set(by_seats))
+    unknown = sorted(set(proposal.base) - set(by_seats))
     if unknown:
         raise ValueError(
             f"the Proposal names {', '.join(unknown)}, which is not a Party in "
             f"Scenario {scenario.name!r}"
         )
 
-    missing = sorted(set(by_seats) - set(votes))
+    missing = sorted(set(by_seats) - set(ballots))
     if missing:
-        raise ValueError(f"no vote was cast by {', '.join(missing)}")
-    strangers = sorted(set(votes) - set(by_seats))
+        raise ValueError(f"no Ballot was cast by {', '.join(missing)}")
+    strangers = sorted(set(ballots) - set(by_seats))
     if strangers:
         raise ValueError(
-            f"{', '.join(strangers)} voted, and holds no seat in Scenario {scenario.name!r}"
+            f"{', '.join(strangers)} cast a Ballot, and holds no seat in "
+            f"Scenario {scenario.name!r}"
         )
 
     return Tally(
         proposal=proposal,
-        ballots=tuple(
-            Ballot(party=name, seats=seats, vote=votes[name]) for name, seats in by_seats.items()
+        casts=tuple(
+            Cast(party=name, seats=seats, ballot=ballots[name])
+            for name, seats in by_seats.items()
         ),
-        backing=sum(by_seats[name] for name in proposal.backers),
+        base_seats=sum(by_seats[name] for name in proposal.base),
     )
 
 
 def render_vote(tally: Tally) -> str:
     """The count, and what it did to the Proposal."""
     proposal = tally.proposal
-    width = max(len("Abstain"), *(len(ballot.party) for ballot in tally.ballots))
+    width = max(len("Abstain"), *(len(cast.party) for cast in tally.casts))
     rule = f"{'-' * width}  -----  -------"
     lines = [
         f"Vote on {proposal.formateur}'s Proposal.",
@@ -401,11 +403,11 @@ def render_vote(tally: Tally) -> str:
         f"{'Party':<{width}}  Seats  Vote",
         rule,
     ]
-    for ballot in tally.ballots:
-        lines.append(f"{ballot.party:<{width}}  {ballot.seats:>5}  {ballot.vote.value}")
+    for cast in tally.casts:
+        lines.append(f"{cast.party:<{width}}  {cast.seats:>5}  {cast.ballot.value}")
     lines.append(rule)
-    for vote in Vote:
-        lines.append(f"{vote.value:<{width}}  {tally.seats_voting(vote):>5}")
+    for ballot in Ballot:
+        lines.append(f"{ballot.value:<{width}}  {tally.seats_casting(ballot):>5}")
 
     support = ", ".join(proposal.support_only) or "nobody"
     outcome = "passes" if tally.passed else "is defeated"
@@ -413,7 +415,7 @@ def render_vote(tally: Tally) -> str:
         [
             "",
             f"Government: {', '.join(proposal.government)}. Support-only: {support}. "
-            f"{tally.backing} seats behind it.",
+            f"{tally.base_seats} seats behind it.",
             f"{tally.no} seats voted No, and it takes {BLOCKING_MINORITY} to defeat a "
             f"Proposal. It {outcome}.",
         ]
