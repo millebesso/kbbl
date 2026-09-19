@@ -32,6 +32,14 @@ from kbbl.models import (
 BLOCKING_MINORITY = 175
 """The seats that must vote No to defeat a Proposal — an absolute majority of 349."""
 
+ROUNDS = 5
+"""The Rounds one Formateur's Attempt is worth (§5.3).
+
+The budget is the Referee's to hold rather than the Formateur's to feel (§2), and it is the
+whole reason whom to court is a decision at all: five Rounds do not reach eight Parties, so a
+Formateur that spends them badly fails (§5.1).
+"""
+
 
 class Grouping(NamedTuple):
     """A set of Parties and the seats they hold between them."""

@@ -37,10 +37,17 @@ demand-satisfaction reports are shown to agents as *feedback*. No value in a par
 file binds a vote. An agent is always free to act against its own stated mandate — it just
 has to do so knowingly.
 
-**The referee never parses prose.** Agents emit structured output (`output_config.format`)
-for anything the referee consumes: the proposal, the vote, the demand list. Prose exists
-for the transcript only. Regexing a proposal out of natural language is the most common way
-an agent simulation becomes unreliable.
+**The referee never parses prose.** Agents emit structured output for anything the referee
+consumes: the proposal, the vote, the demand list. Prose exists for the transcript only.
+Regexing a proposal out of natural language is the most common way an agent simulation
+becomes unreliable.
+
+The mechanism is a **tool call**, not `output_config.format`, and the two are not
+interchangeable here. Ticket 02 measured roughly one live call in eleven coming back empty,
+truncated or carrying a leaked JSON character whenever two or three paragraphs of prose were
+decoded inside a schema's string. So prose is the reply's own text and every field the
+referee reads is a short enumerated tool argument beside it. The rule above is unchanged —
+strengthened, if anything: the referee reads the call and never the message.
 
 ---
 

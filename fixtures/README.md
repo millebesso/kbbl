@@ -34,6 +34,26 @@ Abstention purchasable; GV's high value (8) makes it the expensive sell.
 This is the shape of the real 2026 parliament (§9) — no bloc at 175, a small centre Party's
 Abstention deciding who governs — in a chamber small enough to read the whole Transcript of.
 
+**Four Parties, four different appetites for another election.** Willingness to re-elect is
+the only outside option in the model and the reason a refusal costs anything (§3), and it
+reaches an Agent as one of five bands of prose rather than as a number. This Fixture sits one
+Party in each of four of those bands, so no two Parties here are sent the same disposition:
+
+| Party | Willingness | What its Agent is told |
+| --- | ---: | --- |
+| NP | 1 | Another election would be a disaster for it. |
+| MI | 2 | It would much rather take a deal than face the voters. |
+| GV | 8 | It is comfortable going back to them, and a bad deal is worse. |
+| FF | 9 | It would welcome another election and expects to come back stronger. |
+
+NP and FF held 4 and 6 in an earlier draft, which put both in the same middle band and sent
+the chamber's two largest Parties identical prose — so the lever distinguished nothing between
+exactly the pair whose bargaining decides the Run. The pairing is deliberate now: the largest
+Party dreads the campaign it would have to fight after failing to form a government, and the
+second largest, nine seats behind it, fancies its chances in one. That asymmetry is what a
+Formateur with five Rounds has to work around, and it is what makes MI's Abstention worth
+buying rather than FF's support.
+
 **Every Party is pivotal.** The groupings that reach the Blocking minority without a spare seat
 are NP+FF, NP+GV, NP+MI and FF+GV+MI: each Party appears in at least one, so no Party can be
 safely ignored by the Formateur. That is deliberate. An earlier draft of this Fixture gave GV

@@ -2,27 +2,32 @@
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 import pytest
 
-from conftest import Model, mandate, positions, responded, said, spoken, write_scenario
-from kbbl.agents import MODEL, AgentError, bilateral, persona
+from conftest import Model, chose, mandate, positions, responded, said, spoken, write_scenario
+from kbbl.agents import MODEL, AgentError, FormateurAgent, persona
 from kbbl.cassettes import Cassettes
-from kbbl.models import Bilateral, Ending, Scenario
+from kbbl.models import Bilateral, Choice, Ending, Scenario
+from kbbl.referee import ROUNDS
 from kbbl.scenario import load_scenario
 
 
 def hold_bilateral(
     scenario: Scenario, model: Model, tmp_path: Path, replay: bool = False
 ) -> Bilateral:
-    return bilateral(
-        scenario,
-        formateur=scenario.parties[0],
-        counterparty=scenario.parties[1],
-        cassettes=Cassettes(tmp_path, replay=replay, live=model),
+    """One meeting, held directly: the Formateur is not asked to choose whom it is with."""
+    return FormateurAgent(scenario, scenario.parties[0]).meet(
+        scenario.parties[1], Cassettes(tmp_path, replay=replay, live=model)
     )
+
+
+def make_choice(scenario: Scenario, model: Model, tmp_path: Path) -> Choice:
+    """The first Round's Choice, without holding the Bilateral it books."""
+    return FormateurAgent(scenario, scenario.parties[0]).spend(
+        Cassettes(tmp_path, live=model)
+    ).choice
 
 
 # --- the persona is built from the mandate ---------------------------------------------
@@ -69,6 +74,22 @@ def test_willingness_to_re_elect_reaches_the_agent_as_a_disposition_not_a_number
         assert "willingness" not in brief.lower()
         assert f"{value}/10" not in brief
         assert "conceal" in brief
+
+
+def test_the_fixture_sends_four_parties_four_different_dispositions(
+    four_party: Scenario,
+) -> None:
+    """02 §12.1: NP and FF shared a band, so the lever this ticket leans on distinguished
+    nothing between the Fixture's two largest Parties. Four Parties, four bands now."""
+    sent = {
+        party.name: persona(four_party, party)
+        .split("ANOTHER ELECTION\n\n")[1]
+        .split(" Nobody else knows")[0]
+        for party in four_party.parties
+    }
+
+    assert len(set(sent.values())) == len(four_party.parties)
+    assert sent["NP"] != sent["FF"]
 
 
 def test_exclusions_reach_the_agent_as_a_preference_carrying_a_price(
@@ -176,6 +197,24 @@ def test_each_side_hears_only_what_the_other_said(
     assert formateurs_second[-2] == {"role": "assistant", "content": said("Name your price.")}
 
 
+def test_the_formateur_hears_the_last_word_even_though_it_gets_no_reply(
+    four_party: Scenario, tmp_path: Path
+) -> None:
+    """A Declaration buys the declarer no answer. It does not unsay what it was carried on.
+
+    The Formateur takes this meeting into its next Round, so a meeting carried forward
+    without its closing message is a meeting remembered wrong.
+    """
+    model = Model(spoken("Name your price."), spoken("Nothing you can pay.", "impasse"))
+    agent = FormateurAgent(four_party, four_party.parties[0])
+
+    agent.meet(four_party.party("FF"), Cassettes(tmp_path, live=model))
+    agent.meet(four_party.party("MI"), Cassettes(tmp_path, live=model))
+
+    carried = "\n".join(model.said_to(len(model.requests) - 1))
+    assert said("Nothing you can pay.") in carried
+
+
 def test_the_side_about_to_speak_last_is_told_so(
     four_party: Scenario, tmp_path: Path
 ) -> None:
@@ -205,13 +244,13 @@ def test_the_request_names_the_model_and_caches_the_persona_prefix(
 
 
 def test_the_referee_never_parses_prose(four_party: Scenario, tmp_path: Path) -> None:
-    """§2: how a Bilateral ends is structured output, not something read out of the message."""
+    """§2: how a Bilateral ends is a tool call, never something read out of the message."""
     model = Model(spoken("I declare impasse, we are done here."))
 
     met = hold_bilateral(four_party, model, tmp_path)
 
     assert met.exchanges[0].declares is None
-    assert model.requests[0]["output_config"]["format"]["type"] == "json_schema"
+    assert [tool["name"] for tool in model.requests[0]["tools"]] == ["end_meeting"]
 
 
 def test_a_bilateral_replays_from_cassettes_with_no_live_calls(
@@ -234,32 +273,55 @@ def test_a_truncated_reply_fails_loudly(four_party: Scenario, tmp_path: Path) ->
         hold_bilateral(four_party, model, tmp_path)
 
 
-def test_a_reply_that_is_not_the_agreed_shape_fails_loudly(
+def test_a_reply_with_no_message_in_it_fails_loudly(
     four_party: Scenario, tmp_path: Path
 ) -> None:
-    model = Model(responded("sure, sounds good to me"))
+    """A reply that is only a tool call has ended a meeting nobody was told anything in."""
+    model = Model({"content": [], "stop_reason": "end_turn"})
 
-    with pytest.raises(AgentError):
+    with pytest.raises(AgentError, match="no text block"):
         hold_bilateral(four_party, model, tmp_path)
 
 
-def test_a_formateur_cannot_meet_itself(tmp_path: Path) -> None:
-    scenario = load_scenario(write_scenario(tmp_path, mandate("AA", 349, positions=positions())))
+def test_a_call_to_a_tool_the_agent_does_not_have_fails_loudly(
+    four_party: Scenario, tmp_path: Path
+) -> None:
+    model = Model(responded(said("Done."), called={"name": "meet", "input": {"party": "FF"}}))
+
+    with pytest.raises(AgentError, match="not a tool it has"):
+        hold_bilateral(four_party, model, tmp_path)
+
+
+def test_an_ending_the_referee_does_not_recognise_fails_loudly(
+    four_party: Scenario, tmp_path: Path
+) -> None:
+    model = Model(
+        responded(said("Done."), called={"name": "end_meeting", "input": {"ending": "maybe"}})
+    )
+
+    with pytest.raises(AgentError, match="maybe"):
+        hold_bilateral(four_party, model, tmp_path)
+
+
+def test_a_formateur_cannot_meet_itself(four_party: Scenario, tmp_path: Path) -> None:
+    agent = FormateurAgent(four_party, four_party.parties[0])
 
     with pytest.raises(ValueError, match="itself"):
-        bilateral(
-            scenario,
-            formateur=scenario.parties[0],
-            counterparty=scenario.parties[0],
-            cassettes=Cassettes(tmp_path, live=Model()),
-        )
+        agent.meet(four_party.parties[0], Cassettes(tmp_path, live=Model()))
+
+
+def test_a_formateur_alone_in_the_chamber_has_nobody_to_meet(tmp_path: Path) -> None:
+    scenario = load_scenario(write_scenario(tmp_path, mandate("AA", 349, positions=positions())))
+
+    with pytest.raises(ValueError, match="nobody to meet"):
+        FormateurAgent(scenario, scenario.parties[0])
 
 
 def test_an_empty_message_is_refused_rather_than_shown_as_an_exchange(
     four_party: Scenario, tmp_path: Path
 ) -> None:
     """A live Agent did exactly this. An Exchange nobody can read is not an Exchange."""
-    model = Model(responded(json.dumps({"message": "", "ending": "continue"})))
+    model = Model(responded(""))
 
     with pytest.raises(AgentError, match="unusable|fragment"):
         hold_bilateral(four_party, model, tmp_path)
@@ -275,18 +337,122 @@ def test_a_fragment_is_refused_rather_than_answered_as_though_it_were_a_sentence
     the fragment as the opening of a sentence and wrote the rest of it, so a malfunction
     became a turn of the negotiation.
     """
-    model = Model(responded(json.dumps({"message": fragment, "ending": "continue"})))
+    model = Model(responded(fragment))
 
     with pytest.raises(AgentError, match="fragment"):
         hold_bilateral(four_party, model, tmp_path)
 
 
-def test_the_schema_does_not_claim_to_enforce_the_message_floor(four_party: Scenario) -> None:
-    """Structured outputs drop `minLength`, so a floor written there is a silent no-op.
+def test_no_prose_is_ever_decoded_inside_a_constrained_field(
+    four_party: Scenario, tmp_path: Path
+) -> None:
+    """Ticket 02's finding, held in place: prose is the reply's own text and nothing else.
 
-    An empty message came back from a schema asking for 200 characters. The schema must not
-    carry a constraint that reads like a guarantee and is not one.
+    Roughly one live call in eleven came back empty, truncated or carrying a leaked JSON
+    character while two or three paragraphs were being decoded inside a schema's string. The
+    fields the Referee reads are short and enumerated, and they are the only constrained
+    things in a request.
     """
-    from kbbl.agents import EXCHANGE_FORMAT
+    model = Model()
+    FormateurAgent(four_party, four_party.parties[0]).spend(Cassettes(tmp_path, live=model))
 
-    assert "minLength" not in EXCHANGE_FORMAT["schema"]["properties"]["message"]
+    assert len(model.requests) > 1
+    for request in model.requests:
+        assert "output_config" not in request
+        for tool in request["tools"]:
+            fields = tool["input_schema"]["properties"].values()
+            assert all("enum" in field for field in fields), tool["name"]
+
+
+# --- choosing whom to meet ----------------------------------------------------------------
+
+
+def test_the_formateur_states_its_reasoning_and_books_the_party_it_named(
+    four_party: Scenario, tmp_path: Path
+) -> None:
+    """§5.1's central strategic act: the reasoning is given before the meeting opens."""
+    model = Model(chooses=["MI"])
+
+    choice = make_choice(four_party, model, tmp_path)
+
+    assert choice.counterparty == "MI"
+    assert "MI is the one worth the round" in choice.reasoning
+
+
+def test_the_formateur_is_told_the_budget_and_who_is_left_to_meet(
+    four_party: Scenario, tmp_path: Path
+) -> None:
+    """The budget is the Referee's to report (§2) — an Agent counting its own is one that
+    can be wrong about it."""
+    model = Model()
+
+    make_choice(four_party, model, tmp_path)
+
+    brief = model.system(0) + "\n".join(model.said_to(0))
+    assert f"You have {ROUNDS} rounds" in brief
+    assert f"ROUND 1 OF {ROUNDS}" in brief
+    for other in ("FF", "GV", "MI"):
+        assert other in brief
+    assert [tool["name"] for tool in model.requests[0]["tools"]] == ["meet"]
+    assert model.requests[0]["tools"][0]["input_schema"]["properties"]["party"]["enum"] == [
+        "FF",
+        "GV",
+        "MI",
+    ]
+
+
+def test_the_formateur_cannot_book_a_meeting_with_itself(
+    four_party: Scenario, tmp_path: Path
+) -> None:
+    """NP is not on the list it is given, and a reply naming it anyway is refused."""
+    model = Model(chooses=[chose("NP")])
+
+    with pytest.raises(AgentError, match="not a Party it can meet"):
+        make_choice(four_party, model, tmp_path)
+
+
+def test_a_choice_given_only_in_prose_books_nobody_and_fails_loudly(
+    four_party: Scenario, tmp_path: Path
+) -> None:
+    """§2 again: whom to meet is read from the call, never out of the reasoning."""
+    model = Model(chooses=[responded("I will meet MI, obviously.")])
+
+    with pytest.raises(AgentError, match="booking"):
+        make_choice(four_party, model, tmp_path)
+
+
+def test_a_formateur_that_books_two_meetings_at_once_fails_loudly(
+    four_party: Scenario, tmp_path: Path
+) -> None:
+    model = Model(
+        chooses=[
+            {
+                "content": [
+                    {"type": "text", "text": "Both of them."},
+                    {"type": "tool_use", "id": "a", "name": "meet", "input": {"party": "FF"}},
+                    {"type": "tool_use", "id": "b", "name": "meet", "input": {"party": "MI"}},
+                ],
+                "stop_reason": "tool_use",
+            }
+        ]
+    )
+
+    with pytest.raises(AgentError, match="more than one call"):
+        make_choice(four_party, model, tmp_path)
+
+
+def test_the_counterparty_is_never_told_the_formateur_had_a_choice_to_make(
+    four_party: Scenario, tmp_path: Path
+) -> None:
+    """The Formateur's reasoning about whom to court is the most private thing in the Run."""
+    model = Model(chooses=["MI"])
+
+    FormateurAgent(four_party, four_party.parties[0]).spend(Cassettes(tmp_path, live=model))
+
+    formateur, *counterparties = range(len(model.requests))
+    for index in counterparties:
+        if "You are the leader of MI," not in model.system(index):
+            continue
+        conversation = "\n".join(model.said_to(index)) + model.system(index)
+        assert "worth the round" not in conversation
+        assert "ROUND 1" not in conversation

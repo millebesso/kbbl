@@ -209,6 +209,18 @@ class Exchange(Strict):
     declares: Declaration | None = None
 
 
+class Choice(Strict):
+    """A Formateur's decision about how to spend one Round: whom to meet, and why.
+
+    The reasoning is prose, and nobody but the record ever reads it. The name is the only part
+    the Referee acts on, which is why it arrives as a short enumerated field rather than as
+    something read out of the prose (§2).
+    """
+
+    counterparty: str = Field(min_length=1)
+    reasoning: str = Field(min_length=1)
+
+
 class Bilateral(Strict):
     """The private meeting a Round buys: who met, what was said, and how it finished."""
 
@@ -225,6 +237,38 @@ class Bilateral(Strict):
     def closed_by(self) -> str | None:
         """The side that exited early, or None if the meeting simply ran out of Exchanges."""
         return self.exchanges[-1].speaker if self.exchanges[-1].declares is not None else None
+
+
+class Round(Strict):
+    """One unit of a Formateur's budget: the Choice it made, and the Bilateral that bought.
+
+    The chosen Party is not stored twice. `Bilateral.counterparty` is who was actually met,
+    and a Round whose Choice names somebody else is a record disagreeing with itself — so it
+    is refused here rather than serialised for ticket 06 to puzzle over.
+    """
+
+    number: int = Field(ge=1)
+    choice: Choice
+    bilateral: Bilateral
+
+    @model_validator(mode="after")
+    def _check_it_met_who_it_chose(self) -> Self:
+        if self.bilateral.counterparty != self.choice.counterparty:
+            raise ValueError(
+                f"Round {self.number} chose {self.choice.counterparty} and met "
+                f"{self.bilateral.counterparty}"
+            )
+        return self
+
+    @property
+    def formateur(self) -> str:
+        """The Party whose Round this was."""
+        return self.bilateral.formateur
+
+    @property
+    def counterparty(self) -> str:
+        """The Party this Round was spent on."""
+        return self.bilateral.counterparty
 
 
 class Proposal(Strict):
@@ -292,4 +336,4 @@ class Run(Strict):
 
     scenario: str = Field(min_length=1)
     formateur: str = Field(min_length=1)
-    bilaterals: tuple[Bilateral, ...] = ()
+    rounds: tuple[Round, ...] = ()

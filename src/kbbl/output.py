@@ -9,7 +9,8 @@ from __future__ import annotations
 
 from textwrap import fill
 
-from kbbl.models import Bilateral, Ending, Run
+from kbbl.models import Bilateral, Ending, Round, Run
+from kbbl.referee import ROUNDS
 
 WIDTH = 88
 """Where a message wraps. Transcripts are read, so lines have to be a readable length."""
@@ -22,32 +23,51 @@ than as a wall of paragraphs."""
 def render_transcript(run: Run) -> str:
     """Everything that happened in a Run, start to finish."""
     parts = [f"Run: {run.scenario}\nFormateur: {run.formateur}"]
-    parts.extend(render_bilateral(bilateral) for bilateral in run.bilaterals)
+    parts.extend(render_round(spent) for spent in run.rounds)
     return "\n\n\n".join(parts)
 
 
-def render_bilateral(bilateral: Bilateral) -> str:
-    """One private meeting: who met, every Exchange in order, and how it ended."""
-    heading = f"Bilateral: {bilateral.formateur} meets {bilateral.counterparty}"
-    lines = [heading, "-" * len(heading)]
+def render_round(spent: Round) -> str:
+    """One Round: whom the Formateur chose, why, and the private meeting it bought.
+
+    `spent` rather than `round`: a Round is a unit of budget, and naming it for the builtin
+    it would shadow reads worse than naming it for what spending one means.
+
+    The reasoning is printed before the meeting rather than after it, because that is when it
+    was given — a choice explained after the fact is a different claim from one explained
+    before, and only the second one can be read against what followed.
+    """
+    heading = f"Round {spent.number} of {ROUNDS} — {spent.formateur} meets {spent.counterparty}"
+    lines = [
+        heading,
+        "-" * len(heading),
+        "",
+        f"Why {spent.formateur} chose {spent.counterparty}",
+        _wrap(spent.choice.reasoning),
+    ]
+    lines.extend(_conversation(spent.bilateral))
+    return "\n".join(lines)
+
+
+def _conversation(bilateral: Bilateral) -> list[str]:
+    """Every Exchange in order, and how the meeting finished."""
+    lines: list[str] = []
     for exchange in bilateral.exchanges:
         lines.append("")
         lines.append(f"{exchange.speaker}:")
         lines.append(_wrap(exchange.message))
     lines.append("")
     lines.append(_ending(bilateral))
-    return "\n".join(lines)
+    return lines
 
 
 def _ending(bilateral: Bilateral) -> str:
-    spent = len(bilateral.exchanges)
-    plural = "Exchange" if spent == 1 else "Exchanges"
+    count = len(bilateral.exchanges)
+    plural = "Exchange" if count == 1 else "Exchanges"
     if bilateral.ending is Ending.EXHAUSTED:
-        return (
-            f"Ended: {spent} {plural} spent, and neither side agreed or declared impasse."
-        )
+        return f"Ended: {count} {plural} spent, and neither side agreed or declared impasse."
     verb = "agreed" if bilateral.ending is Ending.AGREEMENT else "declared impasse"
-    return f"Ended: {bilateral.closed_by} {verb}, after {spent} {plural}."
+    return f"Ended: {bilateral.closed_by} {verb}, after {count} {plural}."
 
 
 def _wrap(message: str) -> str:
