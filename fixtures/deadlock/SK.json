@@ -1,0 +1,37 @@
+{
+  "name": "SK",
+  "seats": 115,
+  "positions": {
+    "economic": -5,
+    "environment": 3,
+    "military": -3,
+    "health": -5,
+    "immigration": 3,
+    "law_and_order": -3,
+    "education": -5,
+    "transport": 3,
+    "social": 3,
+    "international": 1
+  },
+  "prefer_not": [
+    "RF"
+  ],
+  "to_govern": [
+    {
+      "axis": "economic",
+      "op": "<=",
+      "value": -4
+    },
+    {
+      "text": "the state holdings are not sold, ever"
+    }
+  ],
+  "to_support": [
+    {
+      "axis": "economic",
+      "op": "<=",
+      "value": -4
+    }
+  ],
+  "willingness_to_re_elect": 8
+}

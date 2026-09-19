@@ -45,6 +45,56 @@ Note that NP+GV is arithmetically one of those groupings while NP lists GV as an
 Exclusions are soft and every one has a price (§3) — this Fixture is built so that the price is
 sometimes worth paying.
 
+## The Referee Fixtures
+
+Three more Fixtures exist so the deterministic core can be tested against answers that are
+obvious by inspection (§8, §9). Nothing negotiates on them — they have no Cassettes — and the
+invariants in `tests/test_referee.py` are run over every Fixture in this directory, found
+rather than listed, so a Fixture added later is covered by them the moment it lands.
+
+### `landslide/` — one Party above the Blocking minority
+
+| Party | Seats | Character           |
+| ----- | ----- | ------------------- |
+| MJ    | 200   | Broad governing left |
+| OP    | 100   | Market right        |
+| RS    | 49    | Greens              |
+
+MJ alone clears 175, so it is the only minimal Grouping there is and nothing the rest of the
+chamber does can defeat a Proposal it tables: OP + RS is 149, and 149 No votes are 26 short.
+The right answer is that the negotiation is over before it starts.
+
+### `knife-edge/` — a kingmaker holds the balance
+
+| Party | Seats | Character    |
+| ----- | ----- | ------------ |
+| RB    | 173   | Right bloc   |
+| LB    | 151   | Left bloc    |
+| KM    | 25    | Centre       |
+
+This is §9's real 2026 arithmetic with the blocs collapsed into one Party each. Neither bloc
+reaches 175, and **KM's Abstention alone decides who governs**: an LB minority of 151 survives
+if KM steps out of the way, because RB's 173 is two seats short of blocking it, and dies the
+moment KM votes with RB. The mirror holds for an RB minority. Neither bloc can do anything
+about it, which is the point — under Negative parliamentarism the thing worth buying is an
+Abstention, and KM's low Willingness to re-elect (2) is what makes it purchasable.
+
+### `deadlock/` — no Platform pays any two prices
+
+| Party | Seats | Character       |
+| ----- | ----- | --------------- |
+| RF    | 120   | Market reform   |
+| SK    | 115   | Socialist left  |
+| TN    | 114   | Traditionalist  |
+
+Every Party is short of 175 and every pair clears it, so nobody governs without somebody else
+stepping aside. The Supporting prices make that impossible to buy with policy: RF charges
+`economic >= +4`, SK charges `economic <= -4`, and TN charges `economic == 0`. Those three
+name one Axis between them and contradict each other pairwise, so **no Platform in the whole
+-5..+5 range pays more than one of them** — the test ranges over all eleven values and says so.
+Any Abstention bought here is bought against a Party's own stated price, which is exactly the
+judgement the Referee is not allowed to make for it.
+
 ## Axis conventions
 
 Positions are scored −5..+5 on ten Axes. The poles used by every Fixture here:

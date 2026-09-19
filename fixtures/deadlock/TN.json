@@ -1,0 +1,38 @@
+{
+  "name": "TN",
+  "seats": 114,
+  "positions": {
+    "economic": 0,
+    "environment": -1,
+    "military": 3,
+    "health": 0,
+    "immigration": -4,
+    "law_and_order": 4,
+    "education": 1,
+    "transport": -1,
+    "social": -4,
+    "international": -3
+  },
+  "prefer_not": [
+    "RF",
+    "SK"
+  ],
+  "to_govern": [
+    {
+      "axis": "economic",
+      "op": "==",
+      "value": 0
+    },
+    {
+      "text": "the referendum is held before anything else"
+    }
+  ],
+  "to_support": [
+    {
+      "axis": "economic",
+      "op": "==",
+      "value": 0
+    }
+  ],
+  "willingness_to_re_elect": 9
+}

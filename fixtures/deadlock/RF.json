@@ -1,0 +1,37 @@
+{
+  "name": "RF",
+  "seats": 120,
+  "positions": {
+    "economic": 5,
+    "environment": -3,
+    "military": 2,
+    "health": 4,
+    "immigration": -1,
+    "law_and_order": 2,
+    "education": 4,
+    "transport": -3,
+    "social": 0,
+    "international": 2
+  },
+  "prefer_not": [
+    "SK"
+  ],
+  "to_govern": [
+    {
+      "axis": "economic",
+      "op": ">=",
+      "value": 4
+    },
+    {
+      "text": "the state holdings are sold this term"
+    }
+  ],
+  "to_support": [
+    {
+      "axis": "economic",
+      "op": ">=",
+      "value": 4
+    }
+  ],
+  "willingness_to_re_elect": 8
+}

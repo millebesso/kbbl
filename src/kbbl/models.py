@@ -56,14 +56,28 @@ states the same table in prose, and this is the copy the Personas are built from
 """
 
 
+def signed(value: int) -> str:
+    """An Axis value as it is written everywhere: `+3`, `-3`, `0`.
+
+    A bare `3` on a scale that runs -5..+5 reads as a magnitude rather than a position, and
+    both the Referee's reports and an Agent's persona show these side by side in columns.
+    """
+    return f"{value:+d}" if value else "0"
+
+
 class Strict(BaseModel):
     """Shared strictness for every model in KBBL. Nothing here is coerced, guessed or ignored."""
 
     model_config = ConfigDict(extra="forbid", strict=True, frozen=True)
 
 
-class Positions(Strict):
-    """A Party's own value on each of the ten Axes. All ten are required."""
+class Axes(Strict):
+    """A value on each of the ten Axes. All ten are required.
+
+    Positions and a Platform are the same ten numbers in the same units and differ only in
+    who owns them, so they are one shape here and two nouns everywhere else (§5.4 compares
+    them Axis by Axis, which only means anything if they are commensurable).
+    """
 
     economic: Score
     environment: Score
@@ -75,6 +89,19 @@ class Positions(Strict):
     transport: Score
     social: Score
     international: Score
+
+    def on(self, axis: Axis) -> int:
+        """The value on one Axis, reached by Axis rather than by attribute name."""
+        value: int = getattr(self, axis.value)
+        return value
+
+
+class Positions(Axes):
+    """A Party's own value on each of the ten Axes — what it went to the election on."""
+
+
+class Platform(Axes):
+    """The single agreed value on each Axis that a Proposal commits its government to."""
 
 
 class AxisDemand(Strict):
@@ -198,6 +225,59 @@ class Bilateral(Strict):
     def closed_by(self) -> str | None:
         """The side that exited early, or None if the meeting simply ran out of Exchanges."""
         return self.exchanges[-1].speaker if self.exchanges[-1].declares is not None else None
+
+
+class Proposal(Strict):
+    """What a Formateur tables for a vote. One per Attempt, and tabling it ends the Attempt.
+
+    No ministries: cabinet portfolios are deliberately out of scope (§4), because modelling
+    them needs a ministry list *and* a per-Party valuation of each post — a second preference
+    model this project does not have.
+    """
+
+    formateur: str = Field(min_length=1)
+    platform: Platform
+    government: tuple[str, ...] = Field(min_length=1)
+    support_only: tuple[str, ...] = ()
+    commitments: tuple[str, ...] = ()
+
+    @model_validator(mode="after")
+    def _check_roles(self) -> Self:
+        for role, named in (("Government", self.government), ("Support-only", self.support_only)):
+            repeated = sorted({name for name in named if named.count(name) > 1})
+            if repeated:
+                raise ValueError(f"{role} names the same Party twice: {', '.join(repeated)}")
+
+        both = sorted(set(self.government) & set(self.support_only))
+        if both:
+            raise ValueError(
+                f"a Party is in both Government and Support-only: {', '.join(both)}. "
+                f"Support-only is backing from outside cabinet, so the two are exclusive"
+            )
+        return self
+
+    @property
+    def backers(self) -> tuple[str, ...]:
+        """Every Party behind this Proposal — in cabinet or backing it from outside.
+
+        They are one list here because §4 gives them one arithmetic: Support-only seats
+        count toward the Blocking minority exactly as Government seats do, and without that
+        the distinction between the two is decorative.
+        """
+        return self.government + self.support_only
+
+
+class Vote(StrEnum):
+    """How one Party votes on a Proposal.
+
+    Under Negative parliamentarism only No is load-bearing, which is what makes an
+    Abstention purchasable: a Party that will neither join nor support can still be paid to
+    step out of the way (§5.2).
+    """
+
+    YES = "Yes"
+    ABSTAIN = "Abstain"
+    NO = "No"
 
 
 class Run(Strict):

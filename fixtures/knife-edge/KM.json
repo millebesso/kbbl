@@ -1,0 +1,35 @@
+{
+  "name": "KM",
+  "seats": 25,
+  "positions": {
+    "economic": 1,
+    "environment": 1,
+    "military": 1,
+    "health": 0,
+    "immigration": 0,
+    "law_and_order": 1,
+    "education": 1,
+    "transport": 1,
+    "social": 1,
+    "international": 3
+  },
+  "prefer_not": [],
+  "to_govern": [
+    {
+      "axis": "economic",
+      "op": ">=",
+      "value": 0
+    },
+    {
+      "text": "the county hospital stays open"
+    }
+  ],
+  "to_support": [
+    {
+      "axis": "economic",
+      "op": ">=",
+      "value": -2
+    }
+  ],
+  "willingness_to_re_elect": 2
+}

@@ -30,6 +30,7 @@ from kbbl.models import (
     Party,
     Scenario,
     TextDemand,
+    signed,
 )
 from kbbl.referee import BLOCKING_MINORITY, render_seat_table
 
@@ -264,8 +265,8 @@ def _where_you_stand(party: Party) -> str:
     lines = ["WHERE YOU STAND", "", "Ten policy axes, each running -5 to +5:", ""]
     for axis in Axis:
         low, high = AXIS_POLES[axis]
-        value = getattr(party.positions, axis.value)
-        lines.append(f"  {axis.value:<{width}}  {_signed(value):>2}    -5 {low}  ..  +5 {high}")
+        value = party.positions.on(axis)
+        lines.append(f"  {axis.value:<{width}}  {signed(value):>2}    -5 {low}  ..  +5 {high}")
     lines.append("")
     lines.append(
         "These are your voters' positions as much as your own. A platform that sits a long "
@@ -288,7 +289,7 @@ def _demand(demand: Demand) -> str:
 
 
 def _comparison(demand: AxisDemand) -> str:
-    value = _signed(demand.value)
+    value = signed(demand.value)
     return {
         ">=": f"at {value} or higher",
         "<=": f"at {value} or lower",
@@ -354,10 +355,6 @@ def _how_you_negotiate() -> str:
             "paragraphs at most.",
         ]
     )
-
-
-def _signed(value: int) -> str:
-    return f"{value:+d}" if value else "0"
 
 
 def _read(response: dict[str, Any], speaker: str) -> Exchange:

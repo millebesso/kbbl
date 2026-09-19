@@ -1,0 +1,35 @@
+{
+  "name": "MJ",
+  "seats": 200,
+  "positions": {
+    "economic": -1,
+    "environment": 1,
+    "military": 1,
+    "health": -1,
+    "immigration": 1,
+    "law_and_order": 0,
+    "education": -1,
+    "transport": 1,
+    "social": 1,
+    "international": 2
+  },
+  "prefer_not": [],
+  "to_govern": [
+    {
+      "axis": "economic",
+      "op": "<=",
+      "value": 0
+    },
+    {
+      "text": "the schools programme is funded in full"
+    }
+  ],
+  "to_support": [
+    {
+      "axis": "economic",
+      "op": "<=",
+      "value": 2
+    }
+  ],
+  "willingness_to_re_elect": 3
+}

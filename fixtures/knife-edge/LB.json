@@ -1,0 +1,37 @@
+{
+  "name": "LB",
+  "seats": 151,
+  "positions": {
+    "economic": -4,
+    "environment": 3,
+    "military": -2,
+    "health": -4,
+    "immigration": 3,
+    "law_and_order": -2,
+    "education": -4,
+    "transport": 3,
+    "social": 3,
+    "international": 3
+  },
+  "prefer_not": [
+    "RB"
+  ],
+  "to_govern": [
+    {
+      "axis": "economic",
+      "op": "<=",
+      "value": -2
+    },
+    {
+      "text": "no cuts to sickness benefit"
+    }
+  ],
+  "to_support": [
+    {
+      "axis": "economic",
+      "op": "<=",
+      "value": 0
+    }
+  ],
+  "willingness_to_re_elect": 5
+}

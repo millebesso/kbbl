@@ -10,14 +10,20 @@ from typing import Any
 import pytest
 
 from kbbl.agents import MIN_MESSAGE
-from kbbl.models import Axis, Scenario
+from kbbl.models import Axis, Platform, Scenario
 from kbbl.scenario import load_scenario
 
 AXES = tuple(axis.value for axis in Axis)
 
 REPO = Path(__file__).resolve().parents[1]
 
-FOUR_PARTY = REPO / "fixtures" / "four-party"
+FIXTURES = REPO / "fixtures"
+
+FOUR_PARTY = FIXTURES / "four-party"
+
+COMMITTED_FIXTURES = sorted(path for path in FIXTURES.iterdir() if path.is_dir())
+"""Every Fixture in the repo, found rather than listed: a Fixture added without the
+invariants being run over it is the one that would have caught something."""
 
 CASSETTES = REPO / "cassettes"
 """The committed recordings, so the whole suite replays for free."""
@@ -29,9 +35,32 @@ def four_party() -> Scenario:
     return load_scenario(FOUR_PARTY)
 
 
+@pytest.fixture
+def landslide() -> Scenario:
+    """One Party above the Blocking minority: it governs, and nothing can stop it."""
+    return load_scenario(FIXTURES / "landslide")
+
+
+@pytest.fixture
+def knife_edge() -> Scenario:
+    """Two blocs and a kingmaker whose Abstention alone decides who governs."""
+    return load_scenario(FIXTURES / "knife-edge")
+
+
+@pytest.fixture
+def deadlock() -> Scenario:
+    """Three Parties whose prices cannot all be paid by any Platform."""
+    return load_scenario(FIXTURES / "deadlock")
+
+
 def positions(**overrides: int) -> dict[str, int]:
     """A neutral Position on every Axis, with named Axes overridden."""
     return {axis: 0 for axis in AXES} | overrides
+
+
+def platform(**overrides: int) -> Platform:
+    """A Platform at 0 on every Axis, with named Axes overridden."""
+    return Platform(**positions(**overrides))
 
 
 def mandate(name: str, seats: int, **overrides: Any) -> dict[str, Any]:

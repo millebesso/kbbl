@@ -1,14 +1,33 @@
-"""The Referee's seat arithmetic: who sits in the chamber, and who can block.
+"""The Referee: seat arithmetic, Gaps, demand satisfaction, and the vote.
 
-The Referee computes and reports. Nothing here constrains an Agent's choice.
+This is the part of the system allowed to be certain (§8), and everything in it computes and
+reports. Nothing here constrains an Agent's choice — a Gap report is shown to a Party as
+feedback and it remains free to accept a Platform five points from its voters, a Demand the
+Referee reports unmet may still be waived by the Party that named it, and a Party may vote
+against a Proposal it is named in. Nothing here reads prose either: a free-text Demand is
+reported as unevaluated rather than guessed at (§2).
 """
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+from enum import StrEnum
 from itertools import combinations
 from typing import NamedTuple
 
-from kbbl.models import TOTAL_SEATS, Scenario
+from kbbl.models import (
+    TOTAL_SEATS,
+    Axis,
+    AxisDemand,
+    Demand,
+    Party,
+    Platform,
+    Proposal,
+    Scenario,
+    TextDemand,
+    Vote,
+    signed,
+)
 
 BLOCKING_MINORITY = 175
 """The seats that must vote No to defeat a Proposal — an absolute majority of 349."""
@@ -71,4 +90,332 @@ def render_blocking_groupings(scenario: Scenario) -> str:
     for label, grouping in zip(labels, groupings, strict=True):
         margin = grouping.seats - BLOCKING_MINORITY
         lines.append(f"  {label:<{width}}  {grouping.seats:>3}  (+{margin})")
+    return "\n".join(lines)
+
+
+class Gap(NamedTuple):
+    """The distance on one Axis between a Party's Position and a Proposal's Platform."""
+
+    axis: Axis
+    position: int
+    platform: int
+
+    @property
+    def gap(self) -> int:
+        """How far apart they are. Unsigned: a betrayal to the left is a betrayal."""
+        return abs(self.position - self.platform)
+
+
+class GapReport(NamedTuple):
+    """Every Gap between one Party's Positions and one Platform, and the summaries over them.
+
+    Held as data rather than rendered on the spot because §7 wants every Gap report a Party
+    was shown to survive into `run.json`, where a later batch aggregation can count them.
+    """
+
+    party: str
+    gaps: tuple[Gap, ...]
+
+    def on(self, axis: Axis) -> Gap:
+        """This report's Gap on one Axis."""
+        return next(gap for gap in self.gaps if gap.axis is axis)
+
+    @property
+    def mean_gap(self) -> float:
+        """The mean Gap over all ten Axes."""
+        return sum(gap.gap for gap in self.gaps) / len(self.gaps)
+
+    @property
+    def worst_gap(self) -> int:
+        """The largest Gap in the report."""
+        return max(gap.gap for gap in self.gaps)
+
+    @property
+    def worst(self) -> tuple[Gap, ...]:
+        """Every Axis at the worst Gap. A tie is reported, never broken."""
+        return tuple(gap for gap in self.gaps if gap.gap == self.worst_gap)
+
+
+def gap_report(party: Party, platform: Platform) -> GapReport:
+    """What one Party gives up on each Axis to accept this Platform (§5.4).
+
+    Feedback, never a constraint. It exists because an Agent asked abstractly to hold its
+    ground drifts, and the same Agent shown the number it is abandoning on its signature Axis
+    behaves differently — which is the only defence this design has against every Run ending
+    in a mushy grand coalition.
+    """
+    return GapReport(
+        party=party.name,
+        gaps=tuple(
+            Gap(axis=axis, position=party.positions.on(axis), platform=platform.on(axis))
+            for axis in Axis
+        ),
+    )
+
+
+def render_gap_report(report: GapReport) -> str:
+    """A Party's own Gaps, with the ones above its mean marked (§5.4).
+
+    Marking above the mean rather than at some fixed size is what names *this* Party's worst
+    betrayals: a Party that conceded evenly everywhere has no standouts to flag, and one that
+    held nine Axes and surrendered the tenth sees exactly that one marked.
+
+    Gaps are whole numbers shown to one decimal, because the mean beside them is not, and a
+    column mixing `4` with `2.1` reads as two different quantities.
+    """
+    width = max(len(axis.value) for axis in Axis)
+    lines = [
+        f"{report.party}: its Positions against this Platform.",
+        "",
+        f"  {'axis':<{width}}  you  platform   gap",
+    ]
+    for gap in report.gaps:
+        mark = "  <<" if gap.gap > report.mean_gap else ""
+        lines.append(
+            f"  {gap.axis.value:<{width}}  {signed(gap.position):>3}  "
+            f"{signed(gap.platform):>8}  {gap.gap:>4.1f}{mark}"
+        )
+    lines.append("")
+    lines.append(f"  mean Gap: {report.mean_gap:.1f}   worst Gap: {_worst(report)}")
+    return "\n".join(lines)
+
+
+def _worst(report: GapReport) -> str:
+    """The Axes at the worst Gap — or the honest answer when there is no betrayal to name.
+
+    Without this a Party handed its own Positions back is told its worst Gap is all ten Axes,
+    which reads as a complaint about a Platform it wrote itself.
+    """
+    if not report.worst_gap:
+        return "none — this Platform is your Positions"
+    named = ", ".join(gap.axis.value for gap in report.worst)
+    return f"{named} ({report.worst_gap:.1f})"
+
+
+class Price(StrEnum):
+    """Which of a Party's two price lists a Platform is being checked against.
+
+    Two lists, never one (§3): a Party asked what a Platform buys has two answers, and
+    collapsing them loses the Formateur its cheapest route to power.
+    """
+
+    GOVERNING = "Governing price"
+    SUPPORTING = "Supporting price"
+
+
+class Satisfaction(StrEnum):
+    """What the Referee can say about one Demand against one Platform."""
+
+    MET = "met"
+    UNMET = "unmet"
+    UNEVALUATED = "unevaluated"
+    """A free-text Demand. Not unknown for want of trying — it is not the Referee's to read
+    (§2), and a guess here would be the Referee inventing a fact for an Agent to act on."""
+
+
+class DemandCheck(NamedTuple):
+    """One Demand, and what the Referee can say about it."""
+
+    demand: Demand
+    satisfaction: Satisfaction
+
+
+class PriceReport(NamedTuple):
+    """One Party's price list, checked Demand by Demand against one Platform."""
+
+    party: str
+    price: Price
+    checks: tuple[DemandCheck, ...]
+
+    @property
+    def met(self) -> tuple[DemandCheck, ...]:
+        return self._with(Satisfaction.MET)
+
+    @property
+    def unmet(self) -> tuple[DemandCheck, ...]:
+        return self._with(Satisfaction.UNMET)
+
+    @property
+    def unevaluated(self) -> tuple[DemandCheck, ...]:
+        return self._with(Satisfaction.UNEVALUATED)
+
+    def _with(self, satisfaction: Satisfaction) -> tuple[DemandCheck, ...]:
+        return tuple(check for check in self.checks if check.satisfaction is satisfaction)
+
+
+def price_report(party: Party, platform: Platform, price: Price) -> PriceReport:
+    """Which of a Party's Demands this Platform pays, on one of its two price lists.
+
+    A report, not a verdict: a Party is free to waive a Demand it named and free to walk away
+    over one the Referee has just called met.
+    """
+    demands = party.to_govern if price is Price.GOVERNING else party.to_support
+    return PriceReport(
+        party=party.name,
+        price=price,
+        checks=tuple(
+            DemandCheck(demand=demand, satisfaction=_satisfaction(demand, platform))
+            for demand in demands
+        ),
+    )
+
+
+def _satisfaction(demand: Demand, platform: Platform) -> Satisfaction:
+    if isinstance(demand, TextDemand):
+        return Satisfaction.UNEVALUATED
+    return Satisfaction.MET if _holds(demand, platform) else Satisfaction.UNMET
+
+
+def _holds(demand: AxisDemand, platform: Platform) -> bool:
+    offered = platform.on(demand.axis)
+    if demand.op == ">=":
+        return offered >= demand.value
+    if demand.op == "<=":
+        return offered <= demand.value
+    return offered == demand.value
+
+
+def render_price_report(report: PriceReport) -> str:
+    """What this Platform pays of one price list, and what it leaves outstanding."""
+    lines = [f"{report.party}, {report.price.value}, against this Platform:", ""]
+    if not report.checks:
+        lines.append("  It named no price. That does not mean this Platform is free to it.")
+        return "\n".join(lines)
+
+    width = max(len(check.satisfaction.value) for check in report.checks)
+    for check in report.checks:
+        lines.append(f"  {check.satisfaction.value:<{width}}  {_demand(check.demand)}")
+    lines.append("")
+    lines.append(f"  {_counted(report)}")
+    return "\n".join(lines)
+
+
+def _counted(report: PriceReport) -> str:
+    """The one-line summary under a price list, saying only what the Referee can say."""
+    checkable = len(report.met) + len(report.unmet)
+    sentences = []
+    if checkable:
+        sentences.append(f"{len(report.met)} of {checkable} Axis Demands met.")
+    free_text = len(report.unevaluated)
+    if free_text:
+        plural = "Demand is" if free_text == 1 else "Demands are"
+        sentences.append(
+            f"{free_text} free-text {plural} not the Referee's to read: judge those yourself."
+        )
+    return " ".join(sentences)
+
+
+def _demand(demand: Demand) -> str:
+    if isinstance(demand, TextDemand):
+        return demand.text
+    return f"{demand.axis.value} {demand.op} {signed(demand.value)}"
+
+
+class Ballot(NamedTuple):
+    """How one Party voted, and the seats that vote carries."""
+
+    party: str
+    seats: int
+    vote: Vote
+
+
+class Tally(NamedTuple):
+    """The chamber's verdict on one Proposal, under Negative parliamentarism."""
+
+    proposal: Proposal
+    ballots: tuple[Ballot, ...]
+    backing: int
+    """The seats behind the Proposal — Government and Support-only together (§4). Reported
+    beside the count rather than used in it: what defeats a Proposal is the No seats, and a
+    Party named in a Proposal is still free to vote against it."""
+
+    def seats_voting(self, vote: Vote) -> int:
+        """The seats cast one way. Named for the question because `seats` is a number
+        everywhere else in the Referee, and a `Tally.seats` taking an argument would not be."""
+        return sum(ballot.seats for ballot in self.ballots if ballot.vote is vote)
+
+    @property
+    def yes(self) -> int:
+        return self.seats_voting(Vote.YES)
+
+    @property
+    def abstain(self) -> int:
+        return self.seats_voting(Vote.ABSTAIN)
+
+    @property
+    def no(self) -> int:
+        return self.seats_voting(Vote.NO)
+
+    @property
+    def passed(self) -> bool:
+        """The whole of the vote rule: a Proposal passes unless a Blocking minority votes No.
+
+        Nothing else can defeat it. A Proposal with 140 seats for it and 174 against passes;
+        one with no seats for it at all passes if fewer than 175 turn up to say No.
+        """
+        return self.no < BLOCKING_MINORITY
+
+
+def count_vote(scenario: Scenario, proposal: Proposal, votes: Mapping[str, Vote]) -> Tally:
+    """Count one chamber vote (§5.2).
+
+    Every Party votes, because every Party holds seats and the count is over seats. A Party
+    the Proposal never mentions still decides whether to abstain or block, which is the whole
+    of the Formateur's cheapest route to power.
+    """
+    by_seats = {party.name: party.seats for party in scenario.parties}
+
+    unknown = sorted(set(proposal.backers) - set(by_seats))
+    if unknown:
+        raise ValueError(
+            f"the Proposal names {', '.join(unknown)}, which is not a Party in "
+            f"Scenario {scenario.name!r}"
+        )
+
+    missing = sorted(set(by_seats) - set(votes))
+    if missing:
+        raise ValueError(f"no vote was cast by {', '.join(missing)}")
+    strangers = sorted(set(votes) - set(by_seats))
+    if strangers:
+        raise ValueError(
+            f"{', '.join(strangers)} voted, and holds no seat in Scenario {scenario.name!r}"
+        )
+
+    return Tally(
+        proposal=proposal,
+        ballots=tuple(
+            Ballot(party=name, seats=seats, vote=votes[name]) for name, seats in by_seats.items()
+        ),
+        backing=sum(by_seats[name] for name in proposal.backers),
+    )
+
+
+def render_vote(tally: Tally) -> str:
+    """The count, and what it did to the Proposal."""
+    proposal = tally.proposal
+    width = max(len("Abstain"), *(len(ballot.party) for ballot in tally.ballots))
+    rule = f"{'-' * width}  -----  -------"
+    lines = [
+        f"Vote on {proposal.formateur}'s Proposal.",
+        "",
+        f"{'Party':<{width}}  Seats  Vote",
+        rule,
+    ]
+    for ballot in tally.ballots:
+        lines.append(f"{ballot.party:<{width}}  {ballot.seats:>5}  {ballot.vote.value}")
+    lines.append(rule)
+    for vote in Vote:
+        lines.append(f"{vote.value:<{width}}  {tally.seats_voting(vote):>5}")
+
+    support = ", ".join(proposal.support_only) or "nobody"
+    outcome = "passes" if tally.passed else "is defeated"
+    lines.extend(
+        [
+            "",
+            f"Government: {', '.join(proposal.government)}. Support-only: {support}. "
+            f"{tally.backing} seats behind it.",
+            f"{tally.no} seats voted No, and it takes {BLOCKING_MINORITY} to defeat a "
+            f"Proposal. It {outcome}.",
+        ]
+    )
     return "\n".join(lines)

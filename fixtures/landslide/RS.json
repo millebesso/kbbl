@@ -1,0 +1,32 @@
+{
+  "name": "RS",
+  "seats": 49,
+  "positions": {
+    "economic": 0,
+    "environment": 3,
+    "military": -1,
+    "health": -2,
+    "immigration": 2,
+    "law_and_order": -2,
+    "education": 0,
+    "transport": 3,
+    "social": 3,
+    "international": 1
+  },
+  "prefer_not": [],
+  "to_govern": [
+    {
+      "axis": "environment",
+      "op": ">=",
+      "value": 3
+    }
+  ],
+  "to_support": [
+    {
+      "axis": "environment",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "willingness_to_re_elect": 5
+}

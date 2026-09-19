@@ -1,0 +1,37 @@
+{
+  "name": "RB",
+  "seats": 173,
+  "positions": {
+    "economic": 4,
+    "environment": -2,
+    "military": 4,
+    "health": 2,
+    "immigration": -4,
+    "law_and_order": 4,
+    "education": 3,
+    "transport": -2,
+    "social": -3,
+    "international": 0
+  },
+  "prefer_not": [
+    "LB"
+  ],
+  "to_govern": [
+    {
+      "axis": "economic",
+      "op": ">=",
+      "value": 2
+    },
+    {
+      "text": "the border package passes this term"
+    }
+  ],
+  "to_support": [
+    {
+      "axis": "economic",
+      "op": ">=",
+      "value": 0
+    }
+  ],
+  "willingness_to_re_elect": 6
+}

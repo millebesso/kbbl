@@ -2,15 +2,37 @@
 
 from __future__ import annotations
 
+from collections import Counter
+from itertools import product
 from pathlib import Path
 
-from conftest import mandate, write_scenario
-from kbbl.models import Scenario
+import pytest
+from pydantic import ValidationError
+
+from conftest import COMMITTED_FIXTURES, mandate, platform, two_party, write_scenario
+from kbbl.models import (
+    TOTAL_SEATS,
+    Axis,
+    AxisDemand,
+    Platform,
+    Proposal,
+    Scenario,
+    TextDemand,
+    Vote,
+)
 from kbbl.referee import (
     BLOCKING_MINORITY,
+    Price,
+    Satisfaction,
     blocking_groupings,
+    count_vote,
+    gap_report,
+    price_report,
     render_blocking_groupings,
+    render_gap_report,
+    render_price_report,
     render_seat_table,
+    render_vote,
 )
 from kbbl.scenario import load_scenario
 
@@ -77,3 +99,418 @@ def test_the_grouping_report_names_the_blocking_minority(four_party: Scenario) -
 
     assert "Blocking minority: 175 of 349 seats." in report
     assert "NP + MI" in report
+
+
+def test_a_gap_is_measured_between_a_position_and_the_platform(
+    four_party: Scenario,
+) -> None:
+    """GV stands at environment +5 and transport +5; a Platform at +1 and +5 betrays one."""
+    report = gap_report(four_party.party("GV"), platform(environment=1, transport=5))
+
+    assert report.on(Axis.ENVIRONMENT).gap == 4
+    assert report.on(Axis.TRANSPORT).gap == 0
+
+
+def test_a_gap_has_no_direction(four_party: Scenario) -> None:
+    """Three points to the left of a Party is the same betrayal as three to the right."""
+    mi = four_party.party("MI")
+    assert mi.positions.on(Axis.TRANSPORT) == 0
+
+    left = gap_report(mi, platform(transport=-3))
+    right = gap_report(mi, platform(transport=3))
+
+    assert left.on(Axis.TRANSPORT).gap == right.on(Axis.TRANSPORT).gap == 3
+
+
+def test_the_mean_gap_is_taken_over_all_ten_axes(four_party: Scenario) -> None:
+    report = gap_report(four_party.party("MI"), platform())
+
+    assert [gap.gap for gap in report.gaps] == [2, 2, 1, 0, 1, 1, 1, 0, 2, 4]
+    assert report.mean_gap == 1.4
+
+
+def test_the_worst_gap_names_every_axis_that_reaches_it(four_party: Scenario) -> None:
+    """A Party betrayed equally on two Axes is told about both — the tie is not broken."""
+    gv = four_party.party("GV")
+    conceded = gv.positions.model_dump() | {"environment": 0, "immigration": -1}
+
+    report = gap_report(gv, Platform(**conceded))
+
+    assert report.worst_gap == 5
+    assert [gap.axis for gap in report.worst] == [Axis.ENVIRONMENT, Axis.IMMIGRATION]
+
+
+def test_the_gap_report_marks_the_axes_a_party_is_furthest_from(four_party: Scenario) -> None:
+    """§5.4: the report's job is to name the betrayals, not to total them up."""
+    gv = four_party.party("GV")
+    conceded = gv.positions.model_dump() | {"environment": 0, "transport": 0}
+
+    report = render_gap_report(gap_report(gv, Platform(**conceded)))
+
+    marked = {line.split()[0] for line in report.splitlines() if line.endswith("<<")}
+    assert marked == {"environment", "transport"}
+    assert "worst Gap: environment, transport (5.0)" in report
+    assert "mean Gap: 1.0" in report
+
+
+def test_the_gap_report_shows_every_axis_and_both_numbers(four_party: Scenario) -> None:
+    report = render_gap_report(gap_report(four_party.party("NP"), platform(economic=1)))
+
+    assert all(axis.value in report for axis in Axis)
+    assert "  economic        +5        +1   4.0  <<" in report
+    assert "  international   +1         0   1.0" in report
+
+
+def test_a_party_that_concedes_evenly_has_no_standout_betrayal(four_party: Scenario) -> None:
+    """Every Axis at the mean, so nothing is marked — and the report says so by saying nothing."""
+    report = render_gap_report(gap_report(four_party.party("MI"), platform(**{
+        axis: value - 2 for axis, value in four_party.party("MI").positions.model_dump().items()
+    })))
+
+    assert "<<" not in report
+    assert "mean Gap: 2.0" in report
+
+
+def test_an_axis_demand_is_checked_against_the_platform(four_party: Scenario) -> None:
+    """FF charges economic <= -2 and health <= -3 to govern. One is paid, one is not."""
+    report = price_report(four_party.party("FF"), platform(economic=-2), Price.GOVERNING)
+
+    assert [check.satisfaction for check in report.checks] == [
+        Satisfaction.MET,
+        Satisfaction.UNMET,
+        Satisfaction.UNEVALUATED,
+    ]
+
+
+def test_every_comparison_is_honoured(tmp_path: Path) -> None:
+    demands = [
+        {"axis": "economic", "op": ">=", "value": 2},
+        {"axis": "environment", "op": "<=", "value": -2},
+        {"axis": "military", "op": "==", "value": 0},
+    ]
+    write_scenario(tmp_path, mandate("AA", 200, to_govern=demands), mandate("BB", 149))
+    aa = load_scenario(tmp_path).party("AA")
+
+    exact = price_report(aa, platform(economic=2, environment=-2, military=0), Price.GOVERNING)
+    over = price_report(aa, platform(economic=5, environment=-5, military=1), Price.GOVERNING)
+
+    assert [check.satisfaction for check in exact.checks] == [Satisfaction.MET] * 3
+    assert [check.satisfaction for check in over.checks] == [
+        Satisfaction.MET,
+        Satisfaction.MET,
+        Satisfaction.UNMET,
+    ]
+
+
+def test_the_two_price_lists_are_reported_separately(four_party: Scenario) -> None:
+    """The point of two lists: this Platform buys FF's support and not its cabinet."""
+    ff = four_party.party("FF")
+    offered = platform(economic=0)
+
+    assert price_report(ff, offered, Price.SUPPORTING).unmet == ()
+    assert len(price_report(ff, offered, Price.GOVERNING).unmet) == 2
+
+
+def test_a_free_text_demand_is_reported_unevaluated_never_guessed_at(
+    four_party: Scenario,
+) -> None:
+    """The Referee does not read prose (§2) — it says so and leaves the Demand to the Agents."""
+    gv = four_party.party("GV")
+
+    report = price_report(gv, platform(environment=5, transport=5), Price.GOVERNING)
+
+    assert report.unmet == ()
+    assert [check.demand for check in report.unevaluated] == [
+        TextDemand(text="no new motorway starts this term")
+    ]
+
+
+def test_the_price_report_names_the_list_and_the_state_of_every_demand(
+    four_party: Scenario,
+) -> None:
+    rendered = render_price_report(
+        price_report(four_party.party("GV"), platform(environment=2), Price.GOVERNING)
+    )
+
+    assert "Governing price" in rendered
+    assert "environment" in rendered and "transport" in rendered
+    assert "no new motorway starts this term" in rendered
+    assert "unevaluated" in rendered
+
+
+def test_a_party_that_names_no_price_still_gets_a_report(tmp_path: Path) -> None:
+    """Naming no price does not mean the Platform is free, and an empty table would imply it."""
+    two_party(tmp_path)
+
+    rendered = render_price_report(
+        price_report(load_scenario(tmp_path).party("AA"), platform(), Price.SUPPORTING)
+    )
+
+    assert "no price" in rendered
+
+
+def proposed(*government: str, support_only: tuple[str, ...] = ()) -> Proposal:
+    """A Proposal from the first-named Party, on a Platform nobody is being asked about."""
+    return Proposal(
+        formateur=government[0],
+        platform=platform(),
+        government=government,
+        support_only=support_only,
+    )
+
+
+def test_a_proposal_passes_unless_the_blocking_minority_votes_no(
+    four_party: Scenario,
+) -> None:
+    """NP governs alone on 140. The other three hold 209 — enough, but only together."""
+    against = count_vote(
+        four_party,
+        proposed("NP"),
+        {"NP": Vote.YES, "FF": Vote.NO, "GV": Vote.NO, "MI": Vote.NO},
+    )
+    abstained = count_vote(
+        four_party,
+        proposed("NP"),
+        {"NP": Vote.YES, "FF": Vote.NO, "GV": Vote.NO, "MI": Vote.ABSTAIN},
+    )
+
+    assert against.no == 209 and not against.passed
+    assert abstained.no == 174 and abstained.passed
+
+
+def test_an_abstention_is_worth_exactly_its_seats(four_party: Scenario) -> None:
+    """MI's 35 seats are the single seat of margin the Fixture is built around."""
+    tally = count_vote(
+        four_party,
+        proposed("FF", support_only=("GV",)),
+        {"FF": Vote.YES, "GV": Vote.YES, "NP": Vote.NO, "MI": Vote.NO},
+    )
+
+    assert tally.no == BLOCKING_MINORITY
+    assert not tally.passed
+
+
+def test_support_only_seats_count_exactly_as_government_seats_do(
+    four_party: Scenario,
+) -> None:
+    """§4: without this, the Government/Support-only distinction is decorative."""
+    votes = {"FF": Vote.YES, "GV": Vote.YES, "NP": Vote.NO, "MI": Vote.ABSTAIN}
+
+    in_cabinet = count_vote(four_party, proposed("FF", "GV"), votes)
+    outside = count_vote(four_party, proposed("FF", support_only=("GV",)), votes)
+
+    assert in_cabinet.backing == outside.backing == 174
+    assert in_cabinet.no == outside.no == 140
+    assert in_cabinet.passed and outside.passed
+
+
+def test_the_referee_counts_a_proposal_its_own_backers_voted_down(
+    four_party: Scenario,
+) -> None:
+    """§2: the Referee never constrains an Agent. A Party may vote against a Proposal it is
+    named in, and the Referee reports what happened rather than correcting it."""
+    tally = count_vote(
+        four_party,
+        proposed("NP", support_only=("FF",)),
+        {"NP": Vote.YES, "FF": Vote.NO, "GV": Vote.NO, "MI": Vote.NO},
+    )
+
+    assert tally.backing == 272
+    assert tally.no == 209 and not tally.passed
+
+
+def test_every_party_in_the_chamber_must_cast_exactly_one_vote(
+    four_party: Scenario,
+) -> None:
+    with pytest.raises(ValueError, match="MI"):
+        count_vote(four_party, proposed("NP"), {"NP": Vote.YES, "FF": Vote.NO, "GV": Vote.NO})
+
+    with pytest.raises(ValueError, match="ZZ"):
+        count_vote(
+            four_party,
+            proposed("NP"),
+            {"NP": Vote.YES, "FF": Vote.NO, "GV": Vote.NO, "MI": Vote.NO, "ZZ": Vote.NO},
+        )
+
+
+def test_a_proposal_may_only_name_parties_in_the_chamber(four_party: Scenario) -> None:
+    with pytest.raises(ValueError, match="ZZ"):
+        count_vote(
+            four_party,
+            proposed("NP", support_only=("ZZ",)),
+            {"NP": Vote.YES, "FF": Vote.NO, "GV": Vote.NO, "MI": Vote.NO},
+        )
+
+
+def test_the_vote_report_gives_the_count_and_the_outcome(four_party: Scenario) -> None:
+    rendered = render_vote(
+        count_vote(
+            four_party,
+            proposed("NP", support_only=("MI",)),
+            {"NP": Vote.YES, "MI": Vote.YES, "FF": Vote.NO, "GV": Vote.ABSTAIN},
+        )
+    )
+
+    assert "175" in rendered
+    assert "132" in rendered
+    assert "passes" in rendered
+
+
+@pytest.mark.parametrize("directory", COMMITTED_FIXTURES, ids=lambda path: path.name)
+def test_every_committed_fixture_seats_the_whole_chamber(directory: Path) -> None:
+    """§8's first invariant, over every Fixture in the repo rather than the ones remembered."""
+    assert load_scenario(directory).seats == TOTAL_SEATS
+
+
+@pytest.mark.parametrize("directory", COMMITTED_FIXTURES, ids=lambda path: path.name)
+def test_a_proposal_never_passes_with_the_blocking_minority_against_it(
+    directory: Path,
+) -> None:
+    """Exhaustive over every way the chamber could vote — it costs nothing, so it is."""
+    scenario = load_scenario(directory)
+    names = [party.name for party in scenario.parties]
+    outcomes = Counter[bool]()
+
+    for votes in product(Vote, repeat=len(names)):
+        tally = count_vote(scenario, proposed(names[0]), dict(zip(names, votes, strict=True)))
+        assert not (tally.passed and tally.no >= BLOCKING_MINORITY)
+        outcomes[tally.passed] += 1
+
+    assert outcomes[True] and outcomes[False], "this Fixture never exercised both outcomes"
+
+
+def test_a_party_listed_support_only_never_appears_in_government() -> None:
+    """§8's third invariant. Support-only is backing from outside cabinet; both is nonsense."""
+    with pytest.raises(ValidationError, match="both Government and Support-only"):
+        Proposal(
+            formateur="NP",
+            platform=platform(),
+            government=("NP", "MI"),
+            support_only=("MI",),
+        )
+
+
+def test_a_proposal_never_names_the_same_party_twice() -> None:
+    """Otherwise its seats would be counted twice over in what stands behind it."""
+    with pytest.raises(ValidationError, match="same Party twice"):
+        Proposal(formateur="NP", platform=platform(), government=("NP", "NP"))
+
+
+def test_nothing_the_chamber_does_defeats_a_landslide(landslide: Scenario) -> None:
+    """MJ holds 200. The other two hold 149 between them and cannot reach 175 however
+    they vote, so the Fixture's right answer is obvious: MJ governs alone."""
+    others = [party.name for party in landslide.parties if party.name != "MJ"]
+
+    for votes in product(Vote, repeat=len(others)):
+        tally = count_vote(
+            landslide,
+            proposed("MJ"),
+            {"MJ": Vote.YES} | dict(zip(others, votes, strict=True)),
+        )
+        assert tally.passed
+
+    assert [grouping.parties for grouping in blocking_groupings(landslide)] == [("MJ",)]
+
+
+@pytest.mark.parametrize(
+    ("governs", "blocks"), [("LB", "RB"), ("RB", "LB")]
+)
+def test_the_kingmaker_alone_decides_who_governs(
+    knife_edge: Scenario, governs: str, blocks: str
+) -> None:
+    """§9's arithmetic in miniature: a minority government lives if KM steps out of the way,
+    and dies if KM joins the opposition. Neither bloc can do anything about it."""
+    outcomes = {
+        vote: count_vote(
+            knife_edge,
+            proposed(governs),
+            {governs: Vote.YES, blocks: Vote.NO, "KM": vote},
+        ).passed
+        for vote in Vote
+    }
+
+    assert outcomes == {Vote.YES: True, Vote.ABSTAIN: True, Vote.NO: False}
+
+
+def test_no_platform_pays_two_parties_in_the_deadlock_fixture(deadlock: Scenario) -> None:
+    """The Fixture is forced: the three Supporting prices contradict each other pairwise, so
+    there is no Platform any two of them would both back."""
+    prices = [
+        price_report(party, platform(), Price.SUPPORTING) for party in deadlock.parties
+    ]
+    assert [len(price.checks) for price in prices] == [1, 1, 1]
+    assert all(
+        isinstance(check.demand, AxisDemand) and check.demand.axis is Axis.ECONOMIC
+        for price in prices
+        for check in price.checks
+    ), "the Supporting prices name one Axis between them, which is what makes this exhaustive"
+
+    for value in range(-5, 6):
+        offered = platform(economic=value)
+        paid = [
+            party.name
+            for party in deadlock.parties
+            if not price_report(party, offered, Price.SUPPORTING).unmet
+        ]
+        assert len(paid) <= 1, f"economic {value:+d} pays {paid}"
+
+
+def test_no_minority_government_survives_the_deadlock_fixture(deadlock: Scenario) -> None:
+    """Every Party is short of 175, and the other two together always reach it."""
+    for party in deadlock.parties:
+        others = [other.name for other in deadlock.parties if other.name != party.name]
+        tally = count_vote(
+            deadlock,
+            proposed(party.name),
+            {party.name: Vote.YES} | dict.fromkeys(others, Vote.NO),
+        )
+
+        assert not tally.passed
+
+
+def test_the_tally_reports_all_three_ways_the_chamber_voted(four_party: Scenario) -> None:
+    """Only No defeats a Proposal, but the other two are what the Transcript is read for."""
+    tally = count_vote(
+        four_party,
+        proposed("NP", support_only=("MI",)),
+        {"NP": Vote.YES, "MI": Vote.YES, "FF": Vote.NO, "GV": Vote.ABSTAIN},
+    )
+
+    assert (tally.yes, tally.abstain, tally.no) == (175, 42, 132)
+    assert tally.yes + tally.abstain + tally.no == TOTAL_SEATS
+
+
+def test_the_ballots_come_back_in_chamber_order(four_party: Scenario) -> None:
+    """Largest Party first, as the seat table shows them — one order, read twice."""
+    tally = count_vote(
+        four_party,
+        proposed("NP"),
+        dict.fromkeys(["NP", "FF", "GV", "MI"], Vote.ABSTAIN),
+    )
+
+    assert [ballot.party for ballot in tally.ballots] == ["NP", "FF", "GV", "MI"]
+    assert [ballot.seats for ballot in tally.ballots] == [140, 132, 42, 35]
+
+
+def test_a_party_handed_its_own_positions_back_is_told_it_gave_up_nothing(
+    four_party: Scenario,
+) -> None:
+    """Naming all ten Axes as the worst Gap would read as a complaint about its own Platform."""
+    gv = four_party.party("GV")
+
+    rendered = render_gap_report(gap_report(gv, Platform(**gv.positions.model_dump())))
+
+    assert "worst Gap: none" in rendered
+    assert "environment" not in rendered.splitlines()[-1]
+    assert "mean Gap: 0.0" in rendered
+
+
+def test_the_price_report_counts_free_text_demands_without_judging_them(
+    four_party: Scenario,
+) -> None:
+    ff = four_party.party("FF")
+
+    paid = render_price_report(price_report(ff, platform(economic=-4, health=-4), Price.GOVERNING))
+
+    assert "2 of 2 Axis Demands met." in paid
+    assert "1 free-text Demand is not the Referee's to read" in paid
