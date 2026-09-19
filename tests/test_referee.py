@@ -280,14 +280,14 @@ def test_a_proposal_passes_unless_the_blocking_minority_votes_no(
 
 def test_an_abstention_is_worth_exactly_its_seats(four_party: Scenario) -> None:
     """MI's 35 seats are the single seat of margin the Fixture is built around."""
-    tally = count_vote(
+    vote = count_vote(
         four_party,
         proposed("FF", support_only=("GV",)),
         {"FF": Ballot.YES, "GV": Ballot.YES, "NP": Ballot.NO, "MI": Ballot.NO},
     )
 
-    assert tally.no == BLOCKING_MINORITY
-    assert not tally.passed
+    assert vote.no == BLOCKING_MINORITY
+    assert not vote.passed
 
 
 def test_support_only_seats_count_exactly_as_government_seats_do(
@@ -309,14 +309,14 @@ def test_the_referee_counts_a_proposal_its_own_base_voted_down(
 ) -> None:
     """§2: the Referee never constrains an Agent. A Party may vote against a Proposal it is
     named in, and the Referee reports what happened rather than correcting it."""
-    tally = count_vote(
+    vote = count_vote(
         four_party,
         proposed("NP", support_only=("FF",)),
         {"NP": Ballot.YES, "FF": Ballot.NO, "GV": Ballot.NO, "MI": Ballot.NO},
     )
 
-    assert tally.base_seats == 272
-    assert tally.no == 209 and not tally.passed
+    assert vote.base_seats == 272
+    assert vote.no == 209 and not vote.passed
 
 
 def test_every_party_in_the_chamber_must_cast_exactly_one_vote(
@@ -372,9 +372,9 @@ def test_a_proposal_never_passes_with_the_blocking_minority_against_it(
     outcomes = Counter[bool]()
 
     for ballots in product(Ballot, repeat=len(names)):
-        tally = count_vote(scenario, proposed(names[0]), dict(zip(names, ballots, strict=True)))
-        assert not (tally.passed and tally.no >= BLOCKING_MINORITY)
-        outcomes[tally.passed] += 1
+        vote = count_vote(scenario, proposed(names[0]), dict(zip(names, ballots, strict=True)))
+        assert not (vote.passed and vote.no >= BLOCKING_MINORITY)
+        outcomes[vote.passed] += 1
 
     assert outcomes[True] and outcomes[False], "this Fixture never exercised both outcomes"
 
@@ -402,12 +402,12 @@ def test_nothing_the_chamber_does_defeats_a_landslide(landslide: Scenario) -> No
     others = [party.name for party in landslide.parties if party.name != "MJ"]
 
     for ballots in product(Ballot, repeat=len(others)):
-        tally = count_vote(
+        vote = count_vote(
             landslide,
             proposed("MJ"),
             {"MJ": Ballot.YES} | dict(zip(others, ballots, strict=True)),
         )
-        assert tally.passed
+        assert vote.passed
 
     assert [grouping.parties for grouping in blocking_groupings(landslide)] == [("MJ",)]
 
@@ -459,37 +459,37 @@ def test_no_minority_government_survives_the_deadlock_fixture(deadlock: Scenario
     """Every Party is short of 175, and the other two together always reach it."""
     for party in deadlock.parties:
         others = [other.name for other in deadlock.parties if other.name != party.name]
-        tally = count_vote(
+        vote = count_vote(
             deadlock,
             proposed(party.name),
             {party.name: Ballot.YES} | dict.fromkeys(others, Ballot.NO),
         )
 
-        assert not tally.passed
+        assert not vote.passed
 
 
-def test_the_tally_reports_all_three_ways_the_chamber_voted(four_party: Scenario) -> None:
+def test_the_vote_reports_all_three_ways_the_chamber_voted(four_party: Scenario) -> None:
     """Only No defeats a Proposal, but the other two are what the Transcript is read for."""
-    tally = count_vote(
+    vote = count_vote(
         four_party,
         proposed("NP", support_only=("MI",)),
         {"NP": Ballot.YES, "MI": Ballot.YES, "FF": Ballot.NO, "GV": Ballot.ABSTAIN},
     )
 
-    assert (tally.yes, tally.abstain, tally.no) == (175, 42, 132)
-    assert tally.yes + tally.abstain + tally.no == TOTAL_SEATS
+    assert (vote.yes, vote.abstain, vote.no) == (175, 42, 132)
+    assert vote.yes + vote.abstain + vote.no == TOTAL_SEATS
 
 
 def test_the_casts_come_back_in_chamber_order(four_party: Scenario) -> None:
     """Largest Party first, as the seat table shows them — one order, read twice."""
-    tally = count_vote(
+    vote = count_vote(
         four_party,
         proposed("NP"),
         dict.fromkeys(["NP", "FF", "GV", "MI"], Ballot.ABSTAIN),
     )
 
-    assert [cast.party for cast in tally.casts] == ["NP", "FF", "GV", "MI"]
-    assert [cast.seats for cast in tally.casts] == [140, 132, 42, 35]
+    assert [cast.party for cast in vote.casts] == ["NP", "FF", "GV", "MI"]
+    assert [cast.seats for cast in vote.casts] == [140, 132, 42, 35]
 
 
 def test_a_party_handed_its_own_positions_back_is_told_it_gave_up_nothing(

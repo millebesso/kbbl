@@ -130,3 +130,17 @@ reading anything. The two axes were run by hand instead, against `CONTEXT.md`,
 - **`render_gap_report` puts the Axes in canonical order, not worst-first.** Stable order
   makes two reports comparable by eye, and the marks and the summary line do the naming. If
   05's Transcripts read badly, this is the knob.
+
+### Follow-up — `Tally` is now `Vote`
+
+The glossary pass this ticket asked for landed in 39fb307, which named the Base and split the
+Chamber's **Vote** from a Party's **Ballot**. That left one conflict behind: `CONTEXT.md`
+defined a Vote as the Chamber's single decision on one Proposal, while the type holding exactly
+that was still called `Tally`. Renamed — `count_vote()` returns a `Vote`, `render_vote()` takes
+one, and the test names follow. 111 tests, `mypy --strict` clean, no behaviour changed.
+
+Of this ticket's five noted nouns, `Grouping`, `Ending` and `Declaration` have entries and
+`Tally` is gone. **`Satisfaction` and `Axes` are still outstanding**, and `Price` is covered
+only obliquely by the Governing price and Supporting price entries. Note also that the prose
+above predates the rename: where it says `Vote` it means what is now `Ballot`, and
+`Proposal.backers` is now `Proposal.base`.

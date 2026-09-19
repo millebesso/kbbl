@@ -319,7 +319,7 @@ class Cast(NamedTuple):
     ballot: Ballot
 
 
-class Tally(NamedTuple):
+class Vote(NamedTuple):
     """The chamber's verdict on one Proposal, under Negative parliamentarism."""
 
     proposal: Proposal
@@ -331,7 +331,7 @@ class Tally(NamedTuple):
 
     def seats_casting(self, ballot: Ballot) -> int:
         """The seats cast one way. Named for the question because `seats` is a number
-        everywhere else in the Referee, and a `Tally.seats` taking an argument would not be."""
+        everywhere else in the Referee, and a `Vote.seats` taking an argument would not be."""
         return sum(cast.seats for cast in self.casts if cast.ballot is ballot)
 
     @property
@@ -356,7 +356,7 @@ class Tally(NamedTuple):
         return self.no < BLOCKING_MINORITY
 
 
-def count_vote(scenario: Scenario, proposal: Proposal, ballots: Mapping[str, Ballot]) -> Tally:
+def count_vote(scenario: Scenario, proposal: Proposal, ballots: Mapping[str, Ballot]) -> Vote:
     """Count one Vote — the Chamber's single decision on one Proposal (§5.2).
 
     Every Party casts a Ballot, because every Party holds seats and the count is over seats. A
@@ -382,7 +382,7 @@ def count_vote(scenario: Scenario, proposal: Proposal, ballots: Mapping[str, Bal
             f"Scenario {scenario.name!r}"
         )
 
-    return Tally(
+    return Vote(
         proposal=proposal,
         casts=tuple(
             Cast(party=name, seats=seats, ballot=ballots[name])
@@ -392,10 +392,10 @@ def count_vote(scenario: Scenario, proposal: Proposal, ballots: Mapping[str, Bal
     )
 
 
-def render_vote(tally: Tally) -> str:
+def render_vote(vote: Vote) -> str:
     """The count, and what it did to the Proposal."""
-    proposal = tally.proposal
-    width = max(len("Abstain"), *(len(cast.party) for cast in tally.casts))
+    proposal = vote.proposal
+    width = max(len("Abstain"), *(len(cast.party) for cast in vote.casts))
     rule = f"{'-' * width}  -----  -------"
     lines = [
         f"Vote on {proposal.formateur}'s Proposal.",
@@ -403,20 +403,20 @@ def render_vote(tally: Tally) -> str:
         f"{'Party':<{width}}  Seats  Vote",
         rule,
     ]
-    for cast in tally.casts:
+    for cast in vote.casts:
         lines.append(f"{cast.party:<{width}}  {cast.seats:>5}  {cast.ballot.value}")
     lines.append(rule)
     for ballot in Ballot:
-        lines.append(f"{ballot.value:<{width}}  {tally.seats_casting(ballot):>5}")
+        lines.append(f"{ballot.value:<{width}}  {vote.seats_casting(ballot):>5}")
 
     support = ", ".join(proposal.support_only) or "nobody"
-    outcome = "passes" if tally.passed else "is defeated"
+    outcome = "passes" if vote.passed else "is defeated"
     lines.extend(
         [
             "",
             f"Government: {', '.join(proposal.government)}. Support-only: {support}. "
-            f"{tally.base_seats} seats behind it.",
-            f"{tally.no} seats voted No, and it takes {BLOCKING_MINORITY} to defeat a "
+            f"{vote.base_seats} seats behind it.",
+            f"{vote.no} seats voted No, and it takes {BLOCKING_MINORITY} to defeat a "
             f"Proposal. It {outcome}.",
         ]
     )
