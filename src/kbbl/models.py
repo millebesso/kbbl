@@ -1,7 +1,9 @@
-"""The party mandate, validated at the boundary (`docs/kbbl.md` §3).
+"""The nouns a Run is made of: the party mandate, and the record of what was said.
 
-Mandates are hand-written JSON, so every model here forbids unknown fields and refuses
-type coercion: a typo must fail loudly rather than reach an Agent as a plausible value.
+Both arrive from outside the program — mandates as hand-written JSON (`docs/kbbl.md` §3),
+Exchanges as an Agent's structured output (§2) — so every model here forbids unknown fields
+and refuses type coercion: a typo or a malformed reply must fail loudly rather than reach an
+Agent, or a Transcript, as a plausible value.
 """
 
 from __future__ import annotations
@@ -34,13 +36,33 @@ Score = Annotated[int, Field(ge=-5, le=5)]
 """A value on an Axis: -5..+5, for both a Party's Positions and a Proposal's Platform."""
 
 
-class MandateModel(BaseModel):
-    """Shared strictness for every model built out of hand-written mandate JSON."""
+AXIS_POLES: dict[Axis, tuple[str, str]] = {
+    Axis.ECONOMIC: ("state-led redistribution", "free market, low tax"),
+    Axis.ENVIRONMENT: ("growth before climate", "climate before growth"),
+    Axis.MILITARY: ("disarmament, non-alignment", "heavy defence, alliance"),
+    Axis.HEALTH: ("fully public provision", "market provision"),
+    Axis.IMMIGRATION: ("restrictive", "open, generous"),
+    Axis.LAW_AND_ORDER: ("rehabilitation, liberties", "punitive, tough"),
+    Axis.EDUCATION: ("comprehensive, public", "school choice, private"),
+    Axis.TRANSPORT: ("roads and cars", "rail and public transit"),
+    Axis.SOCIAL: ("traditional values", "progressive, liberal values"),
+    Axis.INTERNATIONAL: ("sovereigntist, EU-sceptic", "internationalist, pro-EU"),
+}
+"""What -5 and +5 mean on each Axis.
+
+A bare `economic: +5` says nothing to an Agent, so the poles have to travel with the number.
+They are a convention of this repo rather than a fact about politics — `fixtures/README.md`
+states the same table in prose, and this is the copy the Personas are built from.
+"""
+
+
+class Strict(BaseModel):
+    """Shared strictness for every model in KBBL. Nothing here is coerced, guessed or ignored."""
 
     model_config = ConfigDict(extra="forbid", strict=True, frozen=True)
 
 
-class Positions(MandateModel):
+class Positions(Strict):
     """A Party's own value on each of the ten Axes. All ten are required."""
 
     economic: Score
@@ -55,7 +77,7 @@ class Positions(MandateModel):
     international: Score
 
 
-class AxisDemand(MandateModel):
+class AxisDemand(Strict):
     """A price the Referee can check: a constraint on one Axis of a Platform."""
 
     axis: Axis
@@ -63,7 +85,7 @@ class AxisDemand(MandateModel):
     value: Score
 
 
-class TextDemand(MandateModel):
+class TextDemand(Strict):
     """A price only an Agent can interpret. The Referee never reads it."""
 
     text: str = Field(min_length=1)
@@ -89,7 +111,7 @@ Demand = Annotated[
 """A price a Party names. The two forms mix freely within either price list."""
 
 
-class Party(MandateModel):
+class Party(Strict):
     """One parliamentary party, as defined by its hand-written mandate."""
 
     name: str = Field(min_length=1)
@@ -101,7 +123,7 @@ class Party(MandateModel):
     willingness_to_re_elect: int = Field(ge=0, le=10)
 
 
-class Scenario(MandateModel):
+class Scenario(Strict):
     """A complete set of Party mandates whose seats sum to 349. The input to a Run."""
 
     name: str = Field(min_length=1)
@@ -136,3 +158,56 @@ class Scenario(MandateModel):
             if party.name == name:
                 return party
         raise KeyError(f"no Party named {name!r} in Scenario {self.name!r}")
+
+
+class Ending(StrEnum):
+    """How a Bilateral finished."""
+
+    AGREEMENT = "agreement"
+    IMPASSE = "impasse"
+    EXHAUSTED = "exhausted"
+    """Three Exchanges each way spent without either side exiting. Only a Bilateral ends this
+    way — an Exchange can declare the other two, but no side can declare exhaustion."""
+
+
+Declaration = Literal[Ending.AGREEMENT, Ending.IMPASSE]
+"""The two Endings a side may declare, exiting the Bilateral early."""
+
+
+class Exchange(Strict):
+    """One message from one side of a Bilateral, and whether it ends the meeting."""
+
+    speaker: str = Field(min_length=1)
+    message: str = Field(min_length=1)
+    declares: Declaration | None = None
+
+
+class Bilateral(Strict):
+    """The private meeting a Round buys: who met, what was said, and how it finished."""
+
+    formateur: str = Field(min_length=1)
+    counterparty: str = Field(min_length=1)
+    exchanges: tuple[Exchange, ...] = Field(min_length=1)
+
+    @property
+    def ending(self) -> Ending:
+        declared = self.exchanges[-1].declares
+        return declared if declared is not None else Ending.EXHAUSTED
+
+    @property
+    def closed_by(self) -> str | None:
+        """The side that exited early, or None if the meeting simply ran out of Exchanges."""
+        return self.exchanges[-1].speaker if self.exchanges[-1].declares is not None else None
+
+
+class Run(Strict):
+    """The record of one Run, accumulated in memory as it happens.
+
+    Everything an Agent said belongs here rather than only in the Transcript: ticket 06
+    serialises this, and §7 asks that aggregating a batch of Runs later be a loop and a
+    `Counter` rather than a re-instrumentation.
+    """
+
+    scenario: str = Field(min_length=1)
+    formateur: str = Field(min_length=1)
+    bilaterals: tuple[Bilateral, ...] = ()

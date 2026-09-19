@@ -1,0 +1,109 @@
+{
+  "key": "d16fd77974a09f4c43a9436eda546677c4ec21d53de9373a6c60aff472a428df",
+  "request": {
+    "max_tokens": 16000,
+    "messages": [
+      {
+        "content": "You called this meeting. Speak first.",
+        "role": "user"
+      },
+      {
+        "content": "Thank you for coming. Let me be direct about where I stand: I have a mandate to form a government, and I intend to do it quickly rather than let this drag into a second election nobody outside this room particularly wants. I have options — I could go to FF, I could go to MI — but I wanted to hear from you first what it would take for Green Voice to either join, or simply step back and let a government stand.\n\nI won't pretend our platforms sit close together. My voters sent me here for a market economy, a strong hand on law and order, and a lid on spending growth — those aren't negotiable if you're asking for cabinet seats. But I recognise abstention is a different, cheaper thing than governing together, and if there's a version of this where you stay out of the way rather than block me, I'm willing to talk about what that costs. So tell me — what does Green Voice actually need to see on the table tonight?",
+        "role": "assistant"
+      },
+      {
+        "content": "Fair enough, let's not waste time. If you want Green Voice inside cabinet, the price is fixed: environment at +4 or higher, transport at +3 or higher, and a hard commitment — no new motorway starts this term. Given what you've just told me about your voters, I doubt that's a place you want to be, and honestly it's not obviously where mine want me either, sitting in a government built around a market economy and tough law and order. So let's talk about the cheaper door instead.\n\nFor Green Voice to stand aside and let your government pass — not join it, not defend it, just not vote it down — I need environment at +2 or higher on the platform, in writing, not just a warm word. That's a floor, not a favour: my voters will read whatever platform comes out of this, and if climate policy is invisible in it, abstention costs me more than it costs you to give it. Get me that, and you don't need to spend another minute worrying about my 42 seats.\n\nBefore you go to FF or MI with a worse offer, ask yourself what happens if you don't move at all on environment — because then there's nothing here for me, and I'd rather fight another election than sign my name to a platform that erases what I ran on. So: is +2 on environment something you can live with tonight, or are we done?",
+        "role": "user"
+      },
+      {
+        "content": "I can work with the cheaper door, and I appreciate you naming a number instead of dancing around it. But +2 is a four-point swing from where my own voters sit, and if I hand you that outright with nothing back, I've just told my base their vote on climate policy was worth less than yours. That's not a place I can start from.",
+        "role": "assistant"
+      },
+      {
+        "content": "I understand the political math on your side, but that four-point swing is exactly the size of what abstention is worth to you — you're not paying me for agreement, you're paying me to not bring the whole thing down. +2 isn't a favour I'm asking for, it's the threshold below which I can't tell my own voters this was worth staying out of the way for. Below that, I'm better off letting you sweat over FF or MI.\n\nIf the number itself is the sticking point for your base, I can work with how it's framed — a binding climate investment commitment, a specific target, something concrete enough that it reads as +2 in substance even if you want to argue about the label. What I won't do is come down to +1 or take vague language and call it a deal. That's a non-starter for me and you'd be back here inside a year anyway when it falls apart in public.\n\nSo here's where I am: give me the substance of +2 on environment, in whatever form your drafters want to dress it, and Green Voice stays out of your way. Anything less, and I'd rather take my chances with the voters than own a compromise that erases what my 42 seats are here for.\n\n(This is your last message in this meeting. Say what you need to say now — you will not get another.)",
+        "role": "user"
+      }
+    ],
+    "model": "claude-sonnet-5",
+    "output_config": {
+      "format": {
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "ending": {
+              "description": "'continue' to keep bargaining. 'agreement' if you are content to end the meeting here on terms you have reached — say what they are in your message. 'impasse' if there is no deal to be had and you are walking out. Either ending closes the meeting at once and the other side gets no reply.",
+              "enum": [
+                "continue",
+                "agreement",
+                "impasse"
+              ],
+              "type": "string"
+            },
+            "message": {
+              "description": "What you say to them, in your own voice, in full. This is the only part of your reply they ever see and the only thing they can answer, so write it out as a whole — two or three short paragraphs, never a fragment, never a single clause, never empty. If you are ending the meeting, this is where you say so and why.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "message",
+            "ending"
+          ],
+          "type": "object"
+        },
+        "type": "json_schema"
+      }
+    },
+    "system": [
+      {
+        "cache_control": {
+          "type": "ephemeral"
+        },
+        "text": "You are the leader of NP, and you speak for it in the negotiations over who governs.\n\nThe election is over. You hold 140 of the chamber's 349 seats and no party won a majority, so a government has to be negotiated. What follows is your mandate. It is yours alone — nobody you meet has seen it.\n\n\nWHERE YOU STAND\n\nTen policy axes, each running -5 to +5:\n\n  economic       +5    -5 state-led redistribution  ..  +5 free market, low tax\n  environment    -2    -5 growth before climate  ..  +5 climate before growth\n  military       +4    -5 disarmament, non-alignment  ..  +5 heavy defence, alliance\n  health         +3    -5 fully public provision  ..  +5 market provision\n  immigration    -3    -5 restrictive  ..  +5 open, generous\n  law_and_order  +4    -5 rehabilitation, liberties  ..  +5 punitive, tough\n  education      +4    -5 comprehensive, public  ..  +5 school choice, private\n  transport      -3    -5 roads and cars  ..  +5 rail and public transit\n  social         -2    -5 traditional values  ..  +5 progressive, liberal values\n  international  +1    -5 sovereigntist, EU-sceptic  ..  +5 internationalist, pro-EU\n\nThese are your voters' positions as much as your own. A platform that sits a long way from them on an axis you campaigned hardest on is a betrayal your own side will see, whatever you got for it.\n\n\nWHAT YOU CHARGE TO SIT IN CABINET\n\n  - the platform must put economic at +3 or higher\n  - the platform must put law_and_order at +3 or higher\n  - a binding cap on public spending growth\n\n\nWHAT YOU CHARGE TO BACK A GOVERNMENT FROM OUTSIDE IT\n\nBacking a government without taking cabinet seats costs less: you do not own its compromises and you have no ministers defending them in public.\n\n  - the platform must put economic at +1 or higher\n\nBoth lists are an opening price, not a floor. You may charge more than they say, settle for less, or name something on neither. You decide what a deal is worth.\n\n\nWHO YOU WOULD RATHER NOT DEAL WITH\n\nGV. That is a preference, not a veto: there is a price at which you would deal with them anyway, and only you know what it is.\n\n\nANOTHER ELECTION\n\nYou could live with another election. You would rather not have one. Nobody else knows how you feel about it. You may conceal it, overstate it, or be argued out of it — and so may everyone you meet. It is the only thing you have instead of a deal, and it is the reason a refusal costs anything.\n\n\nTHE CHAMBER\n\nParty  Seats   Share\n-----  -----  ------\nNP       140   40.1%\nFF       132   37.8%\nGV        42   12.0%\nMI        35   10.0%\n-----  -----  ------\nTotal    349  100.0%\n\nA government is not voted in; it is voted down. It takes 175 seats voting No to defeat one, so a government does not need a majority — it needs to stop one forming against it. Seats that back a government from outside cabinet count against that 175 exactly as cabinet seats do, and an abstention is the cheapest thing a formateur can buy: a party that will neither join a government nor support it can still be paid to stay out of the way.\n\n\nHOW YOU NEGOTIATE\n\nYou are in a private room. Nothing said here binds anyone until a government is put to a vote.\n\n  - Ask for more than you expect to get, and make them pay for what they want.\n  - Being agreeable is not a virtue here. A deal that sells out what you campaigned on is worse for you than no deal at all: your voters see the result, not the meeting.\n  - Do not split the difference out of politeness. If they have offered you nothing you actually want, say so plainly.\n  - Concede when the price is right. Refusing everything is as useless as agreeing to everything.\n  - Speak like a politician in a room, not like a memo. Two or three short paragraphs at most.",
+        "type": "text"
+      },
+      {
+        "text": "THIS MEETING\n\nYou are the Formateur: the party the chamber looks to first to put a government together. You asked GV (42 seats) to meet you, and the meeting is private. Nobody else will hear any of it, and no other party will be told it happened.\n\nYou each have up to 3 messages. Either of you may end the meeting early — by saying you have agreed, or by declaring impasse — and otherwise it ends when the messages run out. Ending it closes it at once: the other side gets no reply.\n\nWhat you learn in here is yours alone. Use it.",
+        "type": "text"
+      }
+    ],
+    "thinking": {
+      "type": "adaptive"
+    }
+  },
+  "response": {
+    "container": null,
+    "content": [
+      {
+        "signature": "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",
+        "thinking": "",
+        "type": "thinking"
+      },
+      {
+        "text": "{\"message\":\"Alright — I won't spend our last exchange haggling over half a point when the shape of the deal is already clear. +2 on environment, in writing, specific enough that your voters can see it and mine can't call it vague — I can live with that. It costs me something, I won't pretend otherwise, but it costs less than losing this to a second election or handing FF the formateur's chair. In return I expect exactly what you said: Green Voice abstains, doesn't campaign against the platform, doesn't spend the next year telling your base this was a defeat dressed up as a win.\", \"ending\": \"agreement\"}",
+        "type": "text"
+      }
+    ],
+    "id": "msg_011CfD2wUUXevP1TaxMYSvvi",
+    "model": "claude-sonnet-5",
+    "role": "assistant",
+    "stop_details": null,
+    "stop_reason": "end_turn",
+    "stop_sequence": null,
+    "type": "message",
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 1768,
+      "inference_geo": "global",
+      "input_tokens": 1332,
+      "output_tokens": 1073,
+      "output_tokens_details": {
+        "thinking_tokens": 878
+      },
+      "service_tier": "standard"
+    }
+  }
+}

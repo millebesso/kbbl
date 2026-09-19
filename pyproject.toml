@@ -5,6 +5,7 @@ description = "An LLM-driven simulator of government formation in the Swedish Ri
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "anthropic>=1.7.0",
     "pydantic>=2.9",
 ]
 

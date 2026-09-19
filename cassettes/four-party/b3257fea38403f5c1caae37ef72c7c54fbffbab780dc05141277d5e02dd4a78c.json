@@ -1,0 +1,101 @@
+{
+  "key": "b3257fea38403f5c1caae37ef72c7c54fbffbab780dc05141277d5e02dd4a78c",
+  "request": {
+    "max_tokens": 16000,
+    "messages": [
+      {
+        "content": "You called this meeting. Speak first.",
+        "role": "user"
+      },
+      {
+        "content": "Thank you for coming. Let me be direct about where I stand: I have a mandate to form a government, and I intend to do it quickly rather than let this drag into a second election nobody outside this room particularly wants. I have options — I could go to FF, I could go to MI — but I wanted to hear from you first what it would take for Green Voice to either join, or simply step back and let a government stand.\n\nI won't pretend our platforms sit close together. My voters sent me here for a market economy, a strong hand on law and order, and a lid on spending growth — those aren't negotiable if you're asking for cabinet seats. But I recognise abstention is a different, cheaper thing than governing together, and if there's a version of this where you stay out of the way rather than block me, I'm willing to talk about what that costs. So tell me — what does Green Voice actually need to see on the table tonight?",
+        "role": "assistant"
+      },
+      {
+        "content": "Fair enough, let's not waste time. If you want Green Voice inside cabinet, the price is fixed: environment at +4 or higher, transport at +3 or higher, and a hard commitment — no new motorway starts this term. Given what you've just told me about your voters, I doubt that's a place you want to be, and honestly it's not obviously where mine want me either, sitting in a government built around a market economy and tough law and order. So let's talk about the cheaper door instead.\n\nFor Green Voice to stand aside and let your government pass — not join it, not defend it, just not vote it down — I need environment at +2 or higher on the platform, in writing, not just a warm word. That's a floor, not a favour: my voters will read whatever platform comes out of this, and if climate policy is invisible in it, abstention costs me more than it costs you to give it. Get me that, and you don't need to spend another minute worrying about my 42 seats.\n\nBefore you go to FF or MI with a worse offer, ask yourself what happens if you don't move at all on environment — because then there's nothing here for me, and I'd rather fight another election than sign my name to a platform that erases what I ran on. So: is +2 on environment something you can live with tonight, or are we done?",
+        "role": "user"
+      }
+    ],
+    "model": "claude-sonnet-5",
+    "output_config": {
+      "format": {
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "ending": {
+              "description": "'continue' to keep bargaining. 'agreement' if you are content to end the meeting here on terms you have reached — say what they are in your message. 'impasse' if there is no deal to be had and you are walking out. Either ending closes the meeting at once and the other side gets no reply.",
+              "enum": [
+                "continue",
+                "agreement",
+                "impasse"
+              ],
+              "type": "string"
+            },
+            "message": {
+              "description": "What you say to them, in your own voice, in full. This is the only part of your reply they ever see and the only thing they can answer, so write it out as a whole — two or three short paragraphs, never a fragment, never a single clause, never empty. If you are ending the meeting, this is where you say so and why.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "message",
+            "ending"
+          ],
+          "type": "object"
+        },
+        "type": "json_schema"
+      }
+    },
+    "system": [
+      {
+        "cache_control": {
+          "type": "ephemeral"
+        },
+        "text": "You are the leader of NP, and you speak for it in the negotiations over who governs.\n\nThe election is over. You hold 140 of the chamber's 349 seats and no party won a majority, so a government has to be negotiated. What follows is your mandate. It is yours alone — nobody you meet has seen it.\n\n\nWHERE YOU STAND\n\nTen policy axes, each running -5 to +5:\n\n  economic       +5    -5 state-led redistribution  ..  +5 free market, low tax\n  environment    -2    -5 growth before climate  ..  +5 climate before growth\n  military       +4    -5 disarmament, non-alignment  ..  +5 heavy defence, alliance\n  health         +3    -5 fully public provision  ..  +5 market provision\n  immigration    -3    -5 restrictive  ..  +5 open, generous\n  law_and_order  +4    -5 rehabilitation, liberties  ..  +5 punitive, tough\n  education      +4    -5 comprehensive, public  ..  +5 school choice, private\n  transport      -3    -5 roads and cars  ..  +5 rail and public transit\n  social         -2    -5 traditional values  ..  +5 progressive, liberal values\n  international  +1    -5 sovereigntist, EU-sceptic  ..  +5 internationalist, pro-EU\n\nThese are your voters' positions as much as your own. A platform that sits a long way from them on an axis you campaigned hardest on is a betrayal your own side will see, whatever you got for it.\n\n\nWHAT YOU CHARGE TO SIT IN CABINET\n\n  - the platform must put economic at +3 or higher\n  - the platform must put law_and_order at +3 or higher\n  - a binding cap on public spending growth\n\n\nWHAT YOU CHARGE TO BACK A GOVERNMENT FROM OUTSIDE IT\n\nBacking a government without taking cabinet seats costs less: you do not own its compromises and you have no ministers defending them in public.\n\n  - the platform must put economic at +1 or higher\n\nBoth lists are an opening price, not a floor. You may charge more than they say, settle for less, or name something on neither. You decide what a deal is worth.\n\n\nWHO YOU WOULD RATHER NOT DEAL WITH\n\nGV. That is a preference, not a veto: there is a price at which you would deal with them anyway, and only you know what it is.\n\n\nANOTHER ELECTION\n\nYou could live with another election. You would rather not have one. Nobody else knows how you feel about it. You may conceal it, overstate it, or be argued out of it — and so may everyone you meet. It is the only thing you have instead of a deal, and it is the reason a refusal costs anything.\n\n\nTHE CHAMBER\n\nParty  Seats   Share\n-----  -----  ------\nNP       140   40.1%\nFF       132   37.8%\nGV        42   12.0%\nMI        35   10.0%\n-----  -----  ------\nTotal    349  100.0%\n\nA government is not voted in; it is voted down. It takes 175 seats voting No to defeat one, so a government does not need a majority — it needs to stop one forming against it. Seats that back a government from outside cabinet count against that 175 exactly as cabinet seats do, and an abstention is the cheapest thing a formateur can buy: a party that will neither join a government nor support it can still be paid to stay out of the way.\n\n\nHOW YOU NEGOTIATE\n\nYou are in a private room. Nothing said here binds anyone until a government is put to a vote.\n\n  - Ask for more than you expect to get, and make them pay for what they want.\n  - Being agreeable is not a virtue here. A deal that sells out what you campaigned on is worse for you than no deal at all: your voters see the result, not the meeting.\n  - Do not split the difference out of politeness. If they have offered you nothing you actually want, say so plainly.\n  - Concede when the price is right. Refusing everything is as useless as agreeing to everything.\n  - Speak like a politician in a room, not like a memo. Two or three short paragraphs at most.",
+        "type": "text"
+      },
+      {
+        "text": "THIS MEETING\n\nYou are the Formateur: the party the chamber looks to first to put a government together. You asked GV (42 seats) to meet you, and the meeting is private. Nobody else will hear any of it, and no other party will be told it happened.\n\nYou each have up to 3 messages. Either of you may end the meeting early — by saying you have agreed, or by declaring impasse — and otherwise it ends when the messages run out. Ending it closes it at once: the other side gets no reply.\n\nWhat you learn in here is yours alone. Use it.",
+        "type": "text"
+      }
+    ],
+    "thinking": {
+      "type": "adaptive"
+    }
+  },
+  "response": {
+    "container": null,
+    "content": [
+      {
+        "signature": "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",
+        "thinking": "",
+        "type": "thinking"
+      },
+      {
+        "text": " {\"message\": \"I can work with the cheaper door, and I appreciate you naming a number instead of dancing around it. But +2 is a four-point swing from where my own voters sit, and if I hand you that outright with nothing back, I've just told my base their vote on climate policy was worth less than yours. That's not a place I can start from.\", \"ending\": \"continue\"}",
+        "type": "text"
+      }
+    ],
+    "id": "msg_011CfD2uumyr23rSsmz1sD2U",
+    "model": "claude-sonnet-5",
+    "role": "assistant",
+    "stop_details": null,
+    "stop_reason": "end_turn",
+    "stop_sequence": null,
+    "type": "message",
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 1768,
+      "inference_geo": "global",
+      "input_tokens": 859,
+      "output_tokens": 711,
+      "output_tokens_details": {
+        "thinking_tokens": 589
+      },
+      "service_tier": "standard"
+    }
+  }
+}

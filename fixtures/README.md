@@ -64,3 +64,7 @@ Positions are scored −5..+5 on ten Axes. The poles used by every Fixture here:
 
 These poles are a convention of this repo, not a fact about politics. Fixture Positions are
 invented to produce a legible negotiation, nothing more.
+
+The same table lives in `AXIS_POLES` in `src/kbbl/models.py`, because a bare `economic: +5`
+says nothing to an Agent — the poles have to travel with the number into every Persona. Change
+one copy and change the other.
