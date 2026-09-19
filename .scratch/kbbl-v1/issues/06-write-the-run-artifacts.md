@@ -25,3 +25,5 @@ lookup.
 - [ ] Demonstrated: counting outcomes across many Runs is a loop and a `Counter` over `run.json`, with no re-instrumentation
 - [ ] Artifacts are identical under `--replay`
 - [ ] `--out` controls the destination directory (§11.5)
+- [ ] The `Run` record accumulates as the Run happens rather than being assembled after it — a Run that aborts mid-Bilateral keeps every Exchange already paid for (02)
+- [ ] `run.json` carries token and cache usage and the Cassette key for every request, which §7 needs present if aggregation is to be a `Counter` rather than a re-instrumentation (02)

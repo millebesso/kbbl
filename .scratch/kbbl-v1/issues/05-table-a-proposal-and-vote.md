@@ -27,4 +27,8 @@ The run then ends with no vote.
 - [ ] A Formateur may Stand down instead of tabling; the run ends with no vote and reports that outcome distinctly from a rejection
 - [ ] No ministries or portfolios appear anywhere in the Proposal (§4)
 - [ ] A passed Proposal, a rejected Proposal, and a Stand down are each exercised and replayable from Cassettes
+- [ ] What a Bilateral's `Ending` commits a Party to is decided and written down — NP declared `agreement` on its own last word in all three of 02's recordings, and `LAST_WORD` beside an available `agreement` option may simply make wrapping up attractive (02)
+- [ ] A `Demand` reads the same whether an Agent meets it as persona prose or as a report cell — this is the first ticket that shows it both at once (03)
+- [ ] `Ending` is already branched on in `agents.py` and `output.py`; if this ticket adds a third site, the three collapse into one (02, 03)
+- [ ] If the Transcripts read badly, `render_gap_report`'s canonical Axis order is the knob to turn — worst-first is the alternative (03)
 - [ ] **Read the Transcript: did the Gap report change how parties voted, or did they fold anyway?** Record the judgement in this file's Comments (§12.1)
