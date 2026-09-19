@@ -1,0 +1,43 @@
+{
+  "name": "MI",
+  "seats": 35,
+  "positions": {
+    "economic": 2,
+    "environment": 2,
+    "military": 1,
+    "health": 0,
+    "immigration": 1,
+    "law_and_order": 1,
+    "education": 1,
+    "transport": 0,
+    "social": 2,
+    "international": 4
+  },
+  "prefer_not": [],
+  "to_govern": [
+    {
+      "axis": "international",
+      "op": ">=",
+      "value": 3
+    },
+    {
+      "axis": "economic",
+      "op": ">=",
+      "value": 1
+    },
+    {
+      "text": "the rural broadband programme is funded in full"
+    }
+  ],
+  "to_support": [
+    {
+      "axis": "international",
+      "op": ">=",
+      "value": 2
+    },
+    {
+      "text": "the rural broadband programme is funded in full"
+    }
+  ],
+  "willingness_to_re_elect": 2
+}

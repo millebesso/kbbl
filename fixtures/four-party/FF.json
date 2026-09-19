@@ -1,0 +1,45 @@
+{
+  "name": "FF",
+  "seats": 132,
+  "positions": {
+    "economic": -4,
+    "environment": 2,
+    "military": 0,
+    "health": -4,
+    "immigration": 2,
+    "law_and_order": 0,
+    "education": -4,
+    "transport": 2,
+    "social": 3,
+    "international": 2
+  },
+  "prefer_not": [
+    "NP"
+  ],
+  "to_govern": [
+    {
+      "axis": "economic",
+      "op": "<=",
+      "value": -2
+    },
+    {
+      "axis": "health",
+      "op": "<=",
+      "value": -3
+    },
+    {
+      "text": "no cuts to the pension floor this term"
+    }
+  ],
+  "to_support": [
+    {
+      "axis": "economic",
+      "op": "<=",
+      "value": 0
+    },
+    {
+      "text": "no cuts to the pension floor this term"
+    }
+  ],
+  "willingness_to_re_elect": 6
+}

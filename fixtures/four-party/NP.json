@@ -1,0 +1,42 @@
+{
+  "name": "NP",
+  "seats": 140,
+  "positions": {
+    "economic": 5,
+    "environment": -2,
+    "military": 4,
+    "health": 3,
+    "immigration": -3,
+    "law_and_order": 4,
+    "education": 4,
+    "transport": -3,
+    "social": -2,
+    "international": 1
+  },
+  "prefer_not": [
+    "GV"
+  ],
+  "to_govern": [
+    {
+      "axis": "economic",
+      "op": ">=",
+      "value": 3
+    },
+    {
+      "axis": "law_and_order",
+      "op": ">=",
+      "value": 3
+    },
+    {
+      "text": "a binding cap on public spending growth"
+    }
+  ],
+  "to_support": [
+    {
+      "axis": "economic",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "willingness_to_re_elect": 4
+}

@@ -1,0 +1,42 @@
+{
+  "name": "GV",
+  "seats": 42,
+  "positions": {
+    "economic": -2,
+    "environment": 5,
+    "military": -3,
+    "health": -3,
+    "immigration": 4,
+    "law_and_order": -3,
+    "education": -2,
+    "transport": 5,
+    "social": 5,
+    "international": 4
+  },
+  "prefer_not": [
+    "NP"
+  ],
+  "to_govern": [
+    {
+      "axis": "environment",
+      "op": ">=",
+      "value": 4
+    },
+    {
+      "axis": "transport",
+      "op": ">=",
+      "value": 3
+    },
+    {
+      "text": "no new motorway starts this term"
+    }
+  ],
+  "to_support": [
+    {
+      "axis": "environment",
+      "op": ">=",
+      "value": 2
+    }
+  ],
+  "willingness_to_re_elect": 8
+}
