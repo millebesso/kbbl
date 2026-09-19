@@ -94,8 +94,22 @@ _Avoid_: meeting, talks, session, negotiation
 
 **Exchange**:
 One message from one side of a Bilateral. Each side may send up to three, and either side may
-exit early by agreeing or declaring impasse.
+end the meeting early by carrying a Declaration on one of them.
 _Avoid_: message, turn, reply
+
+**Ending**:
+How a Bilateral finished: by *agreement*, by *impasse*, or *exhausted* — three Exchanges each
+way spent with neither. Exactly one per Bilateral, and it belongs to the meeting rather than to
+either side. An Ending of agreement settles nothing: it says the bargaining stopped, not that a
+deal exists. Only a Proposal binds anything, and only the Formateur tables one.
+_Avoid_: outcome, result, close, verdict
+
+**Declaration**:
+A side's announcement, carried on an Exchange, that the Bilateral is over — agreement or
+impasse, the two Endings a side can reach for. It closes the meeting at once and the other side
+gets no reply, so a Declaration is one Party's act even when the word is "agreement".
+Exhaustion is never declared: it is what is left when nobody declares anything.
+_Avoid_: exit, signal, flag, resolution
 
 ### The proposal
 
@@ -149,6 +163,14 @@ _Avoid_: the vote rule, investiture, confidence vote
 The 175 seats — an absolute majority of 349 — that must vote No to defeat a Proposal.
 Anything short of it lets the Proposal through.
 _Avoid_: majority, threshold, quorum, 175 rule
+
+**Grouping**:
+A set of Parties counted together, and the seats they hold between them. Pure arithmetic — a
+Grouping is Parties the Referee has added up, never Parties that have agreed to anything. The
+ones worth naming are the *minimal* Groupings reaching the Blocking minority, where no member
+can be dropped: they name each kingmaker exactly once, and one of them pairing two Parties that
+would rather not deal with each other is the normal case, not a bug.
+_Avoid_: bloc, coalition, alliance, set
 
 **Abstention**:
 A vote that is neither Yes nor No. Under Negative parliamentarism it is the cheapest thing a
