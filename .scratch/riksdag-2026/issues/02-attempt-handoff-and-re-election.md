@@ -49,12 +49,12 @@ why the last criterion needs 01.
 - [ ] Every Party having had an Attempt also ends the Run in Re-election, and this is reachable in an eight-Party Scenario because Stand downs cost no Vote (§5.3)
 - [ ] `Outcome` gains Re-election, and `result.json` distinguishes it from a government that formed
 - [ ] `Run` splits so that a Proposal and its Judgements belong to the Attempt that made them, as `models.Run` says it must
-- [ ] `run.json` still stands alone for a `Counter` with several Attempts in it: counting outcomes over a batch stays a loop and a `Counter`, and per-Attempt questions are reachable without re-instrumentation (§7, 06)
+- [ ] `run.json` still stands alone for a `Counter` with several Attempts in it: counting outcomes over a batch stays a loop and a `Counter`, and per-Attempt questions are reachable without re-instrumentation (§7, kbbl-v1/06)
 - [ ] `result.json` names the Formateur that formed the government, or records that none did
-- [ ] The Ledger keeps every Attempt a Run paid for when it breaks partway through the third — the accumulation 06 built must survive the split (06)
+- [ ] The Ledger keeps every Attempt a Run paid for when it breaks partway through the third — the accumulation `kbbl-v1/06` built must survive the split
 - [ ] **Decided and written down: what a Counterparty remembers across Attempts, and what a former Formateur remembers when it is a Counterparty.** The reason goes in `CONTEXT.md` beside **Counterparty**
 - [ ] The Transcript reads as several Attempts in sequence, and a reader can tell which Vote belonged to which Formateur
 - [ ] A Formateur that is not the first is told so in its briefing, and re-keyed Cassettes are re-recorded rather than patched (README)
 - [ ] §5.3's stated worst case is corrected or defended, and the real bound on a Run's cost is recorded (§6)
-- [ ] A Round that bought a Choice and no Exchange is still dropped from the record; this ticket touches the Ledger and the `Run` shape, so it is the cheapest moment to decide whether a `Bilateral` may hold no Exchanges (06)
+- [ ] A Round that bought a Choice and no Exchange is still dropped from the record; this ticket touches the Ledger and the `Run` shape, so it is the cheapest moment to decide whether a `Bilateral` may hold no Exchanges (kbbl-v1/06)
 - [ ] Demonstrated on `scenarios/riksdag-2026`: a Run in which the Attempt is handed on at least once, read closely — §12.2 says largest-first will visibly diverge from the Speaker's real discretion here (01)

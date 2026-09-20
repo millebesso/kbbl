@@ -48,4 +48,4 @@ author's reading and must be labelled as such.
 - [ ] One live Run is recorded to Cassettes and replays byte-identical
 - [ ] **What the Run actually cost is measured and recorded**, not assumed: §6's ~130 calls / ~$1.56 is a design-time estimate, and v1's four-Party Attempt was 31. Eight Parties means more Exchanges per Round and eight Ballots per Vote
 - [ ] **Read the Transcript: do eight Personas still hold their ground, or does the extra room to manoeuvre produce the grand coalition §12.1 warns about?** Record the judgement in this file's Comments
-- [ ] `transcript.md` is still readable at this length — §10 flags eight Parties as "a lot of transcript to read", and 06 left the four-space indent question open because four Parties never made it hurt (06)
+- [ ] `transcript.md` is still readable at this length — §10 flags eight Parties as "a lot of transcript to read", and `kbbl-v1/06` left the four-space indent question open because four Parties never made it hurt

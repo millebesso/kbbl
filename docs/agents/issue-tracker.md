@@ -10,6 +10,20 @@ Issues and specs (you may know a spec as a PRD) for this repo live as markdown f
 - Triage state is recorded as a `Status:` line near the top of each issue file (see `triage-labels.md` for the role strings)
 - Comments and conversation history append to the bottom of the file under a `## Comments` heading
 
+## Referring to a ticket
+
+Numbering restarts at `01` in every feature directory, so a bare number is only unambiguous
+within one. References work like paths:
+
+- **`06`** — ticket 06 of *this* feature directory. Use it in `Blocked by:` lines, which never
+  cross efforts, and for debts handed between tickets of the same feature.
+- **`kbbl-v1/06`** — ticket 06 of the `kbbl-v1` feature. Use the slug whenever the reference
+  leaves the directory it is written in, including in commit messages and in code comments.
+
+A ticket citing both in one line without the slug is the failure this rule exists to prevent:
+`riksdag-2026/02` carries debts from `kbbl-v1/06` and a dependency on `riksdag-2026/01`, and
+written bare they are indistinguishable.
+
 ## When a skill says "publish to the issue tracker"
 
 Create a new file under `.scratch/<feature-slug>/` (creating the directory if needed).
