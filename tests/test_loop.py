@@ -1,24 +1,23 @@
-"""One Formateur's five Rounds. Zero API calls: every model here is a stand-in."""
+"""One Formateur's whole Attempt. Zero API calls: every model here is a stand-in."""
 
 from __future__ import annotations
 
 from pathlib import Path
 
-from conftest import Model, briefing, leaks, said, spoken
+from conftest import Model, briefing, leaks, said, spoken, stood_down, tabled, voted
 from kbbl.cassettes import Cassettes
 from kbbl.loop import attempt
 from kbbl.models import Ending, Run, Scenario
-from kbbl.referee import ROUNDS
+from kbbl.referee import ROUNDS, count_vote
 
 
 def spend(scenario: Scenario, model: Model, tmp_path: Path, replay: bool = False) -> Run:
-    """A whole Attempt's Rounds, gathered into the record the Transcript is rendered from."""
-    rounds = attempt(
+    """A whole Attempt: its Rounds, what it tabled, and how the chamber answered."""
+    return attempt(
         scenario,
         formateur=scenario.parties[0],
         cassettes=Cassettes(tmp_path, replay=replay, live=model),
     )
-    return Run(scenario=scenario.name, formateur=scenario.parties[0].name, rounds=rounds)
 
 
 def test_a_formateur_spends_five_rounds_and_no_more(
@@ -219,3 +218,146 @@ def test_a_party_met_twice_still_sees_nothing_of_the_meetings_in_between(
             continue
         told = "\n".join(str(message["content"]) for message in request["messages"])
         assert not [message for message in said_to_others if message in told]
+
+
+# --- what the Rounds led to ----------------------------------------------------------------
+
+
+def test_an_attempt_ends_in_a_proposal_the_chamber_votes_on(
+    four_party: Scenario, tmp_path: Path
+) -> None:
+    """§5.3: five Rounds and at most one Proposal. The vote is the end of the Attempt."""
+    model = Model(
+        tables=tabled("NP", "MI", economic=3, law_and_order=4),
+        ballots=["Yes", "No", "No", "Yes"],
+    )
+
+    run = spend(four_party, model, tmp_path)
+
+    assert run.proposal is not None
+    assert run.stood_down is False
+    assert run.proposal.government == ("NP", "MI")
+    assert [judgement.party for judgement in run.judgements] == ["NP", "FF", "GV", "MI"]
+
+    vote = count_vote(four_party, run.proposal, run.ballots)
+    assert vote.no == 174
+    assert vote.passed
+
+
+def test_a_proposal_is_defeated_when_a_blocking_minority_votes_no(
+    four_party: Scenario, tmp_path: Path
+) -> None:
+    """The only thing that defeats a Proposal is 175 seats voting No (§5.2)."""
+    model = Model(tables=tabled("NP"), ballots=["Yes", "No", "No", "No"])
+
+    run = spend(four_party, model, tmp_path)
+
+    assert run.proposal is not None
+    vote = count_vote(four_party, run.proposal, run.ballots)
+    assert vote.no == 209
+    assert not vote.passed
+
+
+def test_a_formateur_that_stands_down_ends_the_attempt_with_no_vote(
+    four_party: Scenario, tmp_path: Path
+) -> None:
+    """§5.3: Standing down costs the Chamber none of its four Votes, so nobody is polled."""
+    model = Model(tables=stood_down("There is nothing here anyone will vote for."))
+
+    run = spend(four_party, model, tmp_path)
+
+    assert run.stood_down
+    assert run.proposal is None
+    assert run.judgements == ()
+    assert len(run.rounds) == ROUNDS
+    assert not [
+        request
+        for request in model.requests
+        if any(tool["name"] == "ballot" for tool in request["tools"])
+    ]
+
+
+def test_a_whole_attempt_replays_from_cassettes_with_no_live_calls(
+    four_party: Scenario, tmp_path: Path
+) -> None:
+    """§8: the Proposal and every Ballot replay too, or the free path stops at the Rounds."""
+    live = Model(tables=tabled("NP", "GV", environment=2), ballots=["Yes", "No", "Yes", "Abstain"])
+    recorded = spend(four_party, live, tmp_path)
+
+    silent = Model()
+    replayed = spend(four_party, silent, tmp_path, replay=True)
+
+    assert replayed == recorded
+    assert silent.requests == []
+    assert recorded.proposal is not None
+    assert [judgement.ballot.value for judgement in recorded.judgements] == [
+        "Yes",
+        "No",
+        "Yes",
+        "Abstain",
+    ]
+
+
+def test_a_stand_down_replays_from_cassettes_with_no_live_calls(
+    four_party: Scenario, tmp_path: Path
+) -> None:
+    live = Model(tables=stood_down("Nobody will pay for a government."))
+    recorded = spend(four_party, live, tmp_path)
+
+    silent = Model()
+    replayed = spend(four_party, silent, tmp_path, replay=True)
+
+    assert replayed == recorded
+    assert silent.requests == []
+    assert replayed.stood_down
+
+
+def test_no_party_sees_another_partys_ballot_or_the_room_it_was_cast_in(
+    four_party: Scenario, tmp_path: Path
+) -> None:
+    """The asymmetry does not lapse because the bargaining is over (§5.1).
+
+    Every Party judges the Proposal in its own room, so what it says casting a Ballot is its
+    own. The audit is over what was actually sent, the same way the Rounds are audited.
+    """
+    model = Model(
+        chooses=["FF", "MI", "GV", "MI", "FF"],
+        tables=tabled("NP", "MI"),
+        ballots=[
+            voted("Yes", "It is our platform, near enough."),
+            voted("No", "Economic at 0 is not what we were promised."),
+            voted("Abstain", "Not worth an election over."),
+            voted("Yes", "The broadband money is in it."),
+        ],
+    )
+
+    run = spend(four_party, model, tmp_path)
+
+    assert len({judgement.reasoning for judgement in run.judgements}) == len(run.judgements)
+    assert leaks(model.requests, run) == []
+
+
+def test_every_conversation_still_alternates_once_the_vote_is_added(
+    four_party: Scenario, tmp_path: Path
+) -> None:
+    """A Party hears its meeting close and the chamber vote open without speaking between."""
+    model = Model(spoken("Nothing doing.", "impasse"), chooses=["FF", "MI", "GV", "MI", "FF"])
+
+    spend(four_party, model, tmp_path)
+
+    for request in model.requests:
+        roles = [message["role"] for message in request["messages"]]
+        assert roles == ["user" if index % 2 == 0 else "assistant" for index in range(len(roles))]
+
+
+def test_the_record_carries_what_the_formateur_said_ending_its_attempt(
+    four_party: Scenario, tmp_path: Path
+) -> None:
+    """A Stand down leaves no Proposal behind, so the prose is the whole account of it."""
+    tabled_it = spend(
+        four_party, Model(tables=tabled("NP", reasoning="NP governs alone.")), tmp_path
+    )
+    stood = spend(four_party, Model(tables=stood_down("FF will not move on economic.")), tmp_path)
+
+    assert tabled_it.reasoning == "NP governs alone."
+    assert stood.reasoning == "FF will not move on economic."

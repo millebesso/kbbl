@@ -6,9 +6,10 @@ price, the Willingness to re-elect arrives as a disposition it is free to lie ab
 price lists arrive as an opening bid rather than a floor. An Agent that sells out its voters
 must be able to — it just has to choose to.
 
-The two things the Referee takes back out of an Agent are whom the Formateur will spend a
-Round on, and whether a Bilateral is over. Both arrive as tool calls carrying one enumerated
-field. There is no path here that reads prose.
+What the Referee takes back out of an Agent is whom the Formateur will spend a Round on,
+whether a Bilateral is over, what a Proposal says, and how each Party votes on it. Every one
+of them arrives as a tool call whose every field is enumerated, with the prose beside it in
+the reply's own text. There is no path here that reads prose.
 """
 
 from __future__ import annotations
@@ -22,19 +23,33 @@ from kbbl.models import (
     AXIS_POLES,
     Axis,
     AxisDemand,
+    Ballot,
     Bilateral,
     Choice,
     Declaration,
     Demand,
     Ending,
     Exchange,
+    Judgement,
     Party,
+    Platform,
+    Proposal,
     Round,
     Scenario,
     TextDemand,
     signed,
 )
-from kbbl.referee import BLOCKING_MINORITY, ROUNDS, render_seat_table
+from kbbl.referee import (
+    BLOCKING_MINORITY,
+    ROUNDS,
+    Price,
+    gap_report,
+    price_report,
+    render_gap_report,
+    render_price_report,
+    render_proposal,
+    render_seat_table,
+)
 
 MODEL = "claude-sonnet-5"
 """§6: one model for every Agent."""
@@ -113,6 +128,50 @@ buys is that the Ending is read from an enumerated field rather than out of the 
 means to keep talking has not accidentally ended anything (§2).
 """
 
+TABLE = "table"
+"""The tool a Formateur tables its Proposal with."""
+
+STAND_DOWN = "stand_down"
+"""The tool a Formateur ends its Attempt with instead of tabling (§5.3)."""
+
+BALLOT = "ballot"
+"""The tool a Party casts its Ballot in the Vote with."""
+
+STAND_DOWN_TOOL: dict[str, Any] = {
+    "name": STAND_DOWN,
+    "description": (
+        "End your attempt without putting anything to the chamber. Call it in the same reply "
+        "as the message that says why. There is no vote, and the government you did not "
+        "form is somebody else's problem now. Call this instead of `table`, never as well."
+    ),
+    "input_schema": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": False,
+    },
+    "strict": True,
+}
+"""Standing down takes no argument, because it is the absence of a Proposal rather than a
+kind of one. The reasons are prose in the same reply, and the Transcript is where they go."""
+
+BALLOT_TOOL: dict[str, Any] = {
+    "name": BALLOT,
+    "description": (
+        "Cast your party's vote on the proposal before the chamber. Call it once, in the "
+        "same reply as what you say about it. 'Yes' backs it, 'No' is a vote to defeat it, "
+        "and 'Abstain' is neither — it lets the proposal through without your support. Your "
+        "seats all go the way you call it."
+    ),
+    "input_schema": {
+        "type": "object",
+        "properties": {"ballot": {"type": "string", "enum": [option.value for option in Ballot]}},
+        "required": ["ballot"],
+        "additionalProperties": False,
+    },
+    "strict": True,
+}
+
 LAST_WORD = (
     "(This is your last message in this meeting. Say what you need to say now — you will not "
     "get another.)"
@@ -163,7 +222,15 @@ def persona(scenario: Scenario, party: Party) -> str:
 
 
 class FormateurAgent:
-    """The Formateur's Agent for the length of an Attempt: it chooses, it meets, it remembers.
+    """The Formateur's Agent for the length of an Attempt: it chooses, meets, remembers, and
+    at the end of its Rounds either tables a Proposal or Stands down.
+
+    It also holds the Vote, which is the Chamber's decision rather than the Formateur's, and
+    that is worth defending rather than glossing. What a Party votes on is the Proposal set
+    against the meeting it had, so every Party has to answer in the room it bargained in — and
+    the rooms are here, because privacy is kept by their never being anywhere else. Handing
+    them to a second object would mean handing out the one thing §5.1 says must not travel.
+    So the Vote is run from here and `put_to_the_chamber` says whose act each part of it is.
 
     Named for the Agent rather than the Party, because `CONTEXT.md` gives *Formateur* to the
     Party itself — this is the LLM instance negotiating on its behalf, which is what that
@@ -191,6 +258,7 @@ class FormateurAgent:
             )
         self._side = _Side(party, _brief(persona(scenario, party), _your_attempt(self.others)))
         self._spent: list[str] = []
+        self._met: list[Bilateral] = []
         self._rooms: dict[str, _Side] = {}
 
     def spend(self, cassettes: Cassettes) -> Round:
@@ -236,8 +304,93 @@ class FormateurAgent:
             exchanges=tuple(exchanges),
         )
         self._spent.append(counterparty.name)
+        self._met.append(met)
         self._side.hear(_that_meeting_is_over(met))
         return met
+
+    def table(self, cassettes: Cassettes) -> tuple[Proposal | None, str]:
+        """What the Rounds were for: a Proposal, or the Formateur Standing down (§5.3).
+
+        Comes back with what the Formateur said doing it. A Stand down leaves no Proposal to
+        read, so the prose is the whole record of why an Attempt ended — throwing it away
+        would leave the Transcript with nothing to say about the outcome §5.3 exists for.
+
+        Both outcomes end the Attempt, and they are not the same outcome. A Proposal voted
+        down spends one of the Chamber's four Votes; Standing down spends none, which is the
+        whole reason a Formateur that has found no government worth tabling is offered the
+        choice rather than pushed into a doomed Proposal.
+
+        Nothing here decides which. The Referee lays out both tools and reads whichever was
+        called — a Formateur tabling a Proposal every Party it met has refused is making a
+        judgement the Referee is not allowed to make for it (§2).
+        """
+        menu = self._commitments()
+        self._side.hear(_time_to_table(self._met, menu))
+        response = self._side.reply(
+            cassettes, tools=[_table_tool(self.scenario, menu), STAND_DOWN_TOOL]
+        )
+        proposal, reasoning = _read_proposal(response, self.party.name, self.scenario, menu)
+        self._side.spoke(reasoning)
+        return proposal, reasoning
+
+    def put_to_the_chamber(
+        self, proposal: Proposal, cassettes: Cassettes
+    ) -> tuple[Judgement, ...]:
+        """Every Party's Ballot on this Proposal, in chamber order, with what it said.
+
+        Every Party votes, including the Formateur and including the Parties the Proposal
+        never names — it is exactly those whose Abstention is the cheapest thing on offer
+        (§5.2), so a Vote that only polled the Base would be counting the wrong chamber.
+
+        **A Party votes in the room it bargained in.** Its own Bilateral is the thing it is
+        being asked to judge the Proposal against, and a Party handed a fresh conversation
+        would be deciding whether terms it has no memory of reaching were honoured. The
+        asymmetry is untouched by that: what a Party carries into the Vote is still only its
+        own meeting, and a Party the Formateur never courted arrives with none.
+        """
+        return tuple(self._judge(party, proposal, cassettes) for party in self.scenario.parties)
+
+    def _judge(self, party: Party, proposal: Proposal, cassettes: Cassettes) -> Judgement:
+        """One Party's Ballot, cast after it has been shown its own Gap report (§5.4)."""
+        side = self._side if party.name == self.party.name else self._voting_room(party)
+        side.hear(_the_vote(self.scenario, proposal, party))
+        response = side.reply(cassettes, tools=[BALLOT_TOOL])
+        judgement = _read_judgement(response, party.name)
+        side.spoke(judgement.reasoning)
+        return judgement
+
+    def _voting_room(self, party: Party) -> _Side:
+        """The conversation this Party votes in: its own Bilateral, or none at all.
+
+        Not cached back into `_rooms`. A Party that votes has not been met, and a room put
+        there would be reopened by `_room` as though it had been.
+        """
+        met = self._rooms.get(party.name)
+        if met is not None:
+            return met
+        return _Side(party, _brief(persona(self.scenario, party), _never_courted(self.party)))
+
+    def _commitments(self) -> tuple[str, ...]:
+        """The free-text Demands this Formateur may grant, in the order it came across them.
+
+        A Commitment is a free-text Demand that has been granted (`CONTEXT.md`), so the ones
+        a Proposal can carry are the ones somebody charges for — its own, and those of the
+        Parties it spent a Round on. That the Referee reports another Party's price list here
+        is the Referee reporting, which is its half of §2; scoping it to the Parties actually
+        met is what keeps it tied to the budget, so a Formateur that courted nobody has
+        nothing but its own to grant.
+
+        The alternative was a free-text field, and that is the one thing ticket 02 measured
+        and ticket 04 removed: a Commitment arriving as prose decoded inside a schema string
+        can come back truncated, and a half-written side deal is a binding term nobody wrote.
+        """
+        courted = (self.scenario.party(name) for name in dict.fromkeys(self._spent))
+        named: dict[str, None] = {}
+        for party in (self.party, *courted):
+            for demand in (*party.to_govern, *party.to_support):
+                if isinstance(demand, TextDemand):
+                    named[demand.text] = None
+        return tuple(named)
 
     def _room(self, counterparty: Party) -> _Side:
         """The conversation this Party is in — the one it was already in, if it has been met.
@@ -364,6 +517,232 @@ def _meet_tool(others: tuple[Party, ...]) -> dict[str, Any]:
         },
         "strict": True,
     }
+
+
+def _table_tool(scenario: Scenario, commitments: tuple[str, ...]) -> dict[str, Any]:
+    """Tabling a Proposal: ten enumerated Axis values, and Parties named from the chamber.
+
+    Every leaf in here is an enum — the Axis values because they run -5..+5 and nothing else,
+    the Party names because a Proposal naming somebody who holds no seat is a Proposal the
+    Referee would have to guess at, and the Commitments because a free-text field is the one
+    shape ticket 02 recorded as unsafe. The Formateur's reasons for all of it are prose in
+    the same reply, where prose is safe (§2).
+
+    `commitments` is left out entirely when nobody has named a free-text Demand, because an
+    empty enum is a field with no value that satisfies it.
+    """
+    names = [party.name for party in scenario.parties]
+    properties: dict[str, Any] = {
+        "platform": {
+            "type": "object",
+            "description": "One agreed value on every axis, -5 to +5.",
+            "properties": {
+                axis.value: {"type": "integer", "enum": list(range(-5, 6))} for axis in Axis
+            },
+            "required": [axis.value for axis in Axis],
+            "additionalProperties": False,
+        },
+        "government": {
+            "type": "array",
+            "description": "The parties taking cabinet seats. Name yourself if you govern.",
+            "items": {"type": "string", "enum": names},
+        },
+        "support_only": {
+            "type": "array",
+            "description": (
+                "The parties backing it from outside cabinet. Their seats count behind it "
+                "exactly as cabinet seats do. Empty if there are none."
+            ),
+            "items": {"type": "string", "enum": names},
+        },
+    }
+    if commitments:
+        properties["commitments"] = {
+            "type": "array",
+            "description": (
+                "The free-text terms the programme carries. Empty if it carries none."
+            ),
+            "items": {"type": "string", "enum": list(commitments)},
+        }
+    return {
+        "name": TABLE,
+        "description": (
+            "Put your proposal to the chamber. Call it once, in the same reply as what you "
+            "say about it. This ends your attempt: there is one proposal and the chamber "
+            "votes on it. Call this or `stand_down`, never both."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": properties,
+            "required": list(properties),
+            "additionalProperties": False,
+        },
+        "strict": True,
+    }
+
+
+def _time_to_table(met: list[Bilateral], commitments: tuple[str, ...]) -> str:
+    """What the Formateur is told when its budget runs out: table something, or stand down."""
+    sections = [
+        "YOUR ROUNDS ARE SPENT.\n\n"
+        "This is what the budget bought:\n\n" + _rounds_in_full(met),
+        "Now you either put a proposal to the chamber or stand down. Either one ends your "
+        "attempt, and there is no second proposal.",
+        "WHAT A PROPOSAL IS\n\n"
+        "  - a platform: one agreed value on every one of the ten axes, -5 to +5;\n"
+        "  - a government: the parties taking cabinet seats;\n"
+        "  - support-only: the parties backing it from outside cabinet, whose seats count "
+        "behind it exactly as cabinet seats do;\n"
+        "  - commitments: the free-text terms the programme carries.\n\n"
+        "There are no ministries in it. Who gets which department is no part of this "
+        "negotiation and not yours to promise.",
+        _commitments_on_offer(commitments),
+        "NOBODY HAS AGREED TO ANYTHING\n\n"
+        "Naming a party is your claim about who governs, not a promise it made you. A party "
+        "you put in the government may vote the proposal down, and a party you leave out "
+        "entirely may let it through — which is the cheapest thing you can be given, and you "
+        "do not have to name anyone to be given it. The chamber rejects a proposal only if "
+        f"{BLOCKING_MINORITY} seats vote No against it.",
+        "OR YOU STAND DOWN\n\n"
+        "If there is no government here worth putting to the chamber, stand down instead. "
+        "Your attempt ends with no vote, and the chamber spends none of the four it has. "
+        "That is a real option, not a forfeit — tabling something you expect to lose costs "
+        "the chamber a vote and buys nobody anything.",
+        f"Which is it, and why? About {2 * WORDS} words in your own words — this is one "
+        f"message and it accounts for a whole government — then call `{TABLE}` or "
+        f"`{STAND_DOWN}` in the same reply.",
+    ]
+    return "\n\n".join(section for section in sections if section)
+
+
+def _rounds_in_full(met: list[Bilateral]) -> str:
+    """Every Round spent and how its meeting finished, five meetings on from the first."""
+    if not met:
+        return "  nothing — you met nobody."
+    return "\n".join(
+        f"  round {number} on {bilateral.counterparty} — "
+        f"{bilateral.ended_by(bilateral.formateur)}"
+        for number, bilateral in enumerate(met, start=1)
+    )
+
+
+def _commitments_on_offer(commitments: tuple[str, ...]) -> str:
+    """The free-text terms this Proposal could carry, named before the Formateur chooses."""
+    if not commitments:
+        return ""
+    named = "\n".join(f"  - {commitment}" for commitment in commitments)
+    return (
+        "FREE-TEXT COMMITMENTS YOU CAN WRITE IN\n\n"
+        f"{named}\n\n"
+        "These are the free-text terms charged for by you and by the parties you met. "
+        "Writing one in puts it in the government's programme; you are free to write in none "
+        "of them. A demand on an axis is not here, because a platform pays that by itself."
+    )
+
+
+def _never_courted(formateur: Party) -> str:
+    """The second system block of a Party the Formateur never met, shown at the Vote.
+
+    It has no Bilateral to carry in, and that is the truth about it rather than an omission:
+    it was not courted, and it still holds every seat it was elected with.
+    """
+    return (
+        "THIS VOTE\n\n"
+        f"{formateur.name} ({formateur.seats} seats) is the Formateur — the party the chamber "
+        "looked to first to put a government together. It never came to see you. Whatever it "
+        "agreed with anybody, it agreed without you in the room.\n\n"
+        "You owe it nothing, and it has asked you for nothing."
+    )
+
+
+def _the_vote(scenario: Scenario, proposal: Proposal, party: Party) -> str:
+    """What one Party is shown before it votes: the Proposal, and its own two reports.
+
+    The Gap report is §5.4's whole defence and it goes in front of every Party, named or not.
+    An Agent asked abstractly to hold its ground drifts; the same Agent shown the number it
+    is abandoning on the Axis it campaigned hardest on does not — or does, knowingly, which
+    is the most this design ever asks for.
+    """
+    sections = [
+        "THE VOTE\n\n"
+        f"The bargaining is over. {proposal.formateur} has put a government to the chamber, "
+        "and the chamber now decides whether to reject it.",
+        render_proposal(scenario, proposal),
+        "WHAT IT ASKS OF YOU\n\n" + _what_it_asks_of_you(proposal, party),
+        "WHERE THIS PLATFORM LEAVES YOUR VOTERS\n\n"
+        + render_gap_report(gap_report(party, proposal.platform))
+        + "\n\n  That is arithmetic, not advice. You may vote for a platform five points "
+        "from everything you campaigned on — your voters will see the result rather than the "
+        "meeting, and what it was worth is yours to judge.",
+        _what_it_pays_of_your_price(proposal, party),
+        _how_the_vote_works(party),
+    ]
+    return "\n\n".join(section for section in sections if section)
+
+
+def _what_it_asks_of_you(proposal: Proposal, party: Party) -> str:
+    """The role the Proposal assigns this Party — including the role of not being named."""
+    if party.name in proposal.government:
+        return (
+            "It puts you in the cabinet. You would own this platform in public, and your "
+            "ministers would be the ones defending it."
+        )
+    if party.name in proposal.support_only:
+        return (
+            "It names you as backing the government from outside the cabinet. No seats at "
+            "that table, and your seats counted behind it all the same."
+        )
+    return (
+        "It does not name you at all. It asks you for nothing — not a cabinet seat, not your "
+        "support — only that you are not among the seats that vote it down."
+    )
+
+
+def _what_it_pays_of_your_price(proposal: Proposal, party: Party) -> str:
+    """The Price report for the list the Proposal's own role puts this Party on.
+
+    A Party the Proposal does not name is charging nothing, because it is being asked for
+    nothing: showing it a price list for a bargain nobody offered would be the Referee
+    reporting on a question that was not put.
+    """
+    price = _price_asked_of(proposal, party)
+    if price is None:
+        return ""
+    return (
+        f"WHAT IT PAYS OF YOUR {price.value.upper()}\n\n"
+        + render_price_report(price_report(party, proposal.platform, price))
+        + "\n\n  A report, not a verdict. You may waive a price you named yourself, and you "
+        "may walk away over one the referee has just called met."
+    )
+
+
+def _price_asked_of(proposal: Proposal, party: Party) -> Price | None:
+    """Which of a Party's two price lists this Proposal is asking it to charge on."""
+    if party.name in proposal.government:
+        return Price.GOVERNING
+    if party.name in proposal.support_only:
+        return Price.SUPPORTING
+    return None
+
+
+def _how_the_vote_works(party: Party) -> str:
+    """Negative parliamentarism, said once to each Party in the terms of its own seats."""
+    return (
+        "HOW THE VOTE WORKS\n\n"
+        "The chamber does not vote a government in. It votes on whether to reject one, and "
+        f"this proposal passes unless {BLOCKING_MINORITY} seats or more vote No. All "
+        f"{party.seats} of your seats go whichever way you do; they are never split.\n\n"
+        "  - Yes      — you are for it.\n"
+        "  - Abstain  — you neither back it nor block it, and it passes over you.\n"
+        "  - No       — you are one of the seats trying to bring it down.\n\n"
+        "Yes and Abstain do the same thing to the arithmetic. Only No can defeat it, and "
+        f"only if enough others vote No beside you to reach {BLOCKING_MINORITY}.\n\n"
+        "Nothing binds you. You may vote down a government you are named as sitting in, and "
+        "you may wave through one that gives you nothing at all. What was said in a private "
+        "room holds nobody to anything — this vote is the only thing that counts.\n\n"
+        f"How do you vote, and why? About {WORDS} words in your own words, then call "
+        f"`{BALLOT}` in the same reply to cast it."
+    )
 
 
 def _your_attempt(others: tuple[Party, ...]) -> str:
@@ -507,13 +886,7 @@ def _the_rules() -> str:
 
 def _that_meeting_is_over(met: Bilateral) -> str:
     """What the Formateur is told once a Bilateral closes, before it chooses again."""
-    if met.ending is Ending.EXHAUSTED:
-        how = "the messages ran out with neither of you agreeing or declaring impasse"
-    else:
-        who = "you" if met.closed_by == met.formateur else met.counterparty
-        verb = "agreed" if met.ending is Ending.AGREEMENT else "declared impasse"
-        how = f"{who} {verb}"
-    return f"The meeting with {met.counterparty} is over: {how}."
+    return f"The meeting with {met.counterparty} is over: {met.ended_by(met.formateur)}."
 
 
 def _where_you_stand(party: Party) -> str:
@@ -616,8 +989,15 @@ def _how_you_negotiate() -> str:
 
 
 def _read_exchange(response: Response, speaker: str) -> Exchange:
-    """Turn one API response into an Exchange, or fail saying what was wrong with it."""
-    message = _prose(response, speaker, "an Exchange")
+    """Turn one API response into an Exchange, or fail saying what was wrong with it.
+
+    The one place an Agent's prose is *required*. The other side reads an Exchange and answers
+    it, so a missing one is a turn of the negotiation that never happened — everything else an
+    Agent says is an aside nobody answers, and `_aside` lets that be absent.
+    """
+    message = _aside(response, speaker)
+    if not message:
+        raise AgentError(f"{speaker}'s Agent returned no text block to read an Exchange from")
     if len(message.strip()) < MIN_MESSAGE:
         raise AgentError(
             f"{speaker}'s Agent returned a fragment rather than an Exchange: {message!r}.\n"
@@ -625,8 +1005,8 @@ def _read_exchange(response: Response, speaker: str) -> Exchange:
             f"it gets read as the start of a sentence and answered as though it were one."
         )
 
-    given = _tool_call(response, speaker, expected=END_MEETING["name"])
-    declares = None if given is None else _declaration(given.get("ending"), speaker)
+    given = _tool_call(response, speaker, expected=(str(END_MEETING["name"]),))
+    declares = None if given is None else _declaration(given[1].get("ending"), speaker)
 
     try:
         return Exchange(speaker=speaker, message=message, declares=declares)
@@ -647,12 +1027,13 @@ def _declaration(ending: Any, speaker: str) -> Declaration:
 def _read_choice(response: Response, speaker: str, others: tuple[Party, ...]) -> Choice:
     """Turn one API response into a Choice: the booked Party, and the reasoning beside it.
 
-    No floor on the reasoning. The fragment `MIN_MESSAGE` exists for is a fragment somebody
-    *answers* — a reasoning is read by nobody in the Run, so a short one is terse rather than
-    dangerous, and an empty one is already refused by `Choice`.
+    No floor on the reasoning, and no requirement that there be one. The fragment
+    `MIN_MESSAGE` exists for is a fragment somebody *answers* — a reasoning is read by nobody
+    in the Run, so a short one is terse and a missing one is a Round the record says nothing
+    about, rather than a Round that did not happen.
     """
-    reasoning = _prose(response, speaker, "its reasoning")
-    given = _tool_call(response, speaker, expected=MEET)
+    reasoning = _aside(response, speaker)
+    given = _tool_call(response, speaker, expected=(MEET,))
     if given is None:
         raise AgentError(
             f"{speaker}'s Agent gave its reasoning without booking a meeting: {reasoning!r}.\n"
@@ -660,7 +1041,7 @@ def _read_choice(response: Response, speaker: str, others: tuple[Party, ...]) ->
             f"names a Party only in prose has chosen nobody."
         )
 
-    chosen = given.get("party")
+    chosen = given[1].get("party")
     if chosen not in [party.name for party in others]:
         raise AgentError(
             f"{speaker}'s Agent chose to meet {chosen!r}, which is not a Party it can meet"
@@ -672,11 +1053,131 @@ def _read_choice(response: Response, speaker: str, others: tuple[Party, ...]) ->
         raise AgentError(f"{speaker}'s Agent returned an unusable Choice: {error}") from error
 
 
-def _prose(response: Response, speaker: str, wanted: str) -> str:
-    """The reply's ordinary text — the only place any prose in KBBL comes from.
+def _read_proposal(
+    response: Response, formateur: str, scenario: Scenario, commitments: tuple[str, ...]
+) -> tuple[Proposal | None, str]:
+    """A tabled Proposal or a Stand down, and the prose the Formateur gave either way.
+
+    None is Standing down, and it is a real answer rather than a failure to give one — a
+    Formateur that called neither tool has not stood down, it has said nothing, and that is
+    the error below.
+    """
+    reasoning = _aside(response, formateur)
+    given = _tool_call(response, formateur, expected=(TABLE, STAND_DOWN))
+    if given is None:
+        raise AgentError(
+            f"{formateur}'s Agent neither tabled a Proposal nor stood down: {reasoning!r}.\n"
+            f"  An Attempt ends one way or the other, and which one is read from the "
+            f"`{TABLE}` or `{STAND_DOWN}` call rather than out of the prose."
+        )
+
+    called, arguments = given
+    if called == STAND_DOWN:
+        return None, reasoning
+
+    government = _listed(arguments, "government", formateur)
+    support_only = _listed(arguments, "support_only", formateur)
+    granted = _listed(arguments, "commitments", formateur)
+
+    chamber = {party.name for party in scenario.parties}
+    for name in (*government, *support_only):
+        if name not in chamber:
+            raise AgentError(
+                f"{formateur}'s Agent named {name!r} in its Proposal, which is not a Party "
+                f"in Scenario {scenario.name!r}"
+            )
+    for commitment in granted:
+        if commitment not in commitments:
+            raise AgentError(
+                f"{formateur}'s Agent granted a Commitment nobody charged for: {commitment!r}"
+            )
+
+    if not government:
+        raise AgentError(
+            f"{formateur}'s Agent tabled a Proposal with nobody in its government.\n"
+            f"  A government of nobody is not a government, and a Formateur with nobody to "
+            f"put in cabinet has stood down — which is `{STAND_DOWN}`, not an empty `{TABLE}`."
+        )
+
+    platform = arguments.get("platform")
+    if not isinstance(platform, dict):
+        raise AgentError(f"{formateur}'s Agent tabled a Platform of {platform!r}")
+
+    try:
+        return (
+            Proposal(
+                formateur=formateur,
+                platform=Platform(**platform),
+                government=tuple(government),
+                support_only=tuple(support_only),
+                commitments=tuple(granted),
+            ),
+            reasoning,
+        )
+    except ValidationError as error:
+        raise AgentError(f"{formateur}'s Agent tabled an unusable Proposal: {error}") from error
+
+
+def _listed(arguments: dict[str, Any], field: str, formateur: str) -> list[str]:
+    """One list-of-names field of a tabled Proposal. Absent means empty, and so does empty.
+
+    Absent is a real case: `commitments` is left off the tool entirely when no Party in the
+    Scenario has named a free-text Demand, because an empty enum is a field nothing satisfies.
+    """
+    given = arguments.get(field, [])
+    if not isinstance(given, list) or not all(isinstance(name, str) for name in given):
+        raise AgentError(f"{formateur}'s Agent gave {field} as {given!r}")
+    return list(given)
+
+
+def _read_judgement(response: Response, party: str) -> Judgement:
+    """One Party's Ballot, and what it said casting it.
+
+    The Ballot is the enumerated argument and the reasoning is the reply's own text, which is
+    the whole of §2 at the one moment it matters most: this is the number the Referee counts,
+    and a Vote read out of prose would be a Vote nobody could check.
+    """
+    reasoning = _aside(response, party)
+    given = _tool_call(response, party, expected=(BALLOT,))
+    if given is None:
+        raise AgentError(
+            f"{party}'s Agent said its piece without voting: {reasoning!r}.\n"
+            f"  Every Party casts a Ballot, and it is read from the `{BALLOT}` call and "
+            f"nowhere else."
+        )
+
+    cast = given[1].get("ballot")
+    if cast not in [option.value for option in Ballot]:
+        raise AgentError(f"{party}'s Agent voted {cast!r}, which is not a Ballot")
+
+    try:
+        return Judgement(party=party, ballot=Ballot(cast), reasoning=reasoning)
+    except ValidationError as error:
+        raise AgentError(f"{party}'s Agent returned an unusable Ballot: {error}") from error
+
+
+def _aside(response: Response, speaker: str) -> str:
+    """The reply's ordinary text — the only place any prose in KBBL comes from — or "".
 
     Ticket 02 recorded what happens when prose is decoded inside a constrained field instead:
-    empty strings, truncated stubs and leaked JSON, in roughly one live call in eleven.
+    empty strings, truncated stubs and leaked JSON, in roughly one live call in eleven. So the
+    message is the reply's own text and every field the Referee reads is an enumerated tool
+    argument beside it (§2).
+
+    Empty is a real answer here, because what comes through this for everything but an
+    Exchange is an aside nobody in the Run answers.
+
+    A Round's reasoning, a Formateur's account of what it tabled, a Party's line on its own
+    Ballot: each is for the Transcript, and none of them is a turn of the negotiation. Live
+    Agents do spend a turn's thinking and hand back the call alone — a whole recorded Attempt
+    aborted on the first live run of this ticket for want of one sentence — and killing a paid
+    Attempt over a missing aside is failing loudly about the wrong thing. The question the
+    Referee asked was answered, in the enumerated field it agreed to read. `_read_exchange` is
+    the one caller that insists, and it says why.
+
+    What is *not* waved through is a reply that did not finish. A refusal, a `max_tokens` cut
+    or any other stop reason is a reply nobody should read a tool call out of either, so it
+    is checked here rather than beside the prose it happens to be missing.
     """
     stop = response.get("stop_reason")
     if stop == "refusal":
@@ -686,16 +1187,18 @@ def _prose(response: Response, speaker: str, wanted: str) -> str:
 
     blocks = response.get("content") or ()
     text = next((block["text"] for block in blocks if block.get("type") == "text"), None)
-    if text is None:
-        raise AgentError(f"{speaker}'s Agent returned no text block to read {wanted} from")
-    return str(text)
+    return "" if text is None else str(text)
 
 
-def _tool_call(response: Response, speaker: str, *, expected: str) -> dict[str, Any] | None:
-    """What a reply called `expected` with, or None if it called nothing.
+def _tool_call(
+    response: Response, speaker: str, *, expected: tuple[str, ...]
+) -> tuple[str, dict[str, Any]] | None:
+    """Which of `expected` a reply called and what with, or None if it called nothing.
 
-    An Agent is offered exactly one tool at a time, so anything else in a reply is a reply
-    nobody agreed to read: two calls, or a call by a name that was never on offer.
+    An Agent is never offered a tool it cannot use, so anything else in a reply is a reply
+    nobody agreed to read: two calls at once, or a call by a name that was never on offer.
+    The name comes back beside the arguments because tabling and Standing down are two tools
+    answering one question, and which was called *is* the answer.
     """
     blocks = response.get("content") or ()
     calls = [block for block in blocks if block.get("type") == "tool_use"]
@@ -706,11 +1209,10 @@ def _tool_call(response: Response, speaker: str, *, expected: str) -> dict[str, 
         raise AgentError(f"{speaker}'s Agent made more than one call in one reply: {names}")
 
     call = calls[0]
-    if call.get("name") != expected:
-        raise AgentError(
-            f"{speaker}'s Agent called {call.get('name')!r}, which is not a tool it has"
-        )
+    name = call.get("name")
+    if name not in expected:
+        raise AgentError(f"{speaker}'s Agent called {name!r}, which is not a tool it has")
     given = call.get("input")
     if not isinstance(given, dict):
-        raise AgentError(f"{speaker}'s Agent called {expected!r} with {given!r}")
-    return given
+        raise AgentError(f"{speaker}'s Agent called {name!r} with {given!r}")
+    return str(name), given

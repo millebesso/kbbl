@@ -1,4 +1,4 @@
-"""`kbbl run <scenario>` — load a Scenario, print the chamber, and spend a Formateur's Rounds.
+"""`kbbl run <scenario>` — load a Scenario, print the chamber, and run one Formateur's Attempt.
 
 Live is the default and `--replay` opts out (§11.5): a Run that negotiates is a Run that
 calls the model, and the free path is the recorded one.
@@ -14,7 +14,6 @@ from pathlib import Path
 from kbbl.agents import AgentError
 from kbbl.cassettes import CassetteMiss, Cassettes
 from kbbl.loop import attempt
-from kbbl.models import Run
 from kbbl.output import render_transcript
 from kbbl.referee import render_blocking_groupings, render_seat_table
 from kbbl.scenario import ScenarioError, load_scenario
@@ -69,7 +68,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     print()
 
     try:
-        rounds = attempt(
+        record = attempt(
             scenario,
             formateur=formateur,
             cassettes=Cassettes(arguments.cassettes / scenario.name, replay=arguments.replay),
@@ -78,6 +77,5 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(error, file=sys.stderr)
         return 1
 
-    record = Run(scenario=scenario.name, formateur=formateur.name, rounds=rounds)
-    print(render_transcript(record))
+    print(render_transcript(scenario, record))
     return 0

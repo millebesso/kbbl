@@ -31,6 +31,7 @@ from kbbl.referee import (
     render_blocking_groupings,
     render_gap_report,
     render_price_report,
+    render_proposal,
     render_seat_table,
     render_vote,
 )
@@ -257,6 +258,52 @@ def proposed(*government: str, support_only: tuple[str, ...] = ()) -> Proposal:
         government=government,
         support_only=support_only,
     )
+
+
+def test_the_proposal_report_shows_the_platform_the_roles_and_the_arithmetic(
+    four_party: Scenario,
+) -> None:
+    """One rendering, shown to every Party before it votes and printed afterwards."""
+    rendered = render_proposal(
+        four_party,
+        Proposal(
+            formateur="NP",
+            platform=platform(economic=3, environment=-2),
+            government=("NP", "MI"),
+            support_only=("GV",),
+            commitments=("a binding cap on public spending growth",),
+        ),
+    )
+
+    assert "NP's Proposal." in rendered
+    assert "economic        +3" in rendered
+    assert "environment     -2" in rendered
+    assert "military         0" in rendered
+    assert "Government:    NP, MI" in rendered
+    assert "Support-only:  GV" in rendered
+    assert "217 seats are behind it" in rendered
+    assert f"{BLOCKING_MINORITY} voting No" in rendered
+    assert "a binding cap on public spending growth" in rendered
+
+
+def test_a_proposal_with_nobody_outside_cabinet_says_so_rather_than_showing_a_blank(
+    four_party: Scenario,
+) -> None:
+    rendered = render_proposal(four_party, proposed("NP"))
+
+    assert "Support-only:  nobody" in rendered
+    assert "commits the government to" not in rendered
+
+
+def test_no_ministry_or_portfolio_is_reported_because_none_is_modelled(
+    four_party: Scenario,
+) -> None:
+    """§4: modelling portfolios needs a ministry list and a per-Party valuation of each
+    post, which is a second preference model this project does not have."""
+    rendered = render_proposal(four_party, proposed("NP", support_only=("MI",)))
+
+    for word in ("ministr", "portfolio", "department"):
+        assert word not in rendered.lower()
 
 
 def test_a_proposal_passes_unless_the_blocking_minority_votes_no(

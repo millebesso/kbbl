@@ -41,7 +41,8 @@ Minimal groupings that reach it:
 Then the Formateur — the largest Party — spends five Rounds. Each Round it picks **one** Party,
 says why before the door closes, and meets it in private for up to three Exchanges each way.
 Five Rounds do not reach everybody, so choosing whom to court is the central strategic act
-(§5.1), and the whole Attempt prints as a Transcript:
+(§5.1). What they buy is a single Proposal, which the chamber then votes on. The whole
+Attempt prints as a Transcript:
 
 ```
 Round 3 of 5 — NP meets GV
@@ -73,6 +74,37 @@ That is an excerpt from the committed Cassettes — `--replay` prints the whole 
 everything it hears from one room into the next. Every other Party knows only its own
 meeting, and is never told the others happened.
 
+## The Proposal and the Vote
+
+When the budget runs out the Formateur either tables a Proposal — a Platform, who governs,
+who supports from outside, and any Commitments — or **Stands down**, which ends its Attempt
+without costing the chamber a Vote. Everything the Referee reads is an enumerated tool
+argument; the prose beside it is for the Transcript and is never parsed.
+
+Before each Party judges the Proposal it is shown its own **Gap report**: how far this
+Platform sits from what it campaigned on, its worst betrayals marked by name. Parties in the
+Proposal also see what it pays of their own price list. Both are feedback and neither binds —
+a Party may vote down a government it is named as sitting in, and one the Proposal ignores
+entirely may wave it through. That report is the only thing standing between this design and
+a mushy grand coalition every run (§5.4), so the first live Attempt was read for exactly it:
+
+```
+GV votes No:
+    This platform is nowhere near my mandate on environment, transport, or social — a
+    betrayal of everything we campaigned on. NP offered nothing for our cooperation.
+    We're not obligated to spare them the consequences of that. Voting No.
+
+...
+
+Yes        175
+Abstain      0
+No         174
+
+174 seats voted No, and it takes 175 to defeat a Proposal. It passes.
+```
+
+Nobody folded, and a government of exactly 175 survived by a single seat.
+
 A Fixture is a Scenario in every respect, so `kbbl run` takes either. See
 [`fixtures/README.md`](fixtures/README.md).
 
@@ -90,9 +122,9 @@ Replay needs no credentials at all: the API client is only built on the live pat
 persona, a briefing or the model changes the request, so `--replay` will miss and say so — a
 miss is the honest answer, not a bug.
 
-A whole Attempt is 24 calls, and `cassettes/four-party/` holds one. Changing a persona, a
-briefing or the schema re-keys every one of them, so the recording is replaced rather than
-patched: delete the drawer and run live again.
+A whole Attempt is around 30 calls, and `cassettes/four-party/` holds one of 31. Changing a
+persona, a briefing or the schema re-keys every one of them, so the recording is replaced
+rather than patched: delete the drawer and run live again.
 
 ## Development
 

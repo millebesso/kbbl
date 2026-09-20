@@ -2,15 +2,39 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
+from typing import Any
 
 import pytest
 
-from conftest import Model, chose, mandate, positions, responded, said, spoken, write_scenario
-from kbbl.agents import MODEL, AgentError, FormateurAgent, persona
+from conftest import (
+    Model,
+    briefing,
+    chose,
+    mandate,
+    platform,
+    positions,
+    responded,
+    said,
+    spoken,
+    stood_down,
+    tabled,
+    voted,
+    write_scenario,
+)
+from kbbl.agents import BALLOT, MODEL, AgentError, FormateurAgent, persona
 from kbbl.cassettes import Cassettes
-from kbbl.models import Bilateral, Choice, Ending, Scenario
-from kbbl.referee import ROUNDS
+from kbbl.loop import attempt
+from kbbl.models import Axis, Ballot, Bilateral, Choice, Ending, Judgement, Scenario
+from kbbl.referee import (
+    ROUNDS,
+    Price,
+    gap_report,
+    price_report,
+    render_gap_report,
+    render_price_report,
+)
 from kbbl.scenario import load_scenario
 
 
@@ -320,10 +344,14 @@ def test_a_formateur_alone_in_the_chamber_has_nobody_to_meet(tmp_path: Path) -> 
 def test_an_empty_message_is_refused_rather_than_shown_as_an_exchange(
     four_party: Scenario, tmp_path: Path
 ) -> None:
-    """A live Agent did exactly this. An Exchange nobody can read is not an Exchange."""
+    """A live Agent did exactly this. An Exchange nobody can read is not an Exchange.
+
+    An empty text block and no text block are one thing to whoever was waiting to be spoken
+    to, so they are refused with one message.
+    """
     model = Model(responded(""))
 
-    with pytest.raises(AgentError, match="unusable|fragment"):
+    with pytest.raises(AgentError, match="no text block"):
         hold_bilateral(four_party, model, tmp_path)
 
 
@@ -352,16 +380,38 @@ def test_no_prose_is_ever_decoded_inside_a_constrained_field(
     character while two or three paragraphs were being decoded inside a schema's string. The
     fields the Referee reads are short and enumerated, and they are the only constrained
     things in a request.
+
+    Walked to the leaves rather than over the top level, because a Proposal's Platform is ten
+    values inside an object and its roles are names inside arrays. An object or an array is a
+    container and carries no text of its own; a leaf that is not enumerated is a field an
+    Agent writes prose into, which is the one shape this repo does not send.
     """
     model = Model()
-    FormateurAgent(four_party, four_party.parties[0]).spend(Cassettes(tmp_path, live=model))
+    hold_vote(four_party, model, tmp_path)
 
-    assert len(model.requests) > 1
+    assert len(model.requests) > ROUNDS
+    named = set()
     for request in model.requests:
         assert "output_config" not in request
         for tool in request["tools"]:
-            fields = tool["input_schema"]["properties"].values()
-            assert all("enum" in field for field in fields), tool["name"]
+            named.add(tool["name"])
+            for path, leaf in _leaves(tool["input_schema"]):
+                assert "enum" in leaf, f"{tool['name']}.{path}"
+    assert named == {"meet", "end_meeting", "table", "stand_down", "ballot"}
+
+
+def _leaves(schema: dict[str, Any], path: str = "") -> list[tuple[str, dict[str, Any]]]:
+    """Every field of a tool schema that an Agent actually writes a value into."""
+    kind = schema.get("type")
+    if kind == "object":
+        return [
+            leaf
+            for name, field in schema.get("properties", {}).items()
+            for leaf in _leaves(field, f"{path}.{name}" if path else name)
+        ]
+    if kind == "array":
+        return _leaves(schema["items"], f"{path}[]")
+    return [(path, schema)]
 
 
 # --- choosing whom to meet ----------------------------------------------------------------
@@ -456,3 +506,470 @@ def test_the_counterparty_is_never_told_the_formateur_had_a_choice_to_make(
         conversation = "\n".join(model.said_to(index)) + model.system(index)
         assert "worth the round" not in conversation
         assert "ROUND 1" not in conversation
+
+
+# --- tabling a Proposal, or standing down -------------------------------------------------
+
+
+def run_attempt(scenario: Scenario, model: Model, tmp_path: Path) -> FormateurAgent:
+    """A Formateur with its five Rounds behind it, ready to table."""
+    agent = FormateurAgent(scenario, scenario.parties[0])
+    cassettes = Cassettes(tmp_path, live=model)
+    for _ in range(ROUNDS):
+        agent.spend(cassettes)
+    return agent
+
+
+def test_the_formateur_tables_a_proposal_as_structured_output(
+    four_party: Scenario, tmp_path: Path
+) -> None:
+    """§2: the Platform, the roles and the Commitments are read from the call, never prose."""
+    model = Model(
+        tables=tabled(
+            "NP",
+            "MI",
+            support_only=["GV"],
+            commitments=["a binding cap on public spending growth"],
+            reasoning="NP and MI govern, GV holds its nose from outside.",
+            economic=3,
+            law_and_order=4,
+        ),
+        chooses=["MI", "GV", "FF", "MI", "GV"],
+    )
+    agent = run_attempt(four_party, model, tmp_path)
+
+    proposal, reasoning = agent.table(Cassettes(tmp_path, live=model))
+
+    assert reasoning == "NP and MI govern, GV holds its nose from outside."
+    assert proposal is not None
+    assert proposal.formateur == "NP"
+    assert proposal.government == ("NP", "MI")
+    assert proposal.support_only == ("GV",)
+    assert proposal.base == ("NP", "MI", "GV")
+    assert proposal.platform.on(Axis.ECONOMIC) == 3
+    assert proposal.platform.on(Axis.ENVIRONMENT) == 0
+    assert proposal.commitments == ("a binding cap on public spending growth",)
+
+
+def test_a_formateur_may_stand_down_instead_of_tabling(
+    four_party: Scenario, tmp_path: Path
+) -> None:
+    """§5.3: Standing down ends the Attempt and costs the Chamber none of its four Votes."""
+    model = Model(tables=stood_down("Nobody here will pay what a government costs."))
+    agent = run_attempt(four_party, model, tmp_path)
+
+    proposal, reasoning = agent.table(Cassettes(tmp_path, live=model))
+
+    assert proposal is None
+    assert reasoning == "Nobody here will pay what a government costs."
+
+
+def test_the_formateur_is_offered_both_tabling_and_standing_down(
+    four_party: Scenario, tmp_path: Path
+) -> None:
+    """The choice is the Formateur's, so both are on the table and neither is the default."""
+    model = Model()
+    agent = run_attempt(four_party, model, tmp_path)
+
+    agent.table(Cassettes(tmp_path, live=model))
+
+    offered = model.requests[-1]
+    assert [tool["name"] for tool in offered["tools"]] == ["table", "stand_down"]
+    brief = str(offered["messages"][-1]["content"])
+    assert "YOUR ROUNDS ARE SPENT." in brief
+    assert "stand down" in brief
+    assert "spends none of the four it has" in brief
+
+
+def test_the_formateur_sees_its_spent_rounds_and_how_each_meeting_ended(
+    four_party: Scenario, tmp_path: Path
+) -> None:
+    """Five meetings on from the first, the endings are worth having in front of it again."""
+    model = Model(
+        spoken("There is nothing here for us.", "impasse"),
+        chooses=["MI", "GV", "FF", "MI", "GV"],
+    )
+    agent = run_attempt(four_party, model, tmp_path)
+
+    agent.table(Cassettes(tmp_path, live=model))
+
+    brief = str(model.requests[-1]["messages"][-1]["content"])
+    assert "round 1 on MI — you declared impasse" in brief
+    assert "round 5 on GV — you declared impasse" in brief
+
+
+def test_no_ministries_or_portfolios_appear_anywhere_in_a_proposal(
+    four_party: Scenario, tmp_path: Path
+) -> None:
+    """§4: cabinet portfolios are deliberately out of scope, so there is nothing to promise."""
+    model = Model()
+    agent = run_attempt(four_party, model, tmp_path)
+
+    proposal, _ = agent.table(Cassettes(tmp_path, live=model))
+
+    assert proposal is not None
+    assert not hasattr(proposal, "ministries")
+    offered = model.requests[-1]
+    tabling = next(tool for tool in offered["tools"] if tool["name"] == "table")
+    assert set(tabling["input_schema"]["properties"]) <= {
+        "platform",
+        "government",
+        "support_only",
+        "commitments",
+    }
+    brief = str(offered["messages"][-1]["content"])
+    assert "There are no ministries in it." in brief
+    for word in ("ministry", "portfolio", "minister of"):
+        assert word not in json.dumps(offered).lower()
+
+
+def test_a_commitment_can_only_be_one_somebody_charged_for(
+    four_party: Scenario, tmp_path: Path
+) -> None:
+    """A Commitment is a free-text Demand that has been granted, so the menu is the Demands.
+
+    Scoped to the Parties the Formateur actually met, plus its own: a Round buys the price
+    list, and a Formateur that courted nobody has only its own to write in.
+    """
+    model = Model(chooses=["MI"])
+    agent = run_attempt(four_party, model, tmp_path)
+
+    agent.table(Cassettes(tmp_path, live=model))
+
+    tabling = next(tool for tool in model.requests[-1]["tools"] if tool["name"] == "table")
+    assert tabling["input_schema"]["properties"]["commitments"]["items"]["enum"] == [
+        "a binding cap on public spending growth",
+        "the rural broadband programme is funded in full",
+    ]
+    assert "no cuts to the pension floor this term" not in json.dumps(model.requests[-1])
+
+
+def test_a_commitment_nobody_charged_for_fails_loudly(
+    four_party: Scenario, tmp_path: Path
+) -> None:
+    model = Model(tables=tabled("NP", commitments=["the moon on a stick"]))
+    agent = run_attempt(four_party, model, tmp_path)
+
+    with pytest.raises(AgentError, match="nobody charged for"):
+        agent.table(Cassettes(tmp_path, live=model))
+
+
+def test_a_proposal_naming_somebody_who_holds_no_seat_fails_loudly(
+    four_party: Scenario, tmp_path: Path
+) -> None:
+    model = Model(tables=tabled("NP", "ZZ"))
+    agent = run_attempt(four_party, model, tmp_path)
+
+    with pytest.raises(AgentError, match="not a Party in Scenario"):
+        agent.table(Cassettes(tmp_path, live=model))
+
+
+def test_a_party_in_both_government_and_support_only_fails_loudly(
+    four_party: Scenario, tmp_path: Path
+) -> None:
+    """§4: Support-only is backing from outside cabinet, so the two roles are exclusive."""
+    model = Model(tables=tabled("NP", "MI", support_only=["MI"]))
+    agent = run_attempt(four_party, model, tmp_path)
+
+    with pytest.raises(AgentError, match="unusable Proposal"):
+        agent.table(Cassettes(tmp_path, live=model))
+
+
+def test_a_formateur_that_neither_tables_nor_stands_down_fails_loudly(
+    four_party: Scenario, tmp_path: Path
+) -> None:
+    """§2 again: which way an Attempt ended is read from the call, not out of the prose."""
+    model = Model(tables=responded("I think we table something along these lines."))
+    agent = run_attempt(four_party, model, tmp_path)
+
+    with pytest.raises(AgentError, match="neither tabled a Proposal nor stood down"):
+        agent.table(Cassettes(tmp_path, live=model))
+
+
+# --- the Vote ------------------------------------------------------------------------------
+
+
+def hold_vote(
+    scenario: Scenario, model: Model, tmp_path: Path
+) -> tuple[FormateurAgent, tuple[Judgement, ...]]:
+    """A whole Attempt through to the Ballots, held on the Proposal the stand-in tables."""
+    agent = run_attempt(scenario, model, tmp_path)
+    cassettes = Cassettes(tmp_path, live=model)
+    proposal, _ = agent.table(cassettes)
+    assert proposal is not None
+    return agent, agent.put_to_the_chamber(proposal, cassettes)
+
+
+def test_every_party_casts_a_ballot_in_chamber_order(
+    four_party: Scenario, tmp_path: Path
+) -> None:
+    """Including the Formateur, and including the Parties the Proposal never names — it is
+    exactly those whose Abstention is the cheapest thing on offer (§5.2)."""
+    model = Model(tables=tabled("NP"), ballots=["Yes", "No", "Abstain", "Abstain"])
+
+    _, judgements = hold_vote(four_party, model, tmp_path)
+
+    assert [judgement.party for judgement in judgements] == ["NP", "FF", "GV", "MI"]
+    assert [judgement.ballot for judgement in judgements] == [
+        Ballot.YES,
+        Ballot.NO,
+        Ballot.ABSTAIN,
+        Ballot.ABSTAIN,
+    ]
+
+
+def test_a_ballot_is_structured_and_its_reasoning_is_prose(
+    four_party: Scenario, tmp_path: Path
+) -> None:
+    """§2: the Referee counts the enumerated field; the sentence is for the Transcript."""
+    model = Model(
+        tables=tabled("NP"),
+        ballots=[voted("No", "Five points from our voters on health. No.")],
+    )
+
+    _, judgements = hold_vote(four_party, model, tmp_path)
+
+    assert judgements[0].ballot is Ballot.NO
+    assert judgements[0].reasoning == "Five points from our voters on health. No."
+    voting = [
+        request
+        for request in model.requests
+        if any(tool["name"] == "ballot" for tool in request["tools"])
+    ]
+    assert len(voting) == len(four_party.parties)
+    for request in voting:
+        assert [tool["name"] for tool in request["tools"]] == ["ballot"]
+
+
+def test_each_party_is_shown_its_own_gap_report_before_it_judges(
+    four_party: Scenario, tmp_path: Path
+) -> None:
+    """§5.4: the only defence this design has against a mushy grand coalition every Run."""
+    model = Model(tables=tabled("NP", economic=3, environment=-2))
+
+    hold_vote(four_party, model, tmp_path)
+
+    shown = voting(model)
+    assert set(shown) == {"NP", "FF", "GV", "MI"}
+    for name, brief in shown.items():
+        assert f"{name}: its Positions against this Platform." in brief
+        assert "mean Gap:" in brief
+        assert "worst Gap:" in brief
+    assert (
+        render_gap_report(gap_report(four_party.party("GV"), platform(economic=3, environment=-2)))
+        in shown["GV"]
+    )
+    assert "GV: its Positions" not in shown["FF"]
+
+
+def test_a_party_in_the_base_is_shown_what_the_platform_pays_of_its_own_price(
+    four_party: Scenario, tmp_path: Path
+) -> None:
+    """The first ticket that shows a Demand as persona prose and as a report cell at once."""
+    model = Model(tables=tabled("NP", "MI", support_only=["GV"], environment=1))
+
+    hold_vote(four_party, model, tmp_path)
+    offered = platform(environment=1)
+
+    shown = voting(model)
+    assert "WHAT IT PAYS OF YOUR GOVERNING PRICE" in shown["MI"]
+    assert (
+        render_price_report(price_report(four_party.party("MI"), offered, Price.GOVERNING))
+        in shown["MI"]
+    )
+    assert "unevaluated  the rural broadband programme is funded in full" in shown["MI"]
+    assert "WHAT IT PAYS OF YOUR SUPPORTING PRICE" in shown["GV"]
+    assert (
+        render_price_report(price_report(four_party.party("GV"), offered, Price.SUPPORTING))
+        in shown["GV"]
+    )
+    assert "unmet  environment >= +2" in shown["GV"]
+    assert "Supporting price" not in shown["MI"]
+
+
+def test_a_party_the_proposal_does_not_name_is_told_it_is_asked_nothing(
+    four_party: Scenario, tmp_path: Path
+) -> None:
+    """Its Abstention is the cheapest thing a Formateur can buy, and it is not being sold
+    anything — so it is shown its Gap report and no price list for a bargain nobody offered."""
+    model = Model(tables=tabled("NP", "MI"))
+
+    hold_vote(four_party, model, tmp_path)
+
+    shown = voting(model)
+    assert "It does not name you at all." in shown["FF"]
+    assert "WHAT IT PAYS OF YOUR" not in shown["FF"]
+    assert "FF: its Positions against this Platform." in shown["FF"]
+    assert "It puts you in the cabinet." in shown["MI"]
+
+
+def test_a_party_votes_in_the_room_it_bargained_in(
+    four_party: Scenario, tmp_path: Path
+) -> None:
+    """The Proposal is judged against the terms it reached, so it has to remember them."""
+    model = Model(
+        spoken("Environment at +2 and I stay out of your way."),
+        chooses=["GV"],
+        tables=tabled("NP"),
+    )
+
+    hold_vote(four_party, model, tmp_path)
+
+    voting = next(
+        request
+        for request in model.requests
+        if any(tool["name"] == "ballot" for tool in request["tools"])
+        and "You are the leader of GV," in briefing(request)
+    )
+    told = "\n".join(str(message["content"]) for message in voting["messages"])
+    assert said("Environment at +2 and I stay out of your way.") in told
+    assert "You are now in the room with" not in told
+
+
+def test_a_party_never_courted_still_votes_and_carries_no_bilateral_into_it(
+    four_party: Scenario, tmp_path: Path
+) -> None:
+    """It holds every seat it was elected with whether or not the Formateur came to see it."""
+    model = Model(chooses=["MI"], tables=tabled("NP", "MI"))
+
+    _, judgements = hold_vote(four_party, model, tmp_path)
+
+    assert {judgement.party for judgement in judgements} == {"NP", "FF", "GV", "MI"}
+    unmet = next(
+        request
+        for request in model.requests
+        if any(tool["name"] == "ballot" for tool in request["tools"])
+        and "You are the leader of FF," in briefing(request)
+    )
+    assert len(unmet["messages"]) == 1
+    assert "It never came to see you." in briefing(unmet)
+
+
+def test_a_ballot_the_referee_does_not_recognise_fails_loudly(
+    four_party: Scenario, tmp_path: Path
+) -> None:
+    model = Model(
+        tables=tabled("NP"),
+        ballots=[responded(said("Maybe."), called={"name": "ballot", "input": {"ballot": "Nej"}})],
+    )
+
+    with pytest.raises(AgentError, match="not a Ballot"):
+        hold_vote(four_party, model, tmp_path)
+
+
+def test_a_party_that_says_its_piece_without_voting_fails_loudly(
+    four_party: Scenario, tmp_path: Path
+) -> None:
+    model = Model(tables=tabled("NP"), ballots=[responded("We are minded to let it through.")])
+
+    with pytest.raises(AgentError, match="without voting"):
+        hold_vote(four_party, model, tmp_path)
+
+
+def voting(model: Model) -> dict[str, str]:
+    """What each Party was shown before it cast its Ballot, keyed by whose it was.
+
+    Read off the requests rather than off the code that built them: what a Party was shown is
+    the thing under test, and three tests were each rebuilding this by hand.
+    """
+    return {
+        _leader(model.system(index)): str(request["messages"][-1]["content"])
+        for index, request in enumerate(model.requests)
+        if any(tool["name"] == BALLOT for tool in request["tools"])
+    }
+
+
+def _leader(system: str) -> str:
+    """Whose conversation a request belongs to, read off the persona's first line."""
+    return system.split("You are the leader of ", 1)[1].split(",", 1)[0]
+
+
+def test_a_call_with_no_prose_beside_it_still_answers_the_question_it_was_asked(
+    four_party: Scenario, tmp_path: Path
+) -> None:
+    """A live Attempt aborted on exactly this: `meet` called after a turn of thinking, with
+    no sentence beside it. Nobody in the Run reads a reasoning, so nothing was lost but the
+    sentence — and re-rolling a paid Attempt over it would have lost the whole Attempt."""
+    booked = responded("", called={"name": "meet", "input": {"party": "MI"}})
+    del booked["content"][0]
+
+    model = Model(
+        chooses=[booked],
+        tables=responded("", called={"name": "stand_down", "input": {}}),
+    )
+    run = attempt(
+        four_party,
+        formateur=four_party.parties[0],
+        cassettes=Cassettes(tmp_path, live=model),
+    )
+
+    assert run.rounds[0].counterparty == "MI"
+    assert run.rounds[0].choice.reasoning == ""
+    assert run.stood_down
+    assert run.reasoning == ""
+
+
+def test_a_ballot_with_no_prose_beside_it_is_still_counted(
+    four_party: Scenario, tmp_path: Path
+) -> None:
+    cast = responded("", called={"name": "ballot", "input": {"ballot": "No"}})
+    del cast["content"][0]
+
+    _, judgements = hold_vote(
+        four_party, Model(tables=tabled("NP"), ballots=[cast]), tmp_path
+    )
+
+    assert all(judgement.ballot is Ballot.NO for judgement in judgements)
+    assert all(judgement.reasoning == "" for judgement in judgements)
+
+
+def test_an_exchange_with_no_prose_beside_it_is_still_refused(
+    four_party: Scenario, tmp_path: Path
+) -> None:
+    """The other side answers an Exchange, so a missing one is a turn that never happened."""
+    silent = responded("", called={"name": "end_meeting", "input": {"ending": "agreement"}})
+    del silent["content"][0]
+
+    with pytest.raises(AgentError, match="no text block"):
+        hold_bilateral(four_party, Model(silent), tmp_path)
+
+
+def test_a_reply_that_did_not_finish_still_fails_however_little_it_was_asked_for(
+    four_party: Scenario, tmp_path: Path
+) -> None:
+    """Waving a missing aside through must not wave through a truncated or refused reply."""
+    model = Model(chooses=[{"content": [], "stop_reason": "max_tokens"}])
+
+    with pytest.raises(AgentError, match="max_tokens"):
+        make_choice(four_party, model, tmp_path)
+
+
+def test_a_platform_that_is_not_ten_axis_values_fails_loudly(
+    four_party: Scenario, tmp_path: Path
+) -> None:
+    model = Model(
+        tables=responded(
+            "Here it is.",
+            called={"name": "table", "input": {"platform": "centrist", "government": ["NP"]}},
+        )
+    )
+    agent = run_attempt(four_party, model, tmp_path)
+
+    with pytest.raises(AgentError, match="tabled a Platform of"):
+        agent.table(Cassettes(tmp_path, live=model))
+
+
+def test_a_government_of_nobody_is_not_a_government(
+    four_party: Scenario, tmp_path: Path
+) -> None:
+    """A Formateur with nobody to put in cabinet has stood down, whatever tool it called.
+
+    Caught on the way back in rather than in the schema. Ticket 02 found the API drops
+    `minLength` from a schema and recorded the lesson that a schema carrying a constraint it
+    does not enforce is lying; the floor that is certain is the one checked here.
+    """
+    model = Model(tables=tabled())
+    agent = run_attempt(four_party, model, tmp_path)
+
+    with pytest.raises(AgentError, match="nobody in its government"):
+        agent.table(Cassettes(tmp_path, live=model))

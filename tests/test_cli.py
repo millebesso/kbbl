@@ -1,4 +1,4 @@
-"""`kbbl run <scenario>` — loads, prints the chamber, spends five Rounds, exits.
+"""`kbbl run <scenario>` — loads, prints the chamber, runs one whole Attempt, exits.
 
 Nothing here calls the model. Most tests record an Attempt against a scripted stand-in and
 then replay those Cassettes through the real CLI, which exercises the whole wiring for free;
@@ -9,7 +9,9 @@ from __future__ import annotations
 
 import subprocess
 import sys
+from collections.abc import Sequence
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -21,12 +23,13 @@ from conftest import (
     positions,
     recorded_requests,
     spoken,
+    stood_down,
+    tabled,
     two_party,
 )
 from kbbl.cassettes import Cassettes
 from kbbl.cli import main
 from kbbl.loop import attempt
-from kbbl.models import Run
 from kbbl.referee import ROUNDS
 from kbbl.scenario import load_scenario
 
@@ -38,22 +41,41 @@ NOT_RECORDED = (
 )
 
 
-@pytest.fixture
-def replay(tmp_path: Path) -> list[str]:
-    """Cassettes for a whole Attempt, recorded off a scripted Agent."""
+def recorded(tmp_path: Path, model: Model) -> list[str]:
+    """Record a whole Attempt off a scripted Agent, and the flags that replay it."""
     scenario = load_scenario(FOUR_PARTY)
-    model = Model(
-        spoken("Abstain and the broadband money is yours."),
-        spoken("Not for that price."),
-        spoken("Then we are done here.", "impasse"),
-        chooses=["FF", "MI", "GV", "MI", "FF"],
-    )
     attempt(
         scenario,
         formateur=scenario.parties[0],
         cassettes=Cassettes(tmp_path / scenario.name, live=model),
     )
     return ["--replay", "--cassettes", str(tmp_path)]
+
+
+def bargaining(
+    tables: dict[str, Any] | None = None, ballots: Sequence[str] = ()
+) -> Model:
+    """The five Rounds every Attempt here spends, and what this one does with them."""
+    return Model(
+        spoken("Abstain and the broadband money is yours."),
+        spoken("Not for that price."),
+        spoken("Then we are done here.", "impasse"),
+        chooses=["FF", "MI", "GV", "MI", "FF"],
+        tables=tables,
+        ballots=ballots,
+    )
+
+
+@pytest.fixture
+def replay(tmp_path: Path) -> list[str]:
+    """Cassettes for a whole Attempt whose Proposal the chamber lets through."""
+    return recorded(
+        tmp_path,
+        bargaining(
+            tabled("NP", "MI", economic=2, law_and_order=3),
+            ["Yes", "No", "No", "Yes"],
+        ),
+    )
 
 
 def test_run_prints_the_chamber_and_exits_zero(
@@ -175,12 +197,11 @@ def test_the_recorded_run_shows_no_party_a_bilateral_it_was_not_in() -> None:
         pytest.skip(NOT_RECORDED)
 
     scenario = load_scenario(FOUR_PARTY)
-    rounds = attempt(
+    run = attempt(
         scenario,
         formateur=scenario.parties[0],
         cassettes=Cassettes(COMMITTED, replay=True),
     )
-    run = Run(scenario=scenario.name, formateur=scenario.parties[0].name, rounds=rounds)
 
     assert leaks(recorded_requests(COMMITTED), run) == []
 
@@ -212,3 +233,52 @@ def test_the_console_script_runs_a_scenario(replay: list[str]) -> None:
 
     assert finished.returncode == 0, finished.stderr
     assert "349" in finished.stdout
+
+
+def test_run_prints_the_proposal_the_ballots_and_the_count(
+    replay: list[str], capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A passed Proposal, end to end through the real command and out of Cassettes."""
+    code = main(["run", str(FOUR_PARTY), *replay])
+
+    out = capsys.readouterr().out
+    assert code == 0
+    assert "The Proposal" in out
+    assert "Government:    NP, MI" in out
+    assert "economic        +2" in out
+    assert "The Vote" in out
+    assert "NP votes Yes:" in out
+    assert "FF votes No:" in out
+    assert "174 seats voted No" in out
+    assert "It passes." in out
+
+
+def test_run_prints_a_defeated_proposal_as_defeated(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """175 seats voting No is the only thing that can defeat a Proposal (§5.2)."""
+    flags = recorded(tmp_path, bargaining(tabled("NP"), ["Yes", "No", "No", "No"]))
+
+    code = main(["run", str(FOUR_PARTY), *flags])
+
+    out = capsys.readouterr().out
+    assert code == 0
+    assert "209 seats voted No" in out
+    assert "It is defeated." in out
+    assert "NP stands down" not in out
+
+
+def test_run_prints_a_stand_down_as_a_stand_down(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """§5.3: the Attempt ends, the chamber holds no Vote, and the Transcript says so."""
+    flags = recorded(tmp_path, bargaining(stood_down("Nobody will pay for a government.")))
+
+    code = main(["run", str(FOUR_PARTY), *flags])
+
+    out = capsys.readouterr().out
+    assert code == 0
+    assert "NP stands down" in out
+    assert "spent none of the four it has" in out
+    assert "Nobody will pay for a government." in out
+    assert "The Vote" not in out

@@ -200,6 +200,47 @@ def _worst(report: GapReport) -> str:
     return f"{named} ({report.worst_gap:.1f})"
 
 
+def render_proposal(scenario: Scenario, proposal: Proposal) -> str:
+    """What is on the table, and the seat arithmetic behind it.
+
+    One rendering, shown to every Party before it votes and printed in the Transcript
+    afterwards — a chamber reading one Proposal and a reader reading another would make the
+    Transcript evidence of nothing.
+
+    **No ministries.** There is no portfolio column here because there is no portfolio
+    anywhere: modelling who gets which department needs a ministry list *and* a per-Party
+    valuation of each post, which is a second preference model this project does not have
+    (§4).
+
+    The Base's seats are stated because they are arithmetic and arithmetic is the Referee's
+    (§2). They are not a prediction: the Parties named have agreed to nothing, and one of them
+    voting No is a thing this Proposal cannot stop.
+    """
+    width = max(len(axis.value) for axis in Axis)
+    lines = [f"{proposal.formateur}'s Proposal.", "", "  Platform:"]
+    lines.extend(
+        f"    {axis.value:<{width}}  {signed(proposal.platform.on(axis)):>3}" for axis in Axis
+    )
+
+    base = sum(scenario.party(name).seats for name in proposal.base)
+    lines.extend(
+        [
+            "",
+            f"  Government:    {', '.join(proposal.government)}",
+            f"  Support-only:  {', '.join(proposal.support_only) or 'nobody'}",
+            "",
+            f"  {base} seats are behind it, in cabinet or outside it. It takes "
+            f"{BLOCKING_MINORITY} voting No to defeat it.",
+        ]
+    )
+
+    if proposal.commitments:
+        lines.append("")
+        lines.append("  It also commits the government to:")
+        lines.extend(f"    - {commitment}" for commitment in proposal.commitments)
+    return "\n".join(lines)
+
+
 class Price(StrEnum):
     """Which of a Party's two price lists a Platform is being checked against.
 

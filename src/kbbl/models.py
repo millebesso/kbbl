@@ -218,7 +218,10 @@ class Choice(Strict):
     """
 
     counterparty: str = Field(min_length=1)
-    reasoning: str = Field(min_length=1)
+    reasoning: str = ""
+    """Why this Party, in the Formateur's own words — empty when its Agent gave the call and
+    no sentence beside it. Nobody in the Run reads a reasoning, so an absent one is a Round
+    the record is silent about rather than a Round that did not happen."""
 
 
 class Bilateral(Strict):
@@ -237,6 +240,28 @@ class Bilateral(Strict):
     def closed_by(self) -> str | None:
         """The side that exited early, or None if the meeting simply ran out of Exchanges."""
         return self.exchanges[-1].speaker if self.exchanges[-1].declares is not None else None
+
+    def ended_by(self, reader: str | None = None) -> str:
+        """How this meeting finished, said to whoever is reading it.
+
+        The only place `Ending` is branched on to make prose. Three sites wanted it by this
+        ticket — the Transcript, the Formateur hearing a meeting close, and the same
+        Formateur seeing its spent Rounds recapped before it tables — and three copies of a
+        three-way branch is three places for the vocabulary to drift.
+
+        `reader` is the Party the sentence is being shown to: it is named "you". The second
+        person is the reason the three sites looked different rather than a reason to keep
+        them apart, so it is a parameter here instead of a fourth branch out there.
+        """
+        if self.ending is Ending.EXHAUSTED:
+            return (
+                "the messages ran out with neither of you agreeing or declaring impasse"
+                if reader is not None
+                else "neither side agreed or declared impasse"
+            )
+        who = "you" if self.closed_by == reader else self.closed_by
+        verb = "agreed" if self.ending is Ending.AGREEMENT else "declared impasse"
+        return f"{who} {verb}"
 
 
 class Round(Strict):
@@ -326,14 +351,76 @@ class Ballot(StrEnum):
     NO = "No"
 
 
+class Judgement(Strict):
+    """One Party's Ballot on a Proposal, and what it said as it cast it.
+
+    The Ballot is the enumerated field the Referee counts; the reasoning is prose and exists
+    for the Transcript alone (§2). They are one record because reading a Ballot without the
+    sentence beside it is exactly what §8 says a full Run is *not* for — the Ballots are read
+    closely, never counted, and the count is the Referee's job from the enum.
+    """
+
+    party: str = Field(min_length=1)
+    ballot: Ballot
+    reasoning: str = ""
+    """Why, in the Party's own words. Empty when its Agent cast the Ballot and said nothing
+    beside it: the Ballot is what the Referee counts, and it is there either way."""
+
+
 class Run(Strict):
     """The record of one Run, accumulated in memory as it happens.
 
     Everything an Agent said belongs here rather than only in the Transcript: ticket 06
     serialises this, and §7 asks that aggregating a batch of Runs later be a loop and a
     `Counter` rather than a re-instrumentation.
+
+    v1 is one Formateur and one Attempt (§10), so this record is both. When there are several
+    Attempts, the Proposal and the Judgements belong to one of them and this splits in two.
     """
 
     scenario: str = Field(min_length=1)
     formateur: str = Field(min_length=1)
     rounds: tuple[Round, ...] = ()
+    proposal: Proposal | None = None
+    """What the Formateur tabled, or None if it Stood down. A finished Attempt has one or the
+    other, and the two outcomes are not the same thing: a Proposal voted down spends one of
+    the Chamber's four Votes and Standing down spends none (§5.3)."""
+    reasoning: str = ""
+    """The Formateur's own account of how it ended its Attempt — the Proposal above, or
+    Standing down instead of tabling one. Named for the prose rather than for either act,
+    because Standing down is by definition the one where nothing was tabled. It is the only
+    account there is of why an Attempt ended the way it did: a Stand down leaves no Proposal
+    behind to read it off."""
+    judgements: tuple[Judgement, ...] = ()
+
+    @model_validator(mode="after")
+    def _check_the_record_agrees_with_itself(self) -> Self:
+        """A tabled Proposal was voted on, and a Stand down was not. Whether *every* Party
+        voted is `count_vote`'s to say, because only it is handed the Chamber."""
+        if self.judgements and self.proposal is None:
+            raise ValueError(
+                f"{self.formateur} tabled no Proposal, and "
+                f"{len(self.judgements)} Ballots were cast on it"
+            )
+        if self.proposal is not None and not self.judgements:
+            raise ValueError(
+                f"{self.formateur} tabled a Proposal and no Ballot was cast on it. Tabling "
+                f"one spends a Vote, and Standing down is the end of an Attempt that does not"
+            )
+        voted = [judgement.party for judgement in self.judgements]
+        twice = sorted({name for name in voted if voted.count(name) > 1})
+        if twice:
+            raise ValueError(f"a Party cast more than one Ballot: {', '.join(twice)}")
+        return self
+
+    @property
+    def ballots(self) -> dict[str, Ballot]:
+        """Every Party's Ballot, in the shape `count_vote` counts. The record owns this: three
+        callers were reshaping it for themselves, which is three places to get it wrong."""
+        return {judgement.party: judgement.ballot for judgement in self.judgements}
+
+    @property
+    def stood_down(self) -> bool:
+        """Whether the Formateur conceded without tabling. True of a finished Attempt that
+        holds no Proposal — which is what `attempt()` returns and nothing else builds."""
+        return self.proposal is None

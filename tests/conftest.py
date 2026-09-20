@@ -53,14 +53,25 @@ def deadlock() -> Scenario:
     return load_scenario(FIXTURES / "deadlock")
 
 
+def axes(**overrides: int) -> dict[str, int]:
+    """A value of 0 on every Axis, with named Axes overridden.
+
+    Named for neither of the two things built out of it. Positions and a Platform are the
+    same ten numbers in the same units (`models.Axes`), and a Platform reached through a
+    helper called `positions` would be exactly the slip `CONTEXT.md` lists under Platform's
+    *Avoid*.
+    """
+    return {axis: 0 for axis in AXES} | overrides
+
+
 def positions(**overrides: int) -> dict[str, int]:
     """A neutral Position on every Axis, with named Axes overridden."""
-    return {axis: 0 for axis in AXES} | overrides
+    return axes(**overrides)
 
 
 def platform(**overrides: int) -> Platform:
     """A Platform at 0 on every Axis, with named Axes overridden."""
-    return Platform(**positions(**overrides))
+    return Platform(**axes(**overrides))
 
 
 def mandate(name: str, seats: int, **overrides: Any) -> dict[str, Any]:
@@ -119,6 +130,35 @@ def chose(party: str, reasoning: str = "They are the ones worth the round.") -> 
     return responded(reasoning, called={"name": "meet", "input": {"party": party}})
 
 
+def tabled(
+    *government: str,
+    support_only: Sequence[str] = (),
+    commitments: Sequence[str] | None = None,
+    reasoning: str = "This is the government the chamber can live with.",
+    **platform: int,
+) -> dict[str, Any]:
+    """One Proposal as a Formateur tables it: the reasons in prose, everything else in the
+    call. Named Axes override a Platform of 0, the way `platform()` does."""
+    tabling: dict[str, Any] = {
+        "platform": axes(**platform),
+        "government": list(government),
+        "support_only": list(support_only),
+    }
+    if commitments is not None:
+        tabling["commitments"] = list(commitments)
+    return responded(reasoning, called={"name": "table", "input": tabling})
+
+
+def stood_down(reasoning: str = "There is no government here worth the chamber's time.") -> dict[str, Any]:
+    """A Formateur conceding without tabling: the Attempt ends and no Vote is spent."""
+    return responded(reasoning, called={"name": "stand_down", "input": {}})
+
+
+def voted(ballot: str, reasoning: str = "That is where we stand on it.") -> dict[str, Any]:
+    """One Ballot as a Party casts it: Yes, Abstain or No in the call, the why in prose."""
+    return responded(reasoning, called={"name": "ballot", "input": {"ballot": ballot}})
+
+
 def said(message: str) -> str:
     """What `spoken(message)` actually puts in the Agent's mouth, once padded to the floor."""
     if len(message) >= MIN_MESSAGE:
@@ -130,12 +170,12 @@ def said(message: str) -> str:
 class Model:
     """A stand-in for the live path. Hands back scripted replies and keeps every request.
 
-    Two scripts, because a request asking whom to meet and a request asking what to say want
-    different replies, and which one this is can be read off the tools offered. Positional
-    replies answer the Exchanges; `chooses` answers the Rounds, as Party names for the usual
-    case or whole replies for a test about a malformed one. The last reply of either script
-    repeats, so a test that only cares about how a Bilateral ends does not have to script
-    every Exchange leading up to it.
+    Four scripts, because four different questions get asked and which one this is can be
+    read off the tools offered: positional replies answer the Exchanges, `chooses` answers
+    the Rounds, `tables` answers the tabling, and `ballots` answers the Vote. Each is given
+    as the short thing it usually is — a Party name, a Ballot — or as a whole reply for a
+    test about a malformed one. The last entry of a script repeats, so a test that only
+    cares about how a Bilateral ends does not have to script every Exchange leading to it.
 
     Unscripted Exchanges are numbered rather than identical. A Run in which every Party says
     the same thing cannot show a leak between Bilaterals, and that is a thing tests here have
@@ -143,18 +183,29 @@ class Model:
     """
 
     def __init__(
-        self, *replies: dict[str, Any], chooses: Sequence[str | dict[str, Any]] = ()
+        self,
+        *replies: dict[str, Any],
+        chooses: Sequence[str | dict[str, Any]] = (),
+        tables: dict[str, Any] | None = None,
+        ballots: Sequence[str | dict[str, Any]] = (),
     ) -> None:
         self.requests: list[dict[str, Any]] = []
         self._replies = list(replies)
         self._chooses = list(chooses)
+        self._tables = tables
+        self._ballots = list(ballots)
         self._spoken = 0
         self._chosen = 0
+        self._voted = 0
 
     def __call__(self, request: Mapping[str, Any]) -> dict[str, Any]:
         self.requests.append(dict(request))
         if self._offers(request, "meet"):
             return self._choice(request)
+        if self._offers(request, "table"):
+            return self._proposal(request)
+        if self._offers(request, "ballot"):
+            return self._ballot()
         self._spoken += 1
         if not self._replies:
             return spoken(f"Message {self._spoken}, and nobody has said it before.")
@@ -168,6 +219,27 @@ class Model:
             return self._books(self._can_meet(request)[0])
         scripted = self._chooses[min(self._chosen - 1, len(self._chooses) - 1)]
         return self._books(scripted) if isinstance(scripted, str) else scripted
+
+    def _proposal(self, request: Mapping[str, Any]) -> dict[str, Any]:
+        """The tabling: a scripted reply, or a bare single-Party government at 0 everywhere.
+
+        The default names the Formateur alone, read off the head of the chamber order the
+        `table` tool was built with, and grants nothing. A Proposal a test did not ask for
+        should offer nobody anything.
+        """
+        if self._tables is not None:
+            return self._tables
+        tabling = self._tabling(request)
+        governs: list[str] = tabling["government"]["items"]["enum"]
+        return tabled(governs[0], commitments=() if "commitments" in tabling else None)
+
+    def _ballot(self) -> dict[str, Any]:
+        """One Party's Ballot: scripted, or an Abstention — the one that decides nothing."""
+        self._voted += 1
+        if not self._ballots:
+            return voted("Abstain")
+        scripted = self._ballots[min(self._voted - 1, len(self._ballots) - 1)]
+        return voted(scripted) if isinstance(scripted, str) else scripted
 
     def _books(self, party: str) -> dict[str, Any]:
         return chose(party, f"Round {self._chosen}: {party} is the one worth the round.")
@@ -183,6 +255,12 @@ class Model:
         tool = next(tool for tool in request["tools"] if tool["name"] == "meet")
         names: list[str] = tool["input_schema"]["properties"]["party"]["enum"]
         return names
+
+    @staticmethod
+    def _tabling(request: Mapping[str, Any]) -> dict[str, Any]:
+        tool = next(tool for tool in request["tools"] if tool["name"] == "table")
+        properties: dict[str, Any] = tool["input_schema"]["properties"]
+        return properties
 
     def system(self, index: int) -> str:
         """Everything the Agent behind request `index` was told before the conversation."""
@@ -222,6 +300,10 @@ def leaks(requests: Sequence[Mapping[str, Any]], run: Run) -> list[str]:
     asymmetry. Anything sent to anyone else is a leak if the record says it was said
     somewhere else, which is what makes stale Cassettes in the drawer harmless here: a
     message belonging to no Bilateral in this Run is not evidence of anything.
+
+    The Vote is audited the same way. Every Party judges the Proposal in its own room, so a
+    Ballot's reasoning belongs to the Party that cast it and nowhere else — the asymmetry
+    does not lapse because the bargaining is over.
     """
     said_in: dict[str, set[str]] = {}
     for spent in run.rounds:
@@ -229,6 +311,8 @@ def leaks(requests: Sequence[Mapping[str, Any]], run: Run) -> list[str]:
             said_in.setdefault(exchange.message, set()).add(spent.counterparty)
     for spent in run.rounds:
         said_in.setdefault(spent.choice.reasoning, set())
+    for judgement in run.judgements:
+        said_in.setdefault(judgement.reasoning, set()).add(judgement.party)
 
     found: list[str] = []
     for request in requests:
@@ -245,5 +329,9 @@ def leaks(requests: Sequence[Mapping[str, Any]], run: Run) -> list[str]:
 def _whose(request: Mapping[str, Any], run: Run) -> str | None:
     """Which Party's conversation a request belongs to, read off its own persona."""
     system = briefing(request)
-    names = {spent.counterparty for spent in run.rounds} | {run.formateur}
+    names = (
+        {spent.counterparty for spent in run.rounds}
+        | {judgement.party for judgement in run.judgements}
+        | {run.formateur}
+    )
     return next((name for name in names if f"You are the leader of {name}," in system), None)
