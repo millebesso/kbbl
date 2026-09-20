@@ -1,0 +1,47 @@
+{
+  "name": "M",
+  "seats": 70,
+  "positions": {
+    "economic": 4,
+    "environment": 0,
+    "military": 4,
+    "health": 2,
+    "immigration": -3,
+    "law_and_order": 4,
+    "education": 3,
+    "transport": -2,
+    "social": 0,
+    "international": 3
+  },
+  "prefer_not": [
+    "V"
+  ],
+  "to_govern": [
+    {
+      "axis": "economic",
+      "op": ">=",
+      "value": 2
+    },
+    {
+      "axis": "law_and_order",
+      "op": ">=",
+      "value": 3
+    },
+    {
+      "text": "income tax cuts in the first budget"
+    }
+  ],
+  "to_support": [
+    {
+      "axis": "economic",
+      "op": ">=",
+      "value": 0
+    },
+    {
+      "axis": "law_and_order",
+      "op": ">=",
+      "value": 2
+    }
+  ],
+  "willingness_to_re_elect": 6
+}

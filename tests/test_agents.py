@@ -973,3 +973,23 @@ def test_a_government_of_nobody_is_not_a_government(
 
     with pytest.raises(AgentError, match="nobody in its government"):
         agent.table(Cassettes(tmp_path, live=model))
+
+
+def test_a_formateur_of_eight_parties_is_told_it_cannot_meet_them_all(
+    riksdag_2026: Scenario, tmp_path: Path
+) -> None:
+    """§5.1: seven other Parties and five Rounds, so some Party goes uncourted.
+
+    The first Scenario where this fires — every Fixture is small enough for the budget to
+    reach the whole chamber, and telling a Formateur otherwise would be the Referee reporting
+    something false about its own procedure. Read off the request, because what matters is
+    what the Agent was actually sent.
+    """
+    model = Model()
+    formateur = riksdag_2026.parties[0]
+    assert len(riksdag_2026.parties) - 1 > ROUNDS
+
+    FormateurAgent(riksdag_2026, formateur).spend(Cassettes(tmp_path, live=model))
+
+    assert formateur.name == "S"
+    assert "you cannot see them all: some party will go uncourted" in briefing(model.requests[0])

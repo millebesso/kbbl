@@ -1,0 +1,42 @@
+{
+  "name": "L",
+  "seats": 19,
+  "positions": {
+    "economic": 3,
+    "environment": 1,
+    "military": 4,
+    "health": 1,
+    "immigration": -1,
+    "law_and_order": 3,
+    "education": 4,
+    "transport": 0,
+    "social": 3,
+    "international": 5
+  },
+  "prefer_not": [
+    "V"
+  ],
+  "to_govern": [
+    {
+      "axis": "education",
+      "op": ">=",
+      "value": 3
+    },
+    {
+      "axis": "international",
+      "op": ">=",
+      "value": 3
+    },
+    {
+      "text": "the state takes over school funding from the municipalities"
+    }
+  ],
+  "to_support": [
+    {
+      "axis": "education",
+      "op": ">=",
+      "value": 2
+    }
+  ],
+  "willingness_to_re_elect": 1
+}

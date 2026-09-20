@@ -69,8 +69,9 @@ sometimes worth paying.
 
 Three more Fixtures exist so the deterministic core can be tested against answers that are
 obvious by inspection (§8, §9). Nothing negotiates on them — they have no Cassettes — and the
-invariants in `tests/test_referee.py` are run over every Fixture in this directory, found
-rather than listed, so a Fixture added later is covered by them the moment it lands.
+invariants in `tests/test_referee.py` are run over every Scenario in the repo — this
+directory and `scenarios/` alike, because a Fixture is a Scenario — found rather than listed,
+so one added later is covered by them the moment it lands.
 
 ### `landslide/` — one Party above the Blocking minority
 

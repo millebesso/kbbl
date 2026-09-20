@@ -1,0 +1,48 @@
+{
+  "name": "V",
+  "seats": 30,
+  "positions": {
+    "economic": -5,
+    "environment": 4,
+    "military": -3,
+    "health": -5,
+    "immigration": 4,
+    "law_and_order": -3,
+    "education": -5,
+    "transport": 4,
+    "social": 4,
+    "international": -1
+  },
+  "prefer_not": [
+    "SD",
+    "M"
+  ],
+  "to_govern": [
+    {
+      "axis": "economic",
+      "op": "<=",
+      "value": -4
+    },
+    {
+      "axis": "health",
+      "op": "<=",
+      "value": -4
+    },
+    {
+      "text": "profit in tax-funded welfare banned in law this term"
+    }
+  ],
+  "to_support": [
+    {
+      "axis": "economic",
+      "op": "<=",
+      "value": -2
+    },
+    {
+      "axis": "health",
+      "op": "<=",
+      "value": -3
+    }
+  ],
+  "willingness_to_re_elect": 5
+}

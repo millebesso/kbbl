@@ -1,0 +1,45 @@
+{
+  "name": "S",
+  "seats": 99,
+  "positions": {
+    "economic": -3,
+    "environment": 1,
+    "military": 3,
+    "health": -4,
+    "immigration": -1,
+    "law_and_order": 2,
+    "education": -3,
+    "transport": 1,
+    "social": 2,
+    "international": 3
+  },
+  "prefer_not": [
+    "SD"
+  ],
+  "to_govern": [
+    {
+      "axis": "economic",
+      "op": "<=",
+      "value": -2
+    },
+    {
+      "axis": "health",
+      "op": "<=",
+      "value": -3
+    },
+    {
+      "text": "no profit extraction from tax-funded schools or elderly care"
+    }
+  ],
+  "to_support": [
+    {
+      "axis": "economic",
+      "op": "<=",
+      "value": 0
+    },
+    {
+      "text": "no cuts to unemployment insurance"
+    }
+  ],
+  "willingness_to_re_elect": 4
+}

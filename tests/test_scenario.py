@@ -7,7 +7,16 @@ from pathlib import Path
 import pytest
 
 from conftest import FOUR_PARTY, mandate, positions, two_party, write_scenario
-from kbbl.models import Axis, AxisDemand, Party, Positions, Scenario, TextDemand
+from kbbl.agents import persona
+from kbbl.models import (
+    TOTAL_SEATS,
+    Axis,
+    AxisDemand,
+    Party,
+    Positions,
+    Scenario,
+    TextDemand,
+)
 from kbbl.scenario import ScenarioError, load_scenario
 
 
@@ -191,3 +200,75 @@ def test_a_field_path_inside_a_price_list_names_the_demands_own_field(
 
     with pytest.raises(ScenarioError, match=r"to_govern\[1\]\.op: Field required"):
         load_scenario(tmp_path)
+
+
+# --- the real parliament (§9) ----------------------------------------------------------------
+
+
+def test_the_2026_riksdag_loads_through_the_one_load_path(riksdag_2026: Scenario) -> None:
+    """§9, §11.6: a Fixture is a Scenario, so the real parliament needs no loader of its own.
+
+    The seats are the one part of this Scenario that is fact, and they are checkable — so
+    they are checked, against §9's table rather than against whatever the files happen to say.
+    """
+    assert riksdag_2026.name == "riksdag-2026"
+    assert {party.name: party.seats for party in riksdag_2026.parties} == {
+        "S": 99,
+        "M": 70,
+        "SD": 62,
+        "V": 30,
+        "C": 25,
+        "KD": 22,
+        "MP": 22,
+        "L": 19,
+    }
+    assert riksdag_2026.seats == TOTAL_SEATS
+
+
+def test_the_real_scenario_loads_largest_first(riksdag_2026: Scenario) -> None:
+    """The loader's sort, which `load_scenario` says is also Formateur order.
+
+    §9 states the order it produces here — S → M → SD → V — and nothing in this module
+    reaches the Formateur: what is pinned is that the boundary hands the chamber back in the
+    order §5.3 reads the Formateur off. Not a cap of four, either; Standing down spends no
+    Vote, so all eight can have an Attempt.
+    """
+    assert [party.name for party in riksdag_2026.parties] == [
+        "S",
+        "M",
+        "SD",
+        "V",
+        "C",
+        "KD",
+        "MP",
+        "L",
+    ]
+
+
+def test_every_exclusion_reaches_its_agent_as_a_preference(riksdag_2026: Scenario) -> None:
+    """§3, decision 7: every Exclusion is soft and has a price.
+
+    Nothing is checked here about the names being real — `Scenario` refuses a dangling
+    Exclusion before a Run can start, and `test_an_exclusion_naming_an_unknown_party_is_
+    rejected` above is where that is pinned. What can go wrong and is not covered elsewhere
+    is the softness: there is no field a Mandate could use to encode a veto, so the only
+    thing holding this open is the prose each Agent is actually shown.
+    """
+    excluded = {
+        (party.name, other)
+        for party in riksdag_2026.parties
+        for other in party.prefer_not
+    }
+
+    assert len(excluded) == 10, "every one of the eight Parties names somebody"
+    assert ("C", "SD") in excluded
+    for name, _ in excluded:
+        assert "preference, not a veto" in persona(riksdag_2026, riksdag_2026.party(name))
+
+
+def test_every_mandate_in_the_real_scenario_survives_a_round_trip(
+    riksdag_2026: Scenario,
+) -> None:
+    assert len(riksdag_2026.parties) == 8
+    for party in riksdag_2026.parties:
+        assert Party.model_validate_json(party.model_dump_json()) == party

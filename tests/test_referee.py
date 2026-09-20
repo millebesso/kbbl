@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from conftest import COMMITTED_FIXTURES, mandate, platform, two_party, write_scenario
+from conftest import COMMITTED_SCENARIOS, mandate, platform, two_party, write_scenario
 from kbbl.models import (
     TOTAL_SEATS,
     Axis,
@@ -403,13 +403,13 @@ def test_the_vote_report_gives_the_count_and_the_outcome(four_party: Scenario) -
     assert "passes" in rendered
 
 
-@pytest.mark.parametrize("directory", COMMITTED_FIXTURES, ids=lambda path: path.name)
-def test_every_committed_fixture_seats_the_whole_chamber(directory: Path) -> None:
-    """§8's first invariant, over every Fixture in the repo rather than the ones remembered."""
+@pytest.mark.parametrize("directory", COMMITTED_SCENARIOS, ids=lambda path: path.name)
+def test_every_committed_scenario_seats_the_whole_chamber(directory: Path) -> None:
+    """§8's first invariant, over every Scenario in the repo rather than the ones remembered."""
     assert load_scenario(directory).seats == TOTAL_SEATS
 
 
-@pytest.mark.parametrize("directory", COMMITTED_FIXTURES, ids=lambda path: path.name)
+@pytest.mark.parametrize("directory", COMMITTED_SCENARIOS, ids=lambda path: path.name)
 def test_a_proposal_never_passes_with_the_blocking_minority_against_it(
     directory: Path,
 ) -> None:
@@ -561,3 +561,31 @@ def test_the_price_report_counts_free_text_demands_without_judging_them(
 
     assert "2 of 2 Axis Demands met." in paid
     assert "1 free-text Demand is not the Referee's to read" in paid
+
+
+def test_neither_bloc_in_the_2026_riksdag_reaches_the_blocking_minority(
+    riksdag_2026: Scenario,
+) -> None:
+    """The whole reason §9 is worth simulating, computed rather than asserted in prose.
+
+    The right bloc is two seats short of blocking a left minority government, so a left
+    government of 151 survives if C abstains. Both blocs being short of 175 is the same fact
+    twice: no minimal Grouping is drawn from one bloc alone, because neither bloc has the
+    seats. What the arithmetic does *not* say is that C is the only Party that can complete
+    one — `M + SD + KD + MP` reaches 176 without it. A Grouping is Parties the Referee has
+    added up, never Parties that have agreed to anything.
+    """
+    seats = {party.name: party.seats for party in riksdag_2026.parties}
+    left, right = {"S", "V", "MP"}, {"M", "SD", "KD", "L"}
+
+    assert sum(seats[name] for name in left) == 151
+    assert sum(seats[name] for name in right) == 173
+    assert seats["C"] == 25
+    assert BLOCKING_MINORITY - sum(seats[name] for name in right) == 2
+
+    reaching = [grouping.parties for grouping in blocking_groupings(riksdag_2026)]
+    assert ("M", "SD", "KD", "L") not in reaching, "the right bloc alone must not reach 175"
+    assert not [
+        named for named in reaching if set(named) <= left or set(named) <= right
+    ], "no minimal Grouping is drawn from one bloc alone"
+    assert ("M", "SD", "KD", "MP") in reaching, "C is not the only Party that completes one"

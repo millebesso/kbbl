@@ -1,0 +1,48 @@
+{
+  "name": "SD",
+  "seats": 62,
+  "positions": {
+    "economic": 1,
+    "environment": -3,
+    "military": 3,
+    "health": -2,
+    "immigration": -5,
+    "law_and_order": 5,
+    "education": 0,
+    "transport": -4,
+    "social": -4,
+    "international": -4
+  },
+  "prefer_not": [
+    "V",
+    "MP"
+  ],
+  "to_govern": [
+    {
+      "axis": "immigration",
+      "op": "<=",
+      "value": -4
+    },
+    {
+      "axis": "law_and_order",
+      "op": ">=",
+      "value": 4
+    },
+    {
+      "text": "a moratorium on asylum residence permits this term"
+    }
+  ],
+  "to_support": [
+    {
+      "axis": "immigration",
+      "op": "<=",
+      "value": -3
+    },
+    {
+      "axis": "law_and_order",
+      "op": ">=",
+      "value": 3
+    }
+  ],
+  "willingness_to_re_elect": 7
+}

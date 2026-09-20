@@ -1,0 +1,42 @@
+{
+  "name": "KD",
+  "seats": 22,
+  "positions": {
+    "economic": 3,
+    "environment": -1,
+    "military": 3,
+    "health": 0,
+    "immigration": -3,
+    "law_and_order": 4,
+    "education": 2,
+    "transport": -2,
+    "social": -3,
+    "international": 1
+  },
+  "prefer_not": [
+    "V"
+  ],
+  "to_govern": [
+    {
+      "axis": "law_and_order",
+      "op": ">=",
+      "value": 3
+    },
+    {
+      "axis": "social",
+      "op": "<=",
+      "value": -2
+    },
+    {
+      "text": "hospital funding taken over by the state from the regions"
+    }
+  ],
+  "to_support": [
+    {
+      "axis": "law_and_order",
+      "op": ">=",
+      "value": 2
+    }
+  ],
+  "willingness_to_re_elect": 5
+}

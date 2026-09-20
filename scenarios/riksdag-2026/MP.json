@@ -1,0 +1,42 @@
+{
+  "name": "MP",
+  "seats": 22,
+  "positions": {
+    "economic": -2,
+    "environment": 5,
+    "military": -2,
+    "health": -3,
+    "immigration": 5,
+    "law_and_order": -4,
+    "education": -2,
+    "transport": 5,
+    "social": 5,
+    "international": 2
+  },
+  "prefer_not": [
+    "SD"
+  ],
+  "to_govern": [
+    {
+      "axis": "environment",
+      "op": ">=",
+      "value": 4
+    },
+    {
+      "axis": "transport",
+      "op": ">=",
+      "value": 3
+    },
+    {
+      "text": "no new nuclear this term"
+    }
+  ],
+  "to_support": [
+    {
+      "axis": "environment",
+      "op": ">=",
+      "value": 2
+    }
+  ],
+  "willingness_to_re_elect": 4
+}

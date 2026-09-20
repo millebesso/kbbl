@@ -1,0 +1,40 @@
+{
+  "name": "C",
+  "seats": 25,
+  "positions": {
+    "economic": 2,
+    "environment": 3,
+    "military": 2,
+    "health": 0,
+    "immigration": 2,
+    "law_and_order": 0,
+    "education": 1,
+    "transport": 0,
+    "social": 3,
+    "international": 3
+  },
+  "prefer_not": [
+    "SD"
+  ],
+  "to_govern": [
+    {
+      "axis": "environment",
+      "op": ">=",
+      "value": 2
+    },
+    {
+      "text": "SD has no influence over government policy"
+    }
+  ],
+  "to_support": [
+    {
+      "axis": "environment",
+      "op": ">=",
+      "value": 1
+    },
+    {
+      "text": "SD has no influence over government policy"
+    }
+  ],
+  "willingness_to_re_elect": 3
+}

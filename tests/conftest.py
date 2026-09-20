@@ -21,9 +21,24 @@ FIXTURES = REPO / "fixtures"
 
 FOUR_PARTY = FIXTURES / "four-party"
 
-COMMITTED_FIXTURES = sorted(path for path in FIXTURES.iterdir() if path.is_dir())
-"""Every Fixture in the repo, found rather than listed: a Fixture added without the
-invariants being run over it is the one that would have caught something."""
+SCENARIOS = REPO / "scenarios"
+
+RIKSDAG_2026 = SCENARIOS / "riksdag-2026"
+
+COMMITTED_SCENARIOS = sorted(
+    path
+    for directory in (FIXTURES, SCENARIOS)
+    for path in directory.iterdir()
+    if path.is_dir()
+)
+"""Every Scenario in the repo, found rather than listed.
+
+Both directories, and one list, because a Fixture **is** a Scenario — same shape, same loader,
+same 349 seats (§9, §11.6). Two lists here would be the second load path that section exists
+to prevent, arriving in the tests instead of in the code.
+
+Found rather than listed because a Scenario added without the invariants being run over it is
+the one that would have caught something."""
 
 CASSETTES = REPO / "cassettes"
 """The committed recordings, so the whole suite replays for free."""
@@ -33,6 +48,12 @@ CASSETTES = REPO / "cassettes"
 def four_party() -> Scenario:
     """The committed four-Party Fixture, loaded through the one and only load path."""
     return load_scenario(FOUR_PARTY)
+
+
+@pytest.fixture
+def riksdag_2026() -> Scenario:
+    """The real parliament elected on 13 September 2026 (§9). Seats fact, Positions editorial."""
+    return load_scenario(RIKSDAG_2026)
 
 
 @pytest.fixture
