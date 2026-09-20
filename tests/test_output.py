@@ -94,6 +94,7 @@ def test_a_run_reads_as_five_distinct_private_meetings(four_party: Scenario) -> 
     run = Run(
         scenario="four-party",
         formateur="NP",
+        finished=True,
         rounds=tuple(
             spent(
                 number,
@@ -125,7 +126,11 @@ def attempted(
     *judgements: Judgement,
     reasoning: str = "This is where the five rounds left us.",
 ) -> str:
-    """A one-Round Run that ends the way this test is about."""
+    """A one-Round Run that ends the way this test is about.
+
+    Finished, because every ending here is one the Formateur reached. A Run that stopped is
+    its own case and has its own test.
+    """
     return render_transcript(
         four_party,
         Run(
@@ -135,6 +140,7 @@ def attempted(
             proposal=proposal,
             reasoning=reasoning,
             judgements=judgements,
+            finished=True,
         ),
     )
 

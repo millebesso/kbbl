@@ -108,6 +108,52 @@ Nobody folded, and a government of exactly 175 survived by a single seat.
 A Fixture is a Scenario in every respect, so `kbbl run` takes either. See
 [`fixtures/README.md`](fixtures/README.md).
 
+## What a Run leaves behind
+
+Every Run writes one timestamped directory. `--out` says where (default `out/`):
+
+```sh
+uv run kbbl run fixtures/four-party --replay --out out/
+```
+
+```
+out/run-20260920-061332/
+  transcript.md    everything above, start to finish — read closely, never counted
+  run.json         the complete record — counted in batches, read by nobody
+  result.json      the outcome and a timestamp
+```
+
+`result.json` is the one-line answer, and it is dated because KBBL predicts an open question
+rather than settling one (§9): comparing a Run against the real government should be a lookup.
+
+```json
+{ "scenario": "four-party", "formateur": "NP", "outcome": "formed",
+  "at": "2026-09-20T06:13:32.715813Z", "government": ["NP", "MI"], "support_only": [],
+  "count": { "yes": 175, "abstain": 0, "no": 174, "base_seats": 175, "passed": true } }
+```
+
+`run.json` holds everything an Agent said, was shown, or decided: every Exchange, which Party
+the Formateur chose each Round and why, the Proposal, every Ballot with its reasoning, every
+Gap report that was put in front of a Party, and the token and cache usage and Cassette key of
+all 31 requests. It carries the chamber and the Referee's count beside the record, so a batch
+aggregation never has to load a Scenario or re-count a Vote:
+
+```python
+Counter(json.loads(path.read_text())["outcome"] for path in Path("out").glob("run-*/run.json"))
+# Counter({'formed': 2, 'rejected': 1, 'stood down': 1})
+```
+
+That is the bar §7 sets: aggregating a batch of Runs later is a loop and a `Counter`, not a
+re-instrumentation. Getting it wrong is only discovered much later, when the aggregation that
+should have been trivial needs every call site re-plumbed — the same failure Cassettes were
+pulled forward to avoid.
+
+**The record accumulates as the Run happens.** It is not assembled at the end, so an Attempt
+that breaks in its fourth Bilateral still writes the three meetings and part of a fourth it
+already paid for. Its `outcome` is `unfinished`, which is a fourth word on purpose: a Run that
+stopped and a Formateur that Stood down both end holding no Proposal, and only one of them is
+a decision somebody made.
+
 ## Live and replay
 
 **A Run calls the model, and live is the default.** Every request and response is written to a
@@ -137,3 +183,6 @@ The test suite makes zero API calls. Tests that need a Bilateral record one agai
 stand-in and replay it. Two replay the committed Cassettes instead, one of them auditing the
 requests of a real Run for whether any Party was ever shown a Bilateral it was not in; both
 skip, saying so, if the drawer is empty.
+
+`tests/test_artifacts.py` writes a batch of four Runs and counts them with a `Counter` over
+`run.json`, which is the only way the claim §7 makes about the record can actually be checked.

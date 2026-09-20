@@ -11,11 +11,18 @@ from __future__ import annotations
 
 from kbbl.agents import FormateurAgent
 from kbbl.cassettes import Cassettes
+from kbbl.ledger import Ledger
 from kbbl.models import Party, Run, Scenario
 from kbbl.referee import ROUNDS
 
 
-def attempt(scenario: Scenario, *, formateur: Party, cassettes: Cassettes) -> Run:
+def attempt(
+    scenario: Scenario,
+    *,
+    formateur: Party,
+    cassettes: Cassettes,
+    ledger: Ledger | None = None,
+) -> Run:
     """One whole Attempt: the Rounds, what they led to, and how the chamber answered.
 
     Returns the record rather than the outcome, because the outcome is the Referee's to
@@ -23,19 +30,19 @@ def attempt(scenario: Scenario, *, formateur: Party, cassettes: Cassettes) -> Ru
     Proposal is a Formateur that Stood down, which is not a Proposal that lost: it spends
     none of the Chamber's four Votes (§5.3).
 
+    The record is written into `ledger` as the Attempt happens, and the Attempt is marked
+    finished only once the chamber has answered. Pass a Ledger in to keep hold of it: this
+    function raises when an Agent hands back something unreadable, and a caller that wants
+    the Exchanges already paid for needs the record from outside the call that failed.
+
     v1 is one Formateur and one Attempt (§10), so one Attempt fills a whole `Run`. The
     handoff to the next-largest Party is deferred, and so is the four-Vote counter.
     """
-    agent = FormateurAgent(scenario, formateur)
-    rounds = tuple(agent.spend(cassettes) for _ in range(ROUNDS))
-    proposal, reasoning = agent.table(cassettes)
-    return Run(
-        scenario=scenario.name,
-        formateur=formateur.name,
-        rounds=rounds,
-        proposal=proposal,
-        reasoning=reasoning,
-        judgements=(
-            () if proposal is None else agent.put_to_the_chamber(proposal, cassettes)
-        ),
-    )
+    agent = FormateurAgent(scenario, formateur, ledger)
+    for _ in range(ROUNDS):
+        agent.spend(cassettes)
+    proposal, _ = agent.table(cassettes)
+    if proposal is not None:
+        agent.put_to_the_chamber(proposal, cassettes)
+    agent.ledger.finish()
+    return agent.ledger.run

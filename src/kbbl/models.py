@@ -8,10 +8,19 @@ Agent, or a Transcript, as a plausible value.
 
 from __future__ import annotations
 
+from datetime import datetime
 from enum import StrEnum
 from typing import Annotated, Any, Literal, Self
 
-from pydantic import BaseModel, ConfigDict, Discriminator, Field, Tag, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Discriminator,
+    Field,
+    Tag,
+    computed_field,
+    model_validator,
+)
 
 TOTAL_SEATS = 349
 """Seats in the chamber. A Scenario's Parties must sum to exactly this."""
@@ -351,6 +360,86 @@ class Ballot(StrEnum):
     NO = "No"
 
 
+class Gap(Strict):
+    """The distance on one Axis between a Party's Position and a Proposal's Platform."""
+
+    axis: Axis
+    position: int
+    platform: int
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def gap(self) -> int:
+        """How far apart they are. Unsigned: a betrayal to the left is a betrayal.
+
+        Computed here and written out all the same. An aggregation over a batch of
+        `run.json` should be a loop and a `Counter` (§7), and one that had to subtract two
+        columns to learn what a Party gave up would be re-deriving the Referee's own
+        arithmetic from the record of it.
+        """
+        return abs(self.position - self.platform)
+
+
+class GapReport(Strict):
+    """Every Gap between one Party's Positions and one Platform, and the summaries over them.
+
+    Held as data rather than rendered on the spot because §7 wants every Gap report a Party
+    was shown to survive into `run.json`, where a later batch aggregation can count them.
+    That is also why the summaries below are written out rather than left as properties: a
+    Gap report is §5.4's whole defence, and whether Agents drift is a question asked of many
+    Runs at once.
+    """
+
+    party: str = Field(min_length=1)
+    gaps: tuple[Gap, ...] = Field(min_length=1)
+
+    def on(self, axis: Axis) -> Gap:
+        """This report's Gap on one Axis."""
+        return next(gap for gap in self.gaps if gap.axis is axis)
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def mean_gap(self) -> float:
+        """The mean Gap over all ten Axes."""
+        return sum(gap.gap for gap in self.gaps) / len(self.gaps)
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def worst_gap(self) -> int:
+        """The largest Gap in the report."""
+        return max(gap.gap for gap in self.gaps)
+
+    @property
+    def worst(self) -> tuple[Gap, ...]:
+        """Every Axis at the worst Gap. A tie is reported, never broken."""
+        return tuple(gap for gap in self.gaps if gap.gap == self.worst_gap)
+
+
+class Usage(Strict):
+    """What one request to the model cost, and the Cassette holding the whole of it.
+
+    §6 budgets a Run at roughly 130 calls, and cost is the first thing anybody aggregates
+    over a batch of them. Recomputing it afterwards from a Transcript is not possible at
+    all — the Transcript holds what was said, never what it was billed at — so the numbers
+    are taken as each reply arrives.
+
+    The Cassette key is here because it is the one handle on what was actually *sent*. No
+    artifact repeats a Persona or a briefing in full, and the request behind this key holds
+    every word the Agent was shown.
+
+    Nothing here says whether this request was replayed or paid for live. That is a fact
+    about the process rather than about the Run, and a record carrying it could not be
+    identical under `--replay`.
+    """
+
+    party: str = Field(min_length=1)
+    cassette: str = Field(min_length=1)
+    input_tokens: int = 0
+    output_tokens: int = 0
+    cache_write_tokens: int = 0
+    cache_read_tokens: int = 0
+
+
 class Judgement(Strict):
     """One Party's Ballot on a Proposal, and what it said as it cast it.
 
@@ -376,6 +465,11 @@ class Run(Strict):
 
     v1 is one Formateur and one Attempt (§10), so this record is both. When there are several
     Attempts, the Proposal and the Judgements belong to one of them and this splits in two.
+
+    Nothing here is assembled at the end. A `Ledger` fills this in as the Run happens, so a
+    Run that breaks mid-Bilateral still holds every Exchange it paid for — which is what
+    `finished` below is for, and the reason it is the only field an unfinished record is
+    dishonest without.
     """
 
     scenario: str = Field(min_length=1)
@@ -392,6 +486,24 @@ class Run(Strict):
     account there is of why an Attempt ended the way it did: a Stand down leaves no Proposal
     behind to read it off."""
     judgements: tuple[Judgement, ...] = ()
+    gap_reports: tuple[GapReport, ...] = ()
+    """Every Gap report the Referee put in front of a Party before it voted (§5.4).
+
+    Beside the Judgements rather than inside one, because a Gap report is something a Party
+    was *shown* and a Judgement is what it then did. Each report names its own Party, so
+    reading the two together is a join on a name.
+    """
+    usage: tuple[Usage, ...] = ()
+    """What every request in this Run cost, in the order they were made."""
+    finished: bool = False
+    """Whether the Attempt reached an end of its own — a Proposal put to the Chamber, or the
+    Formateur Standing down without tabling one.
+
+    False is a Run that *stopped*: an Agent returned something unreadable, a Cassette was
+    missing, the process died. That is not a third way for an Attempt to end and it is not a
+    Stand down either, which is exactly why it has to be written down — the two are
+    otherwise the same record, a Run holding no Proposal, and only one of them is a decision
+    somebody made."""
 
     @model_validator(mode="after")
     def _check_the_record_agrees_with_itself(self) -> Self:
@@ -402,7 +514,7 @@ class Run(Strict):
                 f"{self.formateur} tabled no Proposal, and "
                 f"{len(self.judgements)} Ballots were cast on it"
             )
-        if self.proposal is not None and not self.judgements:
+        if self.finished and self.proposal is not None and not self.judgements:
             raise ValueError(
                 f"{self.formateur} tabled a Proposal and no Ballot was cast on it. Tabling "
                 f"one spends a Vote, and Standing down is the end of an Attempt that does not"
@@ -421,6 +533,83 @@ class Run(Strict):
 
     @property
     def stood_down(self) -> bool:
-        """Whether the Formateur conceded without tabling. True of a finished Attempt that
-        holds no Proposal — which is what `attempt()` returns and nothing else builds."""
-        return self.proposal is None
+        """Whether the Formateur conceded without tabling (§5.3).
+
+        A finished Attempt holding no Proposal, and finished is half of it: a Run that
+        stopped holds no Proposal either, and calling that a Stand down would credit an
+        Agent with a decision it never got to make.
+        """
+        return self.finished and self.proposal is None
+
+
+class Outcome(StrEnum):
+    """How a Run came out, in the one word a batch aggregation counts (§7).
+
+    Three of these are ends an Attempt reached: a government formed, a Proposal the Chamber
+    threw out, a Formateur that Stood down rather than table one. The fourth is a Run that
+    stopped, and it is named here rather than left as a gap so that counting a batch never
+    silently reads a broken Run as a Stand down.
+    """
+
+    FORMED = "formed"
+    REJECTED = "rejected"
+    STOOD_DOWN = "stood down"
+    UNFINISHED = "unfinished"
+
+
+class Count(Strict):
+    """A Vote's arithmetic as an artifact carries it: the seats each way, and what they did.
+
+    Not a second name for the Vote. The Vote is the Chamber's single decision and
+    `referee.count_vote` is the only place it is reckoned; this is that reckoning written
+    down, so that reading a Run back needs neither the Scenario's seats nor a second pass
+    over the Ballots.
+    """
+
+    yes: int
+    abstain: int
+    no: int
+    base_seats: int
+    """The seats in the Proposal's Base, carried over from the Vote that reckoned it and
+    reported for the same reason `referee.Vote.base_seats` gives."""
+    passed: bool
+
+
+class Record(Strict):
+    """`run.json`: one whole Run, and the Referee's arithmetic over it.
+
+    Self-contained on purpose. §7 asks that aggregating a batch of Runs later be a loop and
+    a `Counter`, and an aggregation that had to re-load a Scenario to learn who held what
+    seats — or re-count a Vote to learn whether a government formed — is precisely the
+    re-instrumentation that section exists to prevent. So the outcome, the chamber and the
+    count sit beside the record rather than being derivable from it.
+
+    It carries no timestamp. `result.json` does (§9), and keeping the two apart is what lets
+    this file come out byte-identical when a Run is replayed.
+    """
+
+    scenario: str = Field(min_length=1)
+    outcome: Outcome
+    chamber: dict[str, int]
+    """Every Party in the Scenario and the seats it holds, largest first."""
+    count: Count | None = None
+    """The Vote, or None when the Chamber held none — a Stand down, or a Run that stopped."""
+    run: Run
+
+
+class Result(Strict):
+    """`result.json`: how a Run came out, and when.
+
+    The timestamp is the whole reason this is its own file. KBBL is a prediction of an open
+    question rather than a retrodiction of a settled one (§9), so a later comparison against
+    the real government should be a lookup: what was predicted, and as of when.
+    """
+
+    scenario: str = Field(min_length=1)
+    formateur: str = Field(min_length=1)
+    outcome: Outcome
+    at: datetime
+    government: tuple[str, ...] = ()
+    """Who governs under the Proposal that was tabled. Empty when none was."""
+    support_only: tuple[str, ...] = ()
+    count: Count | None = None

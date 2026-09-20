@@ -14,11 +14,13 @@ the reply's own text. There is no path here that reads prose.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import Any
 
 from pydantic import ValidationError
 
-from kbbl.cassettes import Cassettes, Response
+from kbbl.cassettes import Cassettes, Request, Response, key
+from kbbl.ledger import Ledger
 from kbbl.models import (
     AXIS_POLES,
     Axis,
@@ -30,6 +32,7 @@ from kbbl.models import (
     Demand,
     Ending,
     Exchange,
+    GapReport,
     Judgement,
     Party,
     Platform,
@@ -37,6 +40,7 @@ from kbbl.models import (
     Round,
     Scenario,
     TextDemand,
+    Usage,
     signed,
 )
 from kbbl.referee import (
@@ -247,7 +251,9 @@ class FormateurAgent:
     to guard against is a line of code handing it one, not a sentence forgetting to.
     """
 
-    def __init__(self, scenario: Scenario, party: Party) -> None:
+    def __init__(
+        self, scenario: Scenario, party: Party, ledger: Ledger | None = None
+    ) -> None:
         self.scenario = scenario
         self.party = party
         self.others = tuple(other for other in scenario.parties if other.name != party.name)
@@ -256,7 +262,17 @@ class FormateurAgent:
                 f"{party.name} is the only Party in Scenario {scenario.name!r}, so it has "
                 f"nobody to meet"
             )
-        self._side = _Side(party, _brief(persona(scenario, party), _your_attempt(self.others)))
+        # Taken from the caller when there is one, because the artifacts of a Run that
+        # breaks are written by whoever is still standing after it, and that is never this
+        # object. It is the only place a default Ledger is built.
+        self.ledger = (
+            ledger
+            if ledger is not None
+            else Ledger(scenario=scenario.name, formateur=party.name)
+        )
+        self._side = _Side(
+            party, _brief(persona(scenario, party), _your_attempt(self.others)), self.ledger
+        )
         self._spent: list[str] = []
         self._met: list[Bilateral] = []
         self._rooms: dict[str, _Side] = {}
@@ -278,6 +294,7 @@ class FormateurAgent:
             raise ValueError(f"{self.party.name} cannot hold a Bilateral with itself")
 
         other = self._room(counterparty)
+        self.ledger.met(counterparty.name)
         self._side.hear(_in_the_room(counterparty, len(self._spent) + 1, self._spent))
 
         speaker, listener = self._side, other
@@ -288,6 +305,7 @@ class FormateurAgent:
             exchange = speaker.exchange(cassettes, last_word=last_word)
             spoken[speaker.party.name] += 1
             exchanges.append(exchange)
+            self.ledger.said(exchange)
             # Including the closing one. A side that declares gets no *reply*, which is not
             # the same as the other side never having been told: the Formateur carries this
             # meeting into its next Round, and one missing its last word is carried wrong.
@@ -331,6 +349,7 @@ class FormateurAgent:
         )
         proposal, reasoning = _read_proposal(response, self.party.name, self.scenario, menu)
         self._side.spoke(reasoning)
+        self.ledger.tabled(proposal, reasoning)
         return proposal, reasoning
 
     def put_to_the_chamber(
@@ -351,12 +370,20 @@ class FormateurAgent:
         return tuple(self._judge(party, proposal, cassettes) for party in self.scenario.parties)
 
     def _judge(self, party: Party, proposal: Proposal, cassettes: Cassettes) -> Judgement:
-        """One Party's Ballot, cast after it has been shown its own Gap report (§5.4)."""
+        """One Party's Ballot, cast after it has been shown its own Gap report (§5.4).
+
+        The report is computed once and both shown and recorded, so that what `run.json`
+        says a Party was looking at is the very table it was handed rather than a second
+        reckoning that happens to agree.
+        """
         side = self._side if party.name == self.party.name else self._voting_room(party)
-        side.hear(_the_vote(self.scenario, proposal, party))
+        shown = gap_report(party, proposal.platform)
+        self.ledger.shown(shown)
+        side.hear(_the_vote(self.scenario, proposal, party, shown))
         response = side.reply(cassettes, tools=[BALLOT_TOOL])
         judgement = _read_judgement(response, party.name)
         side.spoke(judgement.reasoning)
+        self.ledger.judged(judgement)
         return judgement
 
     def _voting_room(self, party: Party) -> _Side:
@@ -368,7 +395,11 @@ class FormateurAgent:
         met = self._rooms.get(party.name)
         if met is not None:
             return met
-        return _Side(party, _brief(persona(self.scenario, party), _never_courted(self.party)))
+        return _Side(
+            party,
+            _brief(persona(self.scenario, party), _never_courted(self.party)),
+            self.ledger,
+        )
 
     def _commitments(self) -> tuple[str, ...]:
         """The free-text Demands this Formateur may grant, in the order it came across them.
@@ -411,6 +442,7 @@ class FormateurAgent:
                 persona(self.scenario, counterparty),
                 _their_bilateral(self.party, counterparty),
             ),
+            self.ledger,
         )
         self._rooms[counterparty.name] = other
         return other
@@ -421,15 +453,17 @@ class FormateurAgent:
         response = self._side.reply(cassettes, tools=[_meet_tool(self.others)])
         choice = _read_choice(response, self.party.name, self.others)
         self._side.spoke(choice.reasoning)
+        self.ledger.chose(choice)
         return choice
 
 
 class _Side:
     """One Party in one conversation: its own briefing, and its own half of what was said."""
 
-    def __init__(self, party: Party, system: list[dict[str, Any]]) -> None:
+    def __init__(self, party: Party, system: list[dict[str, Any]], ledger: Ledger) -> None:
         self.party = party
         self._system = system
+        self._ledger = ledger
         self._messages: list[dict[str, str]] = []
 
     def hear(self, text: str) -> None:
@@ -467,16 +501,17 @@ class _Side:
         asked = [dict(message) for message in self._messages]
         if nudge is not None:
             asked[-1]["content"] += f"\n\n{nudge}"
-        return cassettes.respond(
-            {
-                "model": MODEL,
-                "max_tokens": MAX_TOKENS,
-                "thinking": {"type": "adaptive"},
-                "system": self._system,
-                "messages": asked,
-                "tools": tools,
-            }
-        )
+        request: Request = {
+            "model": MODEL,
+            "max_tokens": MAX_TOKENS,
+            "thinking": {"type": "adaptive"},
+            "system": self._system,
+            "messages": asked,
+            "tools": tools,
+        }
+        response = cassettes.respond(request)
+        self._ledger.paid(_usage(response, party=self.party.name, cassette=key(request)))
+        return response
 
 
 def _brief(persona_text: str, second: str) -> list[dict[str, Any]]:
@@ -655,13 +690,16 @@ def _never_courted(formateur: Party) -> str:
     )
 
 
-def _the_vote(scenario: Scenario, proposal: Proposal, party: Party) -> str:
+def _the_vote(scenario: Scenario, proposal: Proposal, party: Party, shown: GapReport) -> str:
     """What one Party is shown before it votes: the Proposal, and its own two reports.
 
     The Gap report is §5.4's whole defence and it goes in front of every Party, named or not.
     An Agent asked abstractly to hold its ground drifts; the same Agent shown the number it
     is abandoning on the Axis it campaigned hardest on does not — or does, knowingly, which
     is the most this design ever asks for.
+
+    It arrives already computed because `run.json` keeps a copy of it (§7), and a report
+    computed twice is two reports that could differ.
     """
     sections = [
         "THE VOTE\n\n"
@@ -670,7 +708,7 @@ def _the_vote(scenario: Scenario, proposal: Proposal, party: Party) -> str:
         render_proposal(scenario, proposal),
         "WHAT IT ASKS OF YOU\n\n" + _what_it_asks_of_you(proposal, party),
         "WHERE THIS PLATFORM LEAVES YOUR VOTERS\n\n"
-        + render_gap_report(gap_report(party, proposal.platform))
+        + render_gap_report(shown)
         + "\n\n  That is arithmetic, not advice. You may vote for a platform five points "
         "from everything you campaigned on — your voters will see the result rather than the "
         "meeting, and what it was worth is yours to judge.",
@@ -1188,6 +1226,36 @@ def _aside(response: Response, speaker: str) -> str:
     blocks = response.get("content") or ()
     text = next((block["text"] for block in blocks if block.get("type") == "text"), None)
     return "" if text is None else str(text)
+
+
+def _usage(response: Response, *, party: str, cassette: str) -> Usage:
+    """What one request cost, read off the reply it got back.
+
+    Read here rather than counted anywhere else because the reply is the only place the
+    numbers exist: §6's whole cost model — prompt caching on the Persona prefix, a batched
+    half-price path — is a claim about `cache_read_input_tokens` against `input_tokens`, and
+    a Run whose record does not carry them cannot be asked whether the caching worked.
+
+    A missing count is zero rather than an error. A Cassette recorded before this ticket and
+    a stand-in that never billed anything both hand back a reply with no `usage` in it, and
+    losing a whole Attempt over the accounting for it would be losing the thing for the
+    account of the thing.
+    """
+    counted = response.get("usage") or {}
+    return Usage(
+        party=party,
+        cassette=cassette,
+        input_tokens=_tokens(counted, "input_tokens"),
+        output_tokens=_tokens(counted, "output_tokens"),
+        cache_write_tokens=_tokens(counted, "cache_creation_input_tokens"),
+        cache_read_tokens=_tokens(counted, "cache_read_input_tokens"),
+    )
+
+
+def _tokens(counted: Mapping[str, Any], field: str) -> int:
+    """One token count, or 0 where the reply gave none. Never a guess at a missing one."""
+    value = counted.get(field)
+    return value if isinstance(value, int) else 0
 
 
 def _tool_call(

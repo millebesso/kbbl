@@ -42,14 +42,18 @@ NOT_RECORDED = (
 
 
 def recorded(tmp_path: Path, model: Model) -> list[str]:
-    """Record a whole Attempt off a scripted Agent, and the flags that replay it."""
+    """Record a whole Attempt off a scripted Agent, and the flags that replay it.
+
+    `--out` is in the flags every test here uses, because a Run writes its artifacts
+    wherever it is pointed and the default is a directory in the repo.
+    """
     scenario = load_scenario(FOUR_PARTY)
     attempt(
         scenario,
         formateur=scenario.parties[0],
         cassettes=Cassettes(tmp_path / scenario.name, live=model),
     )
-    return ["--replay", "--cassettes", str(tmp_path)]
+    return ["--replay", "--cassettes", str(tmp_path), "--out", str(tmp_path / "out")]
 
 
 def bargaining(
@@ -119,23 +123,42 @@ def test_the_formateur_is_no_longer_pointed_at_a_party_from_the_command_line(
 def test_replay_is_identical_every_time(
     replay: list[str], capsys: pytest.CaptureFixture[str]
 ) -> None:
-    """The Transcript is a function of the Cassettes, not of when it was replayed."""
+    """The Transcript is a function of the Cassettes, not of when it was replayed.
+
+    The line naming where the artifacts went is not: every Run gets a directory of its own,
+    so replaying twice writes two of them (`test_artifacts.py` is where that is checked).
+    """
     main(["run", str(FOUR_PARTY), *replay])
     once = capsys.readouterr().out
     main(["run", str(FOUR_PARTY), *replay])
 
-    assert capsys.readouterr().out == once
+    assert _without_the_directory(capsys.readouterr().out) == _without_the_directory(once)
+
+
+def _without_the_directory(out: str) -> str:
+    return "\n".join(line for line in out.splitlines() if not line.startswith("Written to "))
 
 
 def test_a_missing_cassette_explains_itself_without_a_stack_trace(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    code = main(["run", str(FOUR_PARTY), "--replay", "--cassettes", str(tmp_path)])
+    code = main(
+        [
+            "run",
+            str(FOUR_PARTY),
+            "--replay",
+            "--cassettes",
+            str(tmp_path),
+            "--out",
+            str(tmp_path / "out"),
+        ]
+    )
 
     captured = capsys.readouterr()
     assert code != 0
     assert "--replay" in captured.err
     assert "Traceback" not in captured.err
+    assert not (tmp_path / "out").exists(), "a Run that paid for nothing wrote a directory"
 
 
 def test_a_scenario_of_one_party_has_nobody_to_meet(
@@ -151,7 +174,7 @@ def test_a_scenario_of_one_party_has_nobody_to_meet(
         encoding="utf-8",
     )
 
-    code = main(["run", str(alone), "--replay"])
+    code = main(["run", str(alone), "--replay", "--out", str(tmp_path / "out")])
 
     captured = capsys.readouterr()
     assert code != 0
@@ -164,7 +187,9 @@ def test_a_malformed_mandate_fails_without_a_stack_trace(
 ) -> None:
     two_party(tmp_path / "invented", positions=positions(environment=6))
 
-    code = main(["run", str(tmp_path / "invented"), "--replay"])
+    code = main(
+        ["run", str(tmp_path / "invented"), "--replay", "--out", str(tmp_path / "out")]
+    )
 
     captured = capsys.readouterr()
     assert code != 0
@@ -174,13 +199,23 @@ def test_a_malformed_mandate_fails_without_a_stack_trace(
 
 
 def test_the_committed_cassettes_replay_a_real_attempt(
-    capsys: pytest.CaptureFixture[str],
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     """The recorded Run itself, replayed — the check that the Cassettes on disk still fit."""
     if not COMMITTED.is_dir():
         pytest.skip(NOT_RECORDED)
 
-    code = main(["run", str(FOUR_PARTY), "--replay", "--cassettes", str(CASSETTES)])
+    code = main(
+        [
+            "run",
+            str(FOUR_PARTY),
+            "--replay",
+            "--cassettes",
+            str(CASSETTES),
+            "--out",
+            str(tmp_path / "out"),
+        ]
+    )
 
     out = capsys.readouterr()
     assert code == 0, out.err

@@ -120,7 +120,8 @@ How a Bilateral finished: by *agreement*, by *impasse*, or *exhausted* — three
 way spent with neither. Exactly one per Bilateral, and it belongs to the meeting rather than to
 either side. An Ending of agreement settles nothing: it says the bargaining stopped, not that a
 deal exists. Only a Proposal binds anything, and only the Formateur tables one.
-_Avoid_: outcome, result, close, verdict
+_Avoid_: close, verdict — and *Outcome* or *Result*, which name how a whole Run came out and
+never how one meeting finished.
 
 **Declaration**:
 A side's announcement, carried on an Exchange, that the Bilateral is over — agreement or
@@ -229,6 +230,13 @@ names. It is exactly those Parties whose Abstention is the Formateur's cheapest 
 power.
 _Avoid_: vote, choice, verdict, position
 
+**Count**:
+A Vote's arithmetic written down: the seats cast each way, the Base's seats, and whether the
+Proposal passed. Not a second name for the Vote — the Vote is the Chamber's decision and the
+Referee reckons it once; a Count is that reckoning recorded, so reading a Run back needs
+neither the Scenario's seats nor a second pass over the Ballots.
+_Avoid_: tally, result, score, totals
+
 **Abstention**:
 A Ballot that is neither Yes nor No. Under Negative parliamentarism it is the cheapest thing a
 Formateur can buy: a Party that will neither join nor support can still be paid to step out of
@@ -262,7 +270,40 @@ A recorded request/response pair on disk, keyed by a hash of the request, lettin
 without calling the model.
 _Avoid_: fixture, mock, snapshot, tape, VCR
 
+**Ledger**:
+The Run record as it is written — the one place an Exchange, a Ballot, a Gap report or a
+request's cost is entered, at the moment it happens rather than when the Attempt ends. A Run
+that breaks mid-Bilateral keeps everything it has already paid for.
+_Avoid_: recorder, logger, collector, accumulator, buffer
+
+**Outcome**:
+How a Run came out, in the one word a batch of Runs is counted by: *formed*, *rejected*,
+*stood down* — or *unfinished*, a Run that stopped rather than ending. The fourth is named
+rather than left as a gap, so that counting a batch never reads a broken Run as a Stand down.
+_Avoid_: status, verdict, state, ending
+
+**Usage**:
+What one request to the model cost — its tokens in and out, what was written to and read from
+the cache — and the key of the Cassette holding it. Recorded as each reply arrives, because
+the reply is the only place the numbers exist and no Transcript can be asked what it was
+billed. The Cassette key beside them is the one handle on what was actually sent.
+_Avoid_: cost, tokens, metrics, telemetry, billing
+
 **Transcript**:
 The human-readable record of a Run — every Bilateral, the Proposal, the Vote. Read closely,
-never counted.
+never counted. Written as `transcript.md`.
 _Avoid_: log, output, report
+
+**Record**:
+The complete structured record of one Run, written as `run.json`: every Exchange, every
+Choice and its reasoning, the Proposal, every Ballot, every Gap report shown, and what each
+request cost. Counted in batches, read by nobody — the Transcript is the one that is read. It
+carries the Referee's arithmetic beside it and stands alone: aggregating a batch is a loop and
+a `Counter`, never a re-instrumentation.
+_Avoid_: dump, log, trace, export
+
+**Result**:
+The one-line answer with a date on it, written as `result.json`: the Outcome, who governs, and
+when it was predicted. KBBL predicts an open question rather than settling one, so comparing a
+Run against the real government should be a lookup.
+_Avoid_: summary, verdict, conclusion

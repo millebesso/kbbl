@@ -19,11 +19,17 @@ from kbbl.models import (
     TOTAL_SEATS,
     Axis,
     AxisDemand,
-    Demand,
     Ballot,
+    Count,
+    Demand,
+    Gap,
+    GapReport,
+    Outcome,
     Party,
     Platform,
     Proposal,
+    Record,
+    Run,
     Scenario,
     TextDemand,
     signed,
@@ -99,49 +105,6 @@ def render_blocking_groupings(scenario: Scenario) -> str:
         margin = grouping.seats - BLOCKING_MINORITY
         lines.append(f"  {label:<{width}}  {grouping.seats:>3}  (+{margin})")
     return "\n".join(lines)
-
-
-class Gap(NamedTuple):
-    """The distance on one Axis between a Party's Position and a Proposal's Platform."""
-
-    axis: Axis
-    position: int
-    platform: int
-
-    @property
-    def gap(self) -> int:
-        """How far apart they are. Unsigned: a betrayal to the left is a betrayal."""
-        return abs(self.position - self.platform)
-
-
-class GapReport(NamedTuple):
-    """Every Gap between one Party's Positions and one Platform, and the summaries over them.
-
-    Held as data rather than rendered on the spot because §7 wants every Gap report a Party
-    was shown to survive into `run.json`, where a later batch aggregation can count them.
-    """
-
-    party: str
-    gaps: tuple[Gap, ...]
-
-    def on(self, axis: Axis) -> Gap:
-        """This report's Gap on one Axis."""
-        return next(gap for gap in self.gaps if gap.axis is axis)
-
-    @property
-    def mean_gap(self) -> float:
-        """The mean Gap over all ten Axes."""
-        return sum(gap.gap for gap in self.gaps) / len(self.gaps)
-
-    @property
-    def worst_gap(self) -> int:
-        """The largest Gap in the report."""
-        return max(gap.gap for gap in self.gaps)
-
-    @property
-    def worst(self) -> tuple[Gap, ...]:
-        """Every Axis at the worst Gap. A tie is reported, never broken."""
-        return tuple(gap for gap in self.gaps if gap.gap == self.worst_gap)
 
 
 def gap_report(party: Party, platform: Platform) -> GapReport:
@@ -470,3 +433,53 @@ def render_vote(vote: Vote) -> str:
         ]
     )
     return "\n".join(lines)
+
+
+def record(scenario: Scenario, run: Run) -> Record:
+    """Everything `run.json` holds: the Run as it was paid for, and the arithmetic over it.
+
+    The arithmetic is computed once, here, and written down beside the record — never left
+    for a reader to redo. Counting a batch of Runs is meant to be a loop and a `Counter`
+    (§7), and a `Counter` that had to load a Scenario and re-count a Vote to learn whether a
+    government formed is the re-instrumentation that section exists to prevent.
+    """
+    counted = count(scenario, run)
+    return Record(
+        scenario=scenario.name,
+        outcome=outcome(run, counted),
+        chamber={party.name: party.seats for party in scenario.parties},
+        count=counted,
+        run=run,
+    )
+
+
+def count(scenario: Scenario, run: Run) -> Count | None:
+    """This Run's Vote in numbers, or None if the Chamber never held one.
+
+    None covers both of the ways that happens, and they are different things: a Formateur
+    that Stood down spent none of the Chamber's four Votes (§5.3), and a Run that stopped
+    never got as far as asking. `outcome` is what tells them apart.
+    """
+    if not run.finished or run.proposal is None:
+        return None
+    vote = count_vote(scenario, run.proposal, run.ballots)
+    return Count(
+        yes=vote.yes,
+        abstain=vote.abstain,
+        no=vote.no,
+        base_seats=vote.base_seats,
+        passed=vote.passed,
+    )
+
+
+def outcome(run: Run, counted: Count | None) -> Outcome:
+    """The one word this Run is counted as (§7).
+
+    Takes the Count rather than recomputing it, so the word and the numbers beside it in
+    `run.json` can never be two different readings of the same Vote.
+    """
+    if not run.finished:
+        return Outcome.UNFINISHED
+    if counted is None:
+        return Outcome.STOOD_DOWN
+    return Outcome.FORMED if counted.passed else Outcome.REJECTED
