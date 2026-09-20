@@ -305,6 +305,21 @@ class Round(Strict):
         return self.bilateral.counterparty
 
 
+class Role(StrEnum):
+    """What a Proposal makes of one Party: cabinet, backing from outside, or nothing at all.
+
+    Not being named is a role rather than the absence of one, and saying so in the type is
+    what stops the third case being spelled differently everywhere it comes up. It is also
+    the role the cheapest thing on offer is bought from: a Party a Proposal asks for nothing
+    still decides whether to abstain or block, and an Abstention is what a Formateur short of
+    a majority actually needs (§5.2).
+    """
+
+    GOVERNMENT = "in the Government"
+    SUPPORT_ONLY = "Support-only"
+    UNNAMED = "not named"
+
+
 class Proposal(Strict):
     """What a Formateur tables for a vote. One per Attempt, and tabling it ends the Attempt.
 
@@ -344,6 +359,21 @@ class Proposal(Strict):
         a Party in the Base is still free to cast a No Ballot on the Proposal it governs under.
         """
         return self.government + self.support_only
+
+    def role_of(self, name: str) -> Role:
+        """What this Proposal makes of one Party.
+
+        One answer in one place: three sites asked this question by branching on the two
+        tuples themselves — what a Party is told it is being asked for, which of its two
+        price lists it is charging on, and where a Proposal puts a Party somebody would
+        rather not deal with — and three copies of the same branch is three chances for the
+        third case to be forgotten.
+        """
+        if name in self.government:
+            return Role.GOVERNMENT
+        if name in self.support_only:
+            return Role.SUPPORT_ONLY
+        return Role.UNNAMED
 
 
 class Ballot(StrEnum):
@@ -413,6 +443,46 @@ class GapReport(Strict):
     def worst(self) -> tuple[Gap, ...]:
         """Every Axis at the worst Gap. A tie is reported, never broken."""
         return tuple(gap for gap in self.gaps if gap.gap == self.worst_gap)
+
+
+class Placement(Strict):
+    """One Party somebody would rather not deal with, and what a Proposal makes of it."""
+
+    party: str = Field(min_length=1)
+    role: Role
+
+
+class ExclusionReport(Strict):
+    """Where a Proposal puts every Party one Party would rather not deal with (§5.4).
+
+    The information exists in two places and was never put together: a Persona says "V. That
+    is a preference, not a veto" and a Proposal names V in its Government, and nothing stood
+    between them at the moment a Ballot was cast. §5.4's argument — that an Agent asked
+    abstractly to hold its ground drifts, and the same Agent shown the number it is
+    abandoning does not — is about policy distance only because that is the form the risk
+    was first met in. It applies unchanged to a coalition betrayal.
+
+    Held as data rather than rendered on the spot for the reason `GapReport` is: §7 wants
+    every report a Party was shown to survive into `run.json`, where a batch can count how
+    often a Party waved one of these through.
+
+    A Party with no Exclusions has no report at all rather than an empty one — which is why
+    `placements` is never empty, and why `referee.exclusion_report` answers None.
+    """
+
+    party: str = Field(min_length=1)
+    placements: tuple[Placement, ...] = Field(min_length=1)
+
+    @property
+    def in_the_base(self) -> tuple[Placement, ...]:
+        """The ones this Proposal is actually built on, in cabinet or backing it outside.
+
+        One tuple because the Base has one arithmetic (`Proposal.base`): a Party that would
+        rather not deal with V is being asked to wave V's seats through either way.
+        """
+        return tuple(
+            placed for placed in self.placements if placed.role is not Role.UNNAMED
+        )
 
 
 class Usage(Strict):
@@ -492,6 +562,14 @@ class Run(Strict):
     Beside the Judgements rather than inside one, because a Gap report is something a Party
     was *shown* and a Judgement is what it then did. Each report names its own Party, so
     reading the two together is a join on a name.
+    """
+    exclusion_reports: tuple[ExclusionReport, ...] = ()
+    """Every Exclusion report the Referee put in front of a Party before it voted.
+
+    Beside the Gap reports rather than inside them: they answer different questions about
+    the same moment — one what the Platform costs this Party's voters, the other who the
+    Proposal would have it govern beside — and a Party that named nobody has one and not the
+    other. Reading either against a Judgement is a join on a name.
     """
     usage: tuple[Usage, ...] = ()
     """What every request in this Run cost, in the order they were made."""

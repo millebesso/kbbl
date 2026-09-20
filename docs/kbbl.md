@@ -188,6 +188,24 @@ An agent asked abstractly to "hold your ground" drifts. The same agent shown *"y
 points from your voters on your signature issue"* behaves differently. It remains free to
 accept — this is feedback, not a constraint.
 
+**The same argument applies to the coalition, and needed its own report.** A party's
+exclusions and the parties a proposal names are both in front of it at the vote, and until
+`riksdag-2026/03` nothing put them in one sentence: KD and L waved through a government
+containing a party both of them exclude, neither mentioning it. So the referee also shows
+each party, before it votes, where the proposal puts the parties it would rather not deal
+with — in the government, support-only, or not named:
+
+```
+  V   in the Government
+  MP  Support-only
+
+  V, MP are in the Base: counted behind this government, in cabinet or outside it.
+```
+
+Feedback on the same terms: an exclusion is soft and priced (decision 7), so a party may
+still wave through a government built on one. It can no longer do it inattentively. A party
+that excludes nobody is shown nothing rather than an empty table.
+
 ---
 
 ## 6. Stack and cost
@@ -213,7 +231,7 @@ Every run writes:
 ```
 out/run-<timestamp>/
   transcript.md    readable: every bilateral, the proposal, the vote
-  run.json         complete record: exchanges, offers, votes, gap reports
+  run.json         complete record: exchanges, offers, votes, every report shown
   result.json      outcome summary + timestamp
 ```
 
@@ -375,7 +393,7 @@ Recorded because they were judgement calls, not answers to a question:
 | 5   | Termination                       | At most one proposal each (a formateur may stand down), next-largest on failure, 4 failed votes end it |
 | 6   | Willingness to re-elect           | Persona trait; referee-blind; bluffable                        |
 | 7   | Exclusion lists                   | All soft — every exclusion has a price                         |
-| 8   | Anti-drift                        | Show agents their own per-axis gap as feedback                 |
+| 8   | Anti-drift                        | Feedback: each party's own per-axis gap, and where a proposal puts the parties it excludes |
 | 9   | Demands                           | Two price lists; axis constraints or free text                 |
 | 10  | Output                            | One run: prose transcript + structured JSON                    |
 | 11  | Stack                             | Python + uv + pydantic                                         |

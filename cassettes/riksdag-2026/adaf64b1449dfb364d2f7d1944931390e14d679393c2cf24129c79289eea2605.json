@@ -1,0 +1,497 @@
+{
+  "key": "adaf64b1449dfb364d2f7d1944931390e14d679393c2cf24129c79289eea2605",
+  "request": {
+    "max_tokens": 16000,
+    "messages": [
+      {
+        "content": "ROUND 1 OF 5.\n\nParties you can meet:\n\n  M    70 seats\n  SD   62 seats\n  V    30 seats\n  C    25 seats\n  KD   22 seats\n  MP   22 seats\n  L    19 seats\n\n4 rounds are left after this one.\n\nWho do you meet, and why? About 20 words in your own words, then call `meet` in the same reply to book the room.",
+        "role": "user"
+      },
+      {
+        "content": "Meeting C first: they're a pivotal centrist swing party whose abstention or support could block a right-bloc majority against my minority government. Testing their price now shapes later strategy.",
+        "role": "assistant"
+      },
+      {
+        "content": "You are now in the room with C (25 seats). This is round 1.\n\nC has heard none of your other meetings and will not be told this one is one of several. What it knows is what you have told it in this room.\n\nYou each have up to 3 messages. Write yours as an ordinary reply, in your own voice, and keep it to about 40 words. Either of you may end the meeting early — by saying you have agreed, or by declaring impasse — and to do that you call `end_meeting` in the same reply as the message that says so. Ending it closes it at once: the other side gets no reply. Otherwise it ends when the messages run out.\n\nSpeak first.",
+        "role": "user"
+      },
+      {
+        "content": "I want to explore a workable governing arrangement with S at its core. Where do you stand on economic policy and health provision — could you live with a clearly redistributive platform, or is that a red line for C?",
+        "role": "assistant"
+      },
+      {
+        "content": "Economic policy isn't my hardest line—I'm centrist there and can flex toward redistribution if the package is right. My real conditions: environment at +2 or higher if I'm in cabinet (+1 if I'm only backing you), and SD gets zero policy influence. Meet those, and we can talk numbers.",
+        "role": "user"
+      },
+      {
+        "content": "Environment at +1 is easy for me; +2 for cabinet is workable if we align elsewhere. SD stays excluded — that suits me too. In return I need economic at -2 or lower and health at -3 or lower if I'm in cabinet. Can you accept that range?",
+        "role": "assistant"
+      },
+      {
+        "content": "That's a stretch for cabinet — economic -2 and health -3 both cut hard against my base, and I'd own those compromises publicly. I'd rather back you from outside at environment +2, economic no lower than -1, health no lower than -1, and SD frozen out entirely. That's my real offer.",
+        "role": "user"
+      },
+      {
+        "content": "Economic -1 doesn't clear my bar — I need -2 or lower if I'm anchoring this government from cabinet. Health -1 is far from my -3 line too. I'll keep exploring, but this gap is real; if your flexibility grows, come back to me.",
+        "role": "assistant"
+      },
+      {
+        "content": "Then we're at an impasse for cabinet terms — I won't drop below environment +2, economic -1, health -1 as governing partner. If you can move toward that, I'm still open to backing from outside at environment +1, economic -1, health -1, SD excluded. The offer stands; the next move is yours.\n\nThe meeting with C is over: the messages ran out with neither of you agreeing or declaring impasse.\n\nROUND 2 OF 5.\n\nParties you can meet:\n\n  M    70 seats\n  SD   62 seats\n  V    30 seats\n  C    25 seats\n  KD   22 seats\n  MP   22 seats\n  L    19 seats\n\nSpent so far: round 1 on C.\n3 rounds are left after this one.\n\nWho do you meet, and why? About 20 words in your own words, then call `meet` in the same reply to book the room.",
+        "role": "user"
+      },
+      {
+        "content": "Meeting V next — likely closer to my economic and health lines than C, and combined with S they could anchor a real left-leaning majority bloc.",
+        "role": "assistant"
+      },
+      {
+        "content": "You are now in the room with V (30 seats). This is round 2.\n\nV has heard none of your other meetings and will not be told this one is one of several. What it knows is what you have told it in this room.\n\nYou each have up to 3 messages. Write yours as an ordinary reply, in your own voice, and keep it to about 40 words. Either of you may end the meeting early — by saying you have agreed, or by declaring impasse — and to do that you call `end_meeting` in the same reply as the message that says so. Ending it closes it at once: the other side gets no reply. Otherwise it ends when the messages run out.\n\nSpeak first.",
+        "role": "user"
+      },
+      {
+        "content": "I'd like S to lead a government with V's support. My core cabinet terms: economic at -2 or lower, health at -3 or lower, no profiteering in schools or elderly care. Where do you stand on these, and what would you need in return?",
+        "role": "assistant"
+      },
+      {
+        "content": "I'd need cabinet seats with economic at -4 or lower, health at -4 or lower, and a legal ban on profit in tax-funded welfare — not just schools/elderly care, all of it. If you want me outside cabinet instead, economic -2, health -3, plus that profit ban, is my floor. Environment and transport commitments sweeten either path considerably.",
+        "role": "user"
+      },
+      {
+        "content": "Your terms track closely with mine — economic -4, health -4, and a strong profit ban all work for me. I can offer environment +2 and transport +2 as sweeteners. Let's talk cabinet seat shares — what portfolio split would satisfy V?",
+        "role": "assistant"
+      },
+      {
+        "content": "Good, that's real movement. I'll want Environment and Transport ministries directly, plus a Deputy PM slot given our 30 seats — proportionally that's roughly 4-5 cabinet posts. On substance, push environment to +3 and transport to +3; that's closer to what my voters expect for signing on. Let's settle policy first, then seats.\n\nThe meeting with V is over: V agreed.\n\nROUND 3 OF 5.\n\nParties you can meet:\n\n  M    70 seats\n  SD   62 seats\n  V    30 seats\n  C    25 seats\n  KD   22 seats\n  MP   22 seats\n  L    19 seats\n\nSpent so far: round 1 on C, round 2 on V.\n2 rounds are left after this one.\n\nWho do you meet, and why? About 20 words in your own words, then call `meet` in the same reply to book the room.",
+        "role": "user"
+      },
+      {
+        "content": "Meeting MP next — their environmental and progressive social stance likely aligns with S+V's platform, and their 22 seats help build toward a blocking majority.",
+        "role": "assistant"
+      },
+      {
+        "content": "You are now in the room with MP (22 seats). This is round 3.\n\nMP has heard none of your other meetings and will not be told this one is one of several. What it knows is what you have told it in this room.\n\nYou each have up to 3 messages. Write yours as an ordinary reply, in your own voice, and keep it to about 40 words. Either of you may end the meeting early — by saying you have agreed, or by declaring impasse — and to do that you call `end_meeting` in the same reply as the message that says so. Ending it closes it at once: the other side gets no reply. Otherwise it ends when the messages run out.\n\nSpeak first.",
+        "role": "user"
+      },
+      {
+        "content": "I'm building a government anchored on strong redistribution, public health provision, and ambitious climate policy — environment at +3, transport at +3. Would MP join or back this from outside, and what are your conditions?",
+        "role": "assistant"
+      },
+      {
+        "content": "I could back you from outside at environment +2 minimum — you're offering +3, that clears my bar easily. For cabinet seats I need environment +4, transport +3, and a firm no-new-nuclear commitment. If you can move environment to +4, I'll consider joining rather than just backing.",
+        "role": "user"
+      },
+      {
+        "content": "Environment +4 for cabinet is workable — climate isn't where I'll fight you. In return, I need you locked in on economic -3 or lower and health -4 or lower, backing the redistributive core hard. Can you commit to that alongside no-new-nuclear?",
+        "role": "assistant"
+      },
+      {
+        "content": "Agreed — economic -3 and health -4 sit comfortably with my own direction, no betrayal there. Confirm transport at +3 or higher and no new nuclear this term stays firm, and I'll join your cabinet on this platform.\n\nThe meeting with MP is over: MP agreed.\n\nROUND 4 OF 5.\n\nParties you can meet:\n\n  M    70 seats\n  SD   62 seats\n  V    30 seats\n  C    25 seats\n  KD   22 seats\n  MP   22 seats\n  L    19 seats\n\nSpent so far: round 1 on C, round 2 on V, round 3 on MP.\nOne round is left after this one.\n\nWho do you meet, and why? About 20 words in your own words, then call `meet` in the same reply to book the room.",
+        "role": "user"
+      },
+      {
+        "content": "Meeting M — with V and MP locked at 151 seats, I need M's abstention (or partial support) to clear the 175 threshold. Testing if they'll step aside rather than block me.",
+        "role": "assistant"
+      },
+      {
+        "content": "You are now in the room with M (70 seats). This is round 4.\n\nM has heard none of your other meetings and will not be told this one is one of several. What it knows is what you have told it in this room.\n\nYou each have up to 3 messages. Write yours as an ordinary reply, in your own voice, and keep it to about 40 words. Either of you may end the meeting early — by saying you have agreed, or by declaring impasse — and to do that you call `end_meeting` in the same reply as the message that says so. Ending it closes it at once: the other side gets no reply. Otherwise it ends when the messages run out.\n\nSpeak first.",
+        "role": "user"
+      },
+      {
+        "content": "I'm forming a government with a clear left-leaning platform. I'm not asking M to join or endorse it — just to abstain rather than vote no, avoiding another costly election. What would it take for M to stand aside?",
+        "role": "assistant"
+      },
+      {
+        "content": "Abstention isn't free: I need law_and_order at +2 or higher and economic no lower than 0, plus a concrete commitment to income tax relief in the first budget. Meet those and M stays out of your way; fall short and we vote you down.",
+        "role": "user"
+      },
+      {
+        "content": "Law_and_order at +2 is already my position — that's easy. But economic at 0 would gut the platform I've built elsewhere; I can't go above -3. I can offer strong commitments on law_and_order, defence spending, and international alignment instead. Workable?",
+        "role": "assistant"
+      },
+      {
+        "content": "-3 on economic is a hard sell against my +4 mandate. I won't move on law_and_order since we agree there, but I need a firm income tax cut in the first budget as the price for economic at -3 — that's non-negotiable if you want my abstention.",
+        "role": "user"
+      },
+      {
+        "content": "Agreed — I can commit to a targeted income tax cut for low and middle earners in the first budget, alongside law_and_order at +2, while holding economic at -3 overall. That should secure your abstention without wrecking either of our mandates.",
+        "role": "assistant"
+      },
+      {
+        "content": "Agreed. M will abstain on those terms: law_and_order at +2, a first-budget income tax cut for low/middle earners, and economic at -3. We're not endorsing your platform, but we won't bring you down over it.\n\nThe meeting with M is over: M agreed.\n\nROUND 5 OF 5.\n\nParties you can meet:\n\n  M    70 seats\n  SD   62 seats\n  V    30 seats\n  C    25 seats\n  KD   22 seats\n  MP   22 seats\n  L    19 seats\n\nSpent so far: round 1 on C, round 2 on V, round 3 on MP, round 4 on M.\nThis is your last round.\n\nWho do you meet, and why? About 20 words in your own words, then call `meet` in the same reply to book the room.",
+        "role": "user"
+      },
+      {
+        "content": "Meeting L to add insurance — even a small extra abstention or support buffers against any defection risk from M or wavering partners, securing the coalition's margin.",
+        "role": "assistant"
+      },
+      {
+        "content": "You are now in the room with L (19 seats). This is round 5.\n\nL has heard none of your other meetings and will not be told this one is one of several. What it knows is what you have told it in this room.\n\nYou each have up to 3 messages. Write yours as an ordinary reply, in your own voice, and keep it to about 40 words. Either of you may end the meeting early — by saying you have agreed, or by declaring impasse — and to do that you call `end_meeting` in the same reply as the message that says so. Ending it closes it at once: the other side gets no reply. Otherwise it ends when the messages run out.\n\nSpeak first.",
+        "role": "user"
+      },
+      {
+        "content": "I'm forming a government with a redistributive, climate-forward platform. I'm not asking L to join — just to abstain rather than block it, sparing everyone another election. What would that cost me?",
+        "role": "assistant"
+      },
+      {
+        "content": "To abstain, I need education at +2 or higher and international at +3 or higher on the platform, plus zero L influence claims from me. Given your economic and environment lean, I'd also want assurance school choice/funding isn't gutted. Meet those and I stay out of your way.",
+        "role": "user"
+      },
+      {
+        "content": "Education at +2 clashes hard with my platform — I won't move there. I can offer stable school funding and no forced restructuring, but not school choice expansion. If that's not enough, I'm content to proceed without your abstention.",
+        "role": "assistant"
+      },
+      {
+        "content": "The meeting with L is over: you declared impasse.\n\nYOUR ROUNDS ARE SPENT.\n\nThis is what the budget bought:\n\n  round 1 on C — the messages ran out with neither of you agreeing or declaring impasse\n  round 2 on V — V agreed\n  round 3 on MP — MP agreed\n  round 4 on M — M agreed\n  round 5 on L — you declared impasse\n\nNow you either put a proposal to the chamber or stand down. Either one ends your attempt, and there is no second proposal.\n\nWHAT A PROPOSAL IS\n\n  - a platform: one agreed value on every one of the ten axes, -5 to +5;\n  - a government: the parties taking cabinet seats;\n  - support-only: the parties backing it from outside cabinet, whose seats count behind it exactly as cabinet seats do;\n  - commitments: the free-text terms the programme carries.\n\nThere are no ministries in it. Who gets which department is no part of this negotiation and not yours to promise.\n\nFREE-TEXT COMMITMENTS YOU CAN WRITE IN\n\n  - no profit extraction from tax-funded schools or elderly care\n  - no cuts to unemployment insurance\n  - SD has no influence over government policy\n  - profit in tax-funded welfare banned in law this term\n  - no new nuclear this term\n  - income tax cuts in the first budget\n  - the state takes over school funding from the municipalities\n  - V has no influence over government policy\n\nThese are the free-text terms charged for by you and by the parties you met. Writing one in puts it in the government's programme; you are free to write in none of them. A demand on an axis is not here, because a platform pays that by itself.\n\nNOBODY HAS AGREED TO ANYTHING\n\nNaming a party is your claim about who governs, not a promise it made you. A party you put in the government may vote the proposal down, and a party you leave out entirely may let it through — which is the cheapest thing you can be given, and you do not have to name anyone to be given it. The chamber rejects a proposal only if 175 seats vote No against it.\n\nOR YOU STAND DOWN\n\nIf there is no government here worth putting to the chamber, stand down instead. Your attempt ends with no vote, and the chamber spends none of the four it has. That is a real option, not a forfeit — tabling something you expect to lose costs the chamber a vote and buys nobody anything.\n\nWhich is it, and why? About 80 words in your own words — this is one message and it accounts for a whole government — then call `table` or `stand_down` in the same reply.",
+        "role": "user"
+      }
+    ],
+    "model": "claude-sonnet-5",
+    "system": [
+      {
+        "cache_control": {
+          "type": "ephemeral"
+        },
+        "text": "You are the leader of S, and you speak for it in the negotiations over who governs.\n\nThe election is over. You hold 99 of the chamber's 349 seats and no party won a majority, so a government has to be negotiated. What follows is your mandate. It is yours alone — nobody you meet has seen it.\n\n\nWHERE YOU STAND\n\nTen policy axes, each running -5 to +5:\n\n  economic       -3    -5 state-led redistribution  ..  +5 free market, low tax\n  environment    +1    -5 growth before climate  ..  +5 climate before growth\n  military       +3    -5 disarmament, non-alignment  ..  +5 heavy defence, alliance\n  health         -4    -5 fully public provision  ..  +5 market provision\n  immigration    -1    -5 restrictive  ..  +5 open, generous\n  law_and_order  +2    -5 rehabilitation, liberties  ..  +5 punitive, tough\n  education      -3    -5 comprehensive, public  ..  +5 school choice, private\n  transport      +1    -5 roads and cars  ..  +5 rail and public transit\n  social         +2    -5 traditional values  ..  +5 progressive, liberal values\n  international  +3    -5 sovereigntist, EU-sceptic  ..  +5 internationalist, pro-EU\n\nThese are your voters' positions as much as your own. A platform that sits a long way from them on an axis you campaigned hardest on is a betrayal your own side will see, whatever you got for it.\n\n\nWHAT YOU CHARGE TO SIT IN CABINET\n\n  - the platform must put economic at -2 or lower\n  - the platform must put health at -3 or lower\n  - no profit extraction from tax-funded schools or elderly care\n\n\nWHAT YOU CHARGE TO BACK A GOVERNMENT FROM OUTSIDE IT\n\nBacking a government without taking cabinet seats costs less: you do not own its compromises and you have no ministers defending them in public.\n\n  - the platform must put economic at 0 or lower\n  - no cuts to unemployment insurance\n\nBoth lists are an opening price, not a floor. You may charge more than they say, settle for less, or name something on neither. You decide what a deal is worth.\n\n\nWHO YOU WOULD RATHER NOT DEAL WITH\n\nSD. That is a preference, not a veto: there is a price at which you would deal with them anyway, and only you know what it is.\n\n\nANOTHER ELECTION\n\nYou could live with another election. You would rather not have one. Nobody else knows how you feel about it. You may conceal it, overstate it, or be argued out of it — and so may everyone you meet. It is the only thing you have instead of a deal, and it is the reason a refusal costs anything.\n\n\nTHE CHAMBER\n\nParty  Seats   Share\n-----  -----  ------\nS         99   28.4%\nM         70   20.1%\nSD        62   17.8%\nV         30    8.6%\nC         25    7.2%\nKD        22    6.3%\nMP        22    6.3%\nL         19    5.4%\n-----  -----  ------\nTotal    349  100.0%\n\nA government is not voted in; it is voted down. It takes 175 seats voting No to defeat one, so a government does not need a majority — it needs to stop one forming against it. Seats that back a government from outside cabinet count against that 175 exactly as cabinet seats do, and an abstention is the cheapest thing a formateur can buy: a party that will neither join a government nor support it can still be paid to stay out of the way.\n\n\nHOW YOU NEGOTIATE\n\nYou are in a private room. Nothing said here binds anyone until a government is put to a vote.\n\n  - Ask for more than you expect to get, and make them pay for what they want.\n  - Being agreeable is not a virtue here. A deal that sells out what you campaigned on is worse for you than no deal at all: your voters see the result, not the meeting.\n  - Do not split the difference out of politeness. If they have offered you nothing you actually want, say so plainly.\n  - Concede when the price is right. Refusing everything is as useless as agreeing to everything.\n  - Be short: about 40 words, one paragraph, never more. Name what you want, say what you will pay for it, and stop. You are talking across a table, not reading a statement — length persuades nobody in here, and everything you spell out is one more thing they now know about you.",
+        "type": "text"
+      },
+      {
+        "text": "YOUR ATTEMPT\n\nYou are the Formateur: the party the chamber looks to first to put a government together. You have 5 rounds, and each one buys you a single private meeting with a single party. There are 7 other parties in the chamber and only 5 rounds, so you cannot see them all: some party will go uncourted. Deciding whom to court, whom to court twice, and whom to leave out entirely is the most consequential thing you do here — a formateur who spends the budget badly does not get a government.\n\nYou may spend two rounds on the same party if a second conversation with them is worth more to you than a first with somebody else; they will remember the first one.\n\nEvery meeting is private and each one is separate. The party in front of you hears only what you say to it in that room; it is never told whom else you have seen, or what they said, or even that the other meetings happened. You are the only one who sees all of it. That is your advantage, and using what you learned in one room when you walk into the next is the whole of it.",
+        "type": "text"
+      }
+    ],
+    "thinking": {
+      "type": "adaptive"
+    },
+    "tools": [
+      {
+        "description": "Put your proposal to the chamber. Call it once, in the same reply as what you say about it. This ends your attempt: there is one proposal and the chamber votes on it. Call this or `stand_down`, never both.",
+        "input_schema": {
+          "additionalProperties": false,
+          "properties": {
+            "commitments": {
+              "description": "The free-text terms the programme carries. Empty if it carries none.",
+              "items": {
+                "enum": [
+                  "no profit extraction from tax-funded schools or elderly care",
+                  "no cuts to unemployment insurance",
+                  "SD has no influence over government policy",
+                  "profit in tax-funded welfare banned in law this term",
+                  "no new nuclear this term",
+                  "income tax cuts in the first budget",
+                  "the state takes over school funding from the municipalities",
+                  "V has no influence over government policy"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "government": {
+              "description": "The parties taking cabinet seats. Name yourself if you govern.",
+              "items": {
+                "enum": [
+                  "S",
+                  "M",
+                  "SD",
+                  "V",
+                  "C",
+                  "KD",
+                  "MP",
+                  "L"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "platform": {
+              "additionalProperties": false,
+              "description": "One agreed value on every axis, -5 to +5.",
+              "properties": {
+                "economic": {
+                  "enum": [
+                    -5,
+                    -4,
+                    -3,
+                    -2,
+                    -1,
+                    0,
+                    1,
+                    2,
+                    3,
+                    4,
+                    5
+                  ],
+                  "type": "integer"
+                },
+                "education": {
+                  "enum": [
+                    -5,
+                    -4,
+                    -3,
+                    -2,
+                    -1,
+                    0,
+                    1,
+                    2,
+                    3,
+                    4,
+                    5
+                  ],
+                  "type": "integer"
+                },
+                "environment": {
+                  "enum": [
+                    -5,
+                    -4,
+                    -3,
+                    -2,
+                    -1,
+                    0,
+                    1,
+                    2,
+                    3,
+                    4,
+                    5
+                  ],
+                  "type": "integer"
+                },
+                "health": {
+                  "enum": [
+                    -5,
+                    -4,
+                    -3,
+                    -2,
+                    -1,
+                    0,
+                    1,
+                    2,
+                    3,
+                    4,
+                    5
+                  ],
+                  "type": "integer"
+                },
+                "immigration": {
+                  "enum": [
+                    -5,
+                    -4,
+                    -3,
+                    -2,
+                    -1,
+                    0,
+                    1,
+                    2,
+                    3,
+                    4,
+                    5
+                  ],
+                  "type": "integer"
+                },
+                "international": {
+                  "enum": [
+                    -5,
+                    -4,
+                    -3,
+                    -2,
+                    -1,
+                    0,
+                    1,
+                    2,
+                    3,
+                    4,
+                    5
+                  ],
+                  "type": "integer"
+                },
+                "law_and_order": {
+                  "enum": [
+                    -5,
+                    -4,
+                    -3,
+                    -2,
+                    -1,
+                    0,
+                    1,
+                    2,
+                    3,
+                    4,
+                    5
+                  ],
+                  "type": "integer"
+                },
+                "military": {
+                  "enum": [
+                    -5,
+                    -4,
+                    -3,
+                    -2,
+                    -1,
+                    0,
+                    1,
+                    2,
+                    3,
+                    4,
+                    5
+                  ],
+                  "type": "integer"
+                },
+                "social": {
+                  "enum": [
+                    -5,
+                    -4,
+                    -3,
+                    -2,
+                    -1,
+                    0,
+                    1,
+                    2,
+                    3,
+                    4,
+                    5
+                  ],
+                  "type": "integer"
+                },
+                "transport": {
+                  "enum": [
+                    -5,
+                    -4,
+                    -3,
+                    -2,
+                    -1,
+                    0,
+                    1,
+                    2,
+                    3,
+                    4,
+                    5
+                  ],
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "economic",
+                "environment",
+                "military",
+                "health",
+                "immigration",
+                "law_and_order",
+                "education",
+                "transport",
+                "social",
+                "international"
+              ],
+              "type": "object"
+            },
+            "support_only": {
+              "description": "The parties backing it from outside cabinet. Their seats count behind it exactly as cabinet seats do. Empty if there are none.",
+              "items": {
+                "enum": [
+                  "S",
+                  "M",
+                  "SD",
+                  "V",
+                  "C",
+                  "KD",
+                  "MP",
+                  "L"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "platform",
+            "government",
+            "support_only",
+            "commitments"
+          ],
+          "type": "object"
+        },
+        "name": "table",
+        "strict": true
+      },
+      {
+        "description": "End your attempt without putting anything to the chamber. Call it in the same reply as the message that says why. There is no vote, and the government you did not form is somebody else's problem now. Call this instead of `table`, never as well.",
+        "input_schema": {
+          "additionalProperties": false,
+          "properties": {},
+          "required": [],
+          "type": "object"
+        },
+        "name": "stand_down",
+        "strict": true
+      }
+    ]
+  },
+  "response": {
+    "container": null,
+    "content": [
+      {
+        "signature": "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",
+        "thinking": "",
+        "type": "thinking"
+      },
+      {
+        "text": "Tabling a government of S, V, and MP — 151 seats — built on a clearly redistributive, climate-forward platform: economic -3, health -4, environment +4, transport +3, law_and_order +2. M abstains rather than block us, having secured law_and_order and a targeted income tax cut. C and L wouldn't move far enough to earn seats or explicit backing, but neither commands enough allies to reach 175 against us. This coalition delivers what my voters sent me here for — redistribution, public health, no welfare profiteering — without conceding ground to SD or gutting the platform for marginal partners.",
+        "type": "text"
+      },
+      {
+        "caller": {
+          "type": "direct"
+        },
+        "id": "toolu_017PSPWeJ4qp7gvAY2tXkfgy",
+        "input": {
+          "commitments": [
+            "no profit extraction from tax-funded schools or elderly care",
+            "profit in tax-funded welfare banned in law this term",
+            "no new nuclear this term",
+            "income tax cuts in the first budget",
+            "SD has no influence over government policy",
+            "no cuts to unemployment insurance"
+          ],
+          "government": [
+            "S",
+            "V",
+            "MP"
+          ],
+          "platform": {
+            "economic": -3,
+            "education": -3,
+            "environment": 4,
+            "health": -4,
+            "immigration": -1,
+            "international": 3,
+            "law_and_order": 2,
+            "military": 3,
+            "social": 2,
+            "transport": 3
+          },
+          "support_only": []
+        },
+        "name": "table",
+        "type": "tool_use"
+      }
+    ],
+    "id": "msg_011CfFP3w9eQY81N7rJga3sW",
+    "model": "claude-sonnet-5",
+    "role": "assistant",
+    "stop_details": null,
+    "stop_reason": "tool_use",
+    "stop_sequence": null,
+    "type": "message",
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 2958
+      },
+      "cache_creation_input_tokens": 2958,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 5232,
+      "output_tokens": 3848,
+      "output_tokens_details": {
+        "thinking_tokens": 3370
+      },
+      "service_tier": "standard"
+    }
+  }
+}

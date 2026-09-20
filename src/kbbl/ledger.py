@@ -1,6 +1,6 @@
 """The Ledger: the Run record as it is written, one paid-for thing at a time.
 
-Nothing about a Run is assembled at the end. Every Exchange, every Ballot, every Gap report
+Nothing about a Run is assembled at the end. Every Exchange, every Ballot, every report
 put in front of a Party and the cost of every request is entered here at the moment it
 happens, so that a Run which breaks mid-Bilateral still holds everything it has already
 been billed for. §8 pulls Cassettes forward to the first call for the same reason this
@@ -16,6 +16,7 @@ from __future__ import annotations
 from kbbl.models import (
     Bilateral,
     Choice,
+    ExclusionReport,
     Exchange,
     GapReport,
     Judgement,
@@ -51,6 +52,7 @@ class Ledger:
         self._reasoning = ""
         self._judgements: list[Judgement] = []
         self._gap_reports: list[GapReport] = []
+        self._exclusion_reports: list[ExclusionReport] = []
         self._usage: list[Usage] = []
         self._finished = False
 
@@ -69,6 +71,7 @@ class Ledger:
             reasoning=self._reasoning,
             judgements=tuple(self._judgements),
             gap_reports=tuple(self._gap_reports),
+            exclusion_reports=tuple(self._exclusion_reports),
             usage=tuple(self._usage),
             finished=self._finished,
         )
@@ -106,9 +109,17 @@ class Ledger:
         self._proposal = proposal
         self._reasoning = reasoning
 
-    def shown(self, report: GapReport) -> None:
-        """A Gap report the Referee put in front of a Party before it voted (§5.4)."""
-        self._gap_reports.append(report)
+    def shown(self, report: GapReport | ExclusionReport) -> None:
+        """A report the Referee put in front of a Party before it voted (§5.4).
+
+        One verb for one act, and the kind of report decides which list it lands in. Two
+        methods would have let a caller file a report under the wrong heading, which is the
+        only way these can go wrong: a Ledger never reads either one back.
+        """
+        if isinstance(report, GapReport):
+            self._gap_reports.append(report)
+        else:
+            self._exclusion_reports.append(report)
 
     def judged(self, judgement: Judgement) -> None:
         """One Party's Ballot, and what it said casting it."""

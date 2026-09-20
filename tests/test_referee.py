@@ -14,8 +14,11 @@ from kbbl.models import (
     TOTAL_SEATS,
     Axis,
     AxisDemand,
+    ExclusionReport,
+    Party,
     Platform,
     Proposal,
+    Role,
     Scenario,
     TextDemand,
     Ballot,
@@ -26,9 +29,11 @@ from kbbl.referee import (
     Satisfaction,
     blocking_groupings,
     count_vote,
+    exclusion_report,
     gap_report,
     price_report,
     render_blocking_groupings,
+    render_exclusion_report,
     render_gap_report,
     render_price_report,
     render_proposal,
@@ -589,3 +594,71 @@ def test_neither_bloc_in_the_2026_riksdag_reaches_the_blocking_minority(
         named for named in reaching if set(named) <= left or set(named) <= right
     ], "no minimal Grouping is drawn from one bloc alone"
     assert ("M", "SD", "KD", "MP") in reaching, "C is not the only Party that completes one"
+
+
+def test_the_exclusion_report_says_where_the_proposal_puts_each_one(
+    four_party: Scenario,
+) -> None:
+    """§5.4's argument, applied to the coalition rather than to the Platform: the Party is
+    shown who is in the government it is about to wave through, not asked to remember."""
+    report = exclusion_report(four_party.party("GV"), proposed("NP", support_only=("MI",)))
+
+    assert report is not None
+    assert report.party == "GV"
+    assert [(placed.party, placed.role) for placed in report.placements] == [
+        ("NP", Role.GOVERNMENT)
+    ]
+
+
+def reported(party: Party, proposal: Proposal) -> ExclusionReport:
+    """The Exclusion report of a Party that has one. `exclusion_report` answers None for a
+    Party that named nobody, and a test about the rendering is not a test about that."""
+    report = exclusion_report(party, proposal)
+    assert report is not None, f"{party.name} names somebody, so it has a report"
+    return report
+
+
+def test_the_exclusion_report_tells_the_three_roles_apart(four_party: Scenario) -> None:
+    """Not being named is a role, not the absence of one: a Party the Proposal ignores is
+    still one whose seats are not behind it (§5.2)."""
+    governs = reported(four_party.party("GV"), proposed("NP", support_only=("MI",)))
+    supports = reported(four_party.party("NP"), proposed("FF", support_only=("GV",)))
+    ignored = reported(four_party.party("FF"), proposed("GV", support_only=("MI",)))
+
+    assert governs.placements[0].role is Role.GOVERNMENT
+    assert supports.placements[0].role is Role.SUPPORT_ONLY
+    assert ignored.placements[0].role is Role.UNNAMED
+    assert [placed.party for placed in governs.in_the_base] == ["NP"]
+    assert [placed.party for placed in supports.in_the_base] == ["GV"]
+    assert [placed.party for placed in ignored.in_the_base] == []
+
+
+def test_a_party_that_would_deal_with_anybody_is_shown_nothing(four_party: Scenario) -> None:
+    """MI names nobody, so there is no report — the way the Persona omits its section
+    rather than saying "none"."""
+    assert four_party.party("MI").prefer_not == ()
+
+    assert exclusion_report(four_party.party("MI"), proposed("NP")) is None
+
+
+def test_the_exclusion_report_names_who_is_in_the_base(four_party: Scenario) -> None:
+    rendered = render_exclusion_report(
+        reported(four_party.party("GV"), proposed("NP", support_only=("MI",)))
+    )
+
+    assert "GV: the Parties it would rather not deal with" in rendered
+    assert "  NP  in the Government" in rendered
+    assert "NP is in the Base" in rendered
+
+
+def test_an_exclusion_the_proposal_leaves_out_is_reported_as_left_out(
+    four_party: Scenario,
+) -> None:
+    """The report is feedback and never a constraint (§2), so the honest answer when a
+    Proposal is built on nobody this Party objects to is that it is built on nobody."""
+    rendered = render_exclusion_report(
+        reported(four_party.party("FF"), proposed("GV", support_only=("MI",)))
+    )
+
+    assert "  NP  not named" in rendered
+    assert "None of them is in the Base" in rendered

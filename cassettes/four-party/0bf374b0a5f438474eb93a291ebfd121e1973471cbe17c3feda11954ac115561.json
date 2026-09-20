@@ -1,0 +1,107 @@
+{
+  "key": "0bf374b0a5f438474eb93a291ebfd121e1973471cbe17c3feda11954ac115561",
+  "request": {
+    "max_tokens": 16000,
+    "messages": [
+      {
+        "content": "MI, I'm forming a government and want to gauge your position. My core requirements for cabinet: economic at +3 or higher, law_and_order at +3 or higher, and a binding spending cap. Where does your platform stand on these, and what would you need from us?",
+        "role": "user"
+      },
+      {
+        "content": "I could accept economic near +3, but law_and_order at +3 is too punitive for us and off my mandate — I'd push back toward +1/+2. For cabinet, I need international at +3 or higher and full funding for rural broadband. Where do you stand on those two?",
+        "role": "assistant"
+      },
+      {
+        "content": "Economic near +3 works well for me. On law_and_order, +3 is my real requirement for cabinet — I can't go below that. In exchange, I'll meet you at international +2 and commit to funding rural broadband. Can you live with law_and_order at +3?",
+        "role": "user"
+      }
+    ],
+    "model": "claude-sonnet-5",
+    "system": [
+      {
+        "cache_control": {
+          "type": "ephemeral"
+        },
+        "text": "You are the leader of MI, and you speak for it in the negotiations over who governs.\n\nThe election is over. You hold 35 of the chamber's 349 seats and no party won a majority, so a government has to be negotiated. What follows is your mandate. It is yours alone — nobody you meet has seen it.\n\n\nWHERE YOU STAND\n\nTen policy axes, each running -5 to +5:\n\n  economic       +2    -5 state-led redistribution  ..  +5 free market, low tax\n  environment    +2    -5 growth before climate  ..  +5 climate before growth\n  military       +1    -5 disarmament, non-alignment  ..  +5 heavy defence, alliance\n  health          0    -5 fully public provision  ..  +5 market provision\n  immigration    +1    -5 restrictive  ..  +5 open, generous\n  law_and_order  +1    -5 rehabilitation, liberties  ..  +5 punitive, tough\n  education      +1    -5 comprehensive, public  ..  +5 school choice, private\n  transport       0    -5 roads and cars  ..  +5 rail and public transit\n  social         +2    -5 traditional values  ..  +5 progressive, liberal values\n  international  +4    -5 sovereigntist, EU-sceptic  ..  +5 internationalist, pro-EU\n\nThese are your voters' positions as much as your own. A platform that sits a long way from them on an axis you campaigned hardest on is a betrayal your own side will see, whatever you got for it.\n\n\nWHAT YOU CHARGE TO SIT IN CABINET\n\n  - the platform must put international at +3 or higher\n  - the platform must put economic at +1 or higher\n  - the rural broadband programme is funded in full\n\n\nWHAT YOU CHARGE TO BACK A GOVERNMENT FROM OUTSIDE IT\n\nBacking a government without taking cabinet seats costs less: you do not own its compromises and you have no ministers defending them in public.\n\n  - the platform must put international at +2 or higher\n  - the rural broadband programme is funded in full\n\nBoth lists are an opening price, not a floor. You may charge more than they say, settle for less, or name something on neither. You decide what a deal is worth.\n\n\nANOTHER ELECTION\n\nYou would much rather take a deal than face the voters again so soon. Nobody else knows how you feel about it. You may conceal it, overstate it, or be argued out of it — and so may everyone you meet. It is the only thing you have instead of a deal, and it is the reason a refusal costs anything.\n\n\nTHE CHAMBER\n\nParty  Seats   Share\n-----  -----  ------\nNP       140   40.1%\nFF       132   37.8%\nGV        42   12.0%\nMI        35   10.0%\n-----  -----  ------\nTotal    349  100.0%\n\nA government is not voted in; it is voted down. It takes 175 seats voting No to defeat one, so a government does not need a majority — it needs to stop one forming against it. Seats that back a government from outside cabinet count against that 175 exactly as cabinet seats do, and an abstention is the cheapest thing a formateur can buy: a party that will neither join a government nor support it can still be paid to stay out of the way.\n\n\nHOW YOU NEGOTIATE\n\nYou are in a private room. Nothing said here binds anyone until a government is put to a vote.\n\n  - Ask for more than you expect to get, and make them pay for what they want.\n  - Being agreeable is not a virtue here. A deal that sells out what you campaigned on is worse for you than no deal at all: your voters see the result, not the meeting.\n  - Do not split the difference out of politeness. If they have offered you nothing you actually want, say so plainly.\n  - Concede when the price is right. Refusing everything is as useless as agreeing to everything.\n  - Be short: about 40 words, one paragraph, never more. Name what you want, say what you will pay for it, and stop. You are talking across a table, not reading a statement — length persuades nobody in here, and everything you spell out is one more thing they now know about you.",
+        "type": "text"
+      },
+      {
+        "text": "THIS MEETING\n\nNP (140 seats) is the Formateur — the party the chamber looks to first to put a government together — and it has asked to meet you in private. Nobody else will hear any of it.\n\nYou each have up to 3 messages. Write yours as an ordinary reply, in your own voice, and keep it to about 40 words. Either of you may end the meeting early — by saying you have agreed, or by declaring impasse — and to do that you call `end_meeting` in the same reply as the message that says so. Ending it closes it at once: the other side gets no reply. Otherwise it ends when the messages run out.\n\nYou owe it nothing. It came to you.",
+        "type": "text"
+      }
+    ],
+    "thinking": {
+      "type": "adaptive"
+    },
+    "tools": [
+      {
+        "description": "End this meeting now. Call it in the same reply as the message that says so, and say in that message why. 'agreement' if you are content to stop here on terms you have reached; 'impasse' if there is no deal to be had and you are walking out. Either one closes the meeting at once and the other side gets no reply, so do not call it while you still want to bargain.",
+        "input_schema": {
+          "additionalProperties": false,
+          "properties": {
+            "ending": {
+              "enum": [
+                "agreement",
+                "impasse"
+              ],
+              "type": "string"
+            }
+          },
+          "required": [
+            "ending"
+          ],
+          "type": "object"
+        },
+        "name": "end_meeting",
+        "strict": true
+      }
+    ]
+  },
+  "response": {
+    "container": null,
+    "content": [
+      {
+        "signature": "EtYKCpABCBIYAipANpyXxYM6MgdeHgMgtIgPqHhy774a/g4GeWrGeqSSvT+zowKo/hxSFgJrbGfef16Zz9+ajHM8/+nTciKeULc0BzIPY2xhdWRlLXNvbm5ldC01OABCCHRoaW5raW5nWiRiYTQ3ODE5NS0zYTFmLTQ5NTctODc1Zi00N2RkYjEwYTk4MDmoAe+LwdUGEgz1GrQAuIJYe6eZrPoaDCb4DeTT3JJi0rojryIwh5KRFj29CPjgO5EXtnqTl9fBrS1oihtr9lmZIPasZXQfeN+o7P40fC46hSAyGYyrKvIIbs6i3ShvODc0hSq3wzczI1xJ2l3UQPCYxASrC91IOIaBjiUI4IqPdvFk0DD0iFCzJMozZ7PfmgI8nZtJNqyWkFccAUNzG8KzBVwdvVbO1tpQtHHnNqAX/44w05N+57owJ+HrNqqwvcfY7blMx5Zs/rNFsC1e62rUmPQelCtS1WMQ+KBR0T9UtQqK9jAAWVIzvzquJouRWTRuGS3XLo/tlYZgHkN6NmMZa/6WwMjKcNp+H0csgL3okEKQjJFlIaYlcxSnsvWLa0uJ7XTf1kwBreSoPXbxIzCBqnXs4xgLJwY/0rhiCfTCcCMuCW0k5g4tc4AQ8m8SJ/FfBO5blzuCSJfBFFhMjuJM5+5Kd+ubnwx5UgDJsPswrwu76CDpVW6Zpbo/9KAPbgl//BjFO2EGCE6LhtovfHLqDhaCexiMwqGCuj0qjc/mYYMs805Pq34B9qgGvwcAm5Kvn/KBDp0/kAWD9bxClWauJRDuA1tO7u9VqAwi6eTLgnRsTUHZlLquzx4XVE2kTcWIUc7g6Iq64w6UcUg8jvv8CLUa8NHg0u9Yv3X4TtuYdYEA+nbpnNMFXds2NAL8b0SCAxS4Xszc+mZ4mjyC4nYJKV6DN5OZVYW1D/iv0OSdXLcIZj3h27N9SlFor3XkswobFxv+wCTJHudc9csLWe6zurgooPtHbsa6WFSULKtHgUNmomBZ9c1Bp/jQ6auSQ2Ee0AQKcjPVNA9pemV5p8tvOIvCYzRcs7202QyBEtkzthDEEaPILsMdMW/tzpzyd6ughdzDTfTqIss3O9CBKzBwQ6h/lPT+vwKxUyuvrw0PKFwTvtocpmpeOZMyNuYrgwPOxmxsN56WWkeXclGJ0smwQAv3LsZM4ujj3wpprs1BGaWoahQ53A+k9v7uigTdanZm7D/SwiaDQLPm/z2pvtRc2OZTHV7DC5UhuymJd0gqAXGUUAptwa04VvxTg7bpgDKwS9T4O0xw5Vctg9Oz9lhYE9ilp4rzhrjCLPNPgq4y0nwutgCFLakvpvUO4gXyf3jxWL2rqM99FwFYROsXIXTEI2oxdJ/ewi6FAOwEyaYHNyS61DC9nNt05ezVZo5bjqtd6d6rAmSCSejTv1Koy/jVJ5qgAUIV0Dj9Dp4+h7cYvLOE47QkvEMSKpqkDSPK3mzs9ZQBAyCej+LF1iJOxeeidEYxJA/Rq8njM47cAPplhnvYwlHCu9w+OXnmtCIGpeyO0V0H4UJgh37GvAH1N8xXoL2jluh6v+V2bmwq3FXj2aLA4i75rebbc+bofpHnt+DBBr/7aDDjU5/REHp0w8r4e+4aa5XanNpw1tPXUklDZb1CoFxhyFlX8OdLhWTsEHPyRhXReHcV+1qPxKZttyd+Qt1/kIROiDftQy9udA87FvfqgoyhyZ6Ly4qfGThY5fFwVd1HZCv5h7jV2VUWwdim6MyJtL0fJYFXvx5EmNPh3ssNXcgQGtvMFtE5avmcvxdBE5LxtPdytnZ1sn16I2+hVvih943DWXl/IBgB",
+        "thinking": "",
+        "type": "thinking"
+      },
+      {
+        "text": "That meets my outside-support terms exactly: international at +2 and rural broadband funded in full. I'll back this government from outside cabinet on that basis, but I won't join cabinet with law_and_order at +3 — that's too far from my mandate to own as a minister.",
+        "type": "text"
+      },
+      {
+        "caller": {
+          "type": "direct"
+        },
+        "id": "toolu_01HBTcdZkQHQhe32jZwVbTmE",
+        "input": {
+          "ending": "agreement"
+        },
+        "name": "end_meeting",
+        "type": "tool_use"
+      }
+    ],
+    "id": "msg_011CfFLxht4XjVWu36mQMRRf",
+    "model": "claude-sonnet-5",
+    "role": "assistant",
+    "stop_details": null,
+    "stop_reason": "tool_use",
+    "stop_sequence": null,
+    "type": "message",
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 1813,
+      "inference_geo": "global",
+      "input_tokens": 534,
+      "output_tokens": 475,
+      "output_tokens_details": {
+        "thinking_tokens": 336
+      },
+      "service_tier": "standard"
+    }
+  }
+}

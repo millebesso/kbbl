@@ -36,7 +36,10 @@
       "axis": "education",
       "op": ">=",
       "value": 2
+    },
+    {
+      "text": "V has no influence over government policy"
     }
   ],
-  "willingness_to_re_elect": 1
+  "willingness_to_re_elect": 3
 }

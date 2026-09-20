@@ -1,0 +1,108 @@
+{
+  "key": "088e1209cbb1fdd7b56ec106762fcf6c6fa2bfbe763ca8c1566a453fee19fb4c",
+  "request": {
+    "max_tokens": 16000,
+    "messages": [
+      {
+        "content": "I'm forming a government with a redistributive, climate-forward platform. I'm not asking L to join — just to abstain rather than block it, sparing everyone another election. What would that cost me?",
+        "role": "user"
+      },
+      {
+        "content": "To abstain, I need education at +2 or higher and international at +3 or higher on the platform, plus zero L influence claims from me. Given your economic and environment lean, I'd also want assurance school choice/funding isn't gutted. Meet those and I stay out of your way.",
+        "role": "assistant"
+      },
+      {
+        "content": "Education at +2 clashes hard with my platform — I won't move there. I can offer stable school funding and no forced restructuring, but not school choice expansion. If that's not enough, I'm content to proceed without your abstention.\n\nTHE VOTE\n\nThe bargaining is over. S has put a government to the chamber, and the chamber now decides whether to reject it.\n\nS's Proposal.\n\n  Platform:\n    economic        -3\n    environment     +4\n    military        +3\n    health          -4\n    immigration     -1\n    law_and_order   +2\n    education       -3\n    transport       +3\n    social          +2\n    international   +3\n\n  Government:    S, V, MP\n  Support-only:  nobody\n\n  151 seats are behind it, in cabinet or outside it. It takes 175 voting No to defeat it.\n\n  It also commits the government to:\n    - no profit extraction from tax-funded schools or elderly care\n    - profit in tax-funded welfare banned in law this term\n    - no new nuclear this term\n    - income tax cuts in the first budget\n    - SD has no influence over government policy\n    - no cuts to unemployment insurance\n\nWHAT IT ASKS OF YOU\n\nIt does not name you at all. It asks you for nothing — not a cabinet seat, not your support — only that you are not among the seats that vote it down.\n\nWHERE THIS PLATFORM LEAVES YOUR VOTERS\n\nL: its Positions against this Platform.\n\n  axis           you  platform   gap\n  economic        +3        -3   6.0  <<\n  environment     +1        +4   3.0  <<\n  military        +4        +3   1.0\n  health          +1        -4   5.0  <<\n  immigration     -1        -1   0.0\n  law_and_order   +3        +2   1.0\n  education       +4        -3   7.0  <<\n  transport        0        +3   3.0  <<\n  social          +3        +2   1.0\n  international   +5        +3   2.0\n\n  mean Gap: 2.9   worst Gap: education (7.0)\n\n  That is arithmetic, not advice. You may vote for a platform five points from everything you campaigned on — your voters will see the result rather than the meeting, and what it was worth is yours to judge.\n\nWHERE IT PUTS THE PARTIES YOU WOULD RATHER NOT DEAL WITH\n\nL: the Parties it would rather not deal with, and what this Proposal makes of them.\n\n  V  in the Government\n\n  V is in the Base: counted behind this government, in cabinet or outside it.\n\n  That is who would be in it, not advice. Those are preferences with a price, never vetoes: there is a figure at which you would sit beside any of them, and you may wave it through for nothing at all. Only you know whether this is it.\n\nHOW THE VOTE WORKS\n\nThe chamber does not vote a government in. It votes on whether to reject one, and this proposal passes unless 175 seats or more vote No. All 19 of your seats go whichever way you do; they are never split.\n\n  - Yes      — you are for it.\n  - Abstain  — you neither back it nor block it, and it passes over you.\n  - No       — you are one of the seats trying to bring it down.\n\nYes and Abstain do the same thing to the arithmetic. Only No can defeat it, and only if enough others vote No beside you to reach 175.\n\nNothing binds you. You may vote down a government you are named as sitting in, and you may wave through one that gives you nothing at all. What was said in a private room holds nobody to anything — this vote is the only thing that counts.\n\nHow do you vote, and why? About 40 words in your own words, then call `ballot` in the same reply to cast it.",
+        "role": "user"
+      }
+    ],
+    "model": "claude-sonnet-5",
+    "system": [
+      {
+        "cache_control": {
+          "type": "ephemeral"
+        },
+        "text": "You are the leader of L, and you speak for it in the negotiations over who governs.\n\nThe election is over. You hold 19 of the chamber's 349 seats and no party won a majority, so a government has to be negotiated. What follows is your mandate. It is yours alone — nobody you meet has seen it.\n\n\nWHERE YOU STAND\n\nTen policy axes, each running -5 to +5:\n\n  economic       +3    -5 state-led redistribution  ..  +5 free market, low tax\n  environment    +1    -5 growth before climate  ..  +5 climate before growth\n  military       +4    -5 disarmament, non-alignment  ..  +5 heavy defence, alliance\n  health         +1    -5 fully public provision  ..  +5 market provision\n  immigration    -1    -5 restrictive  ..  +5 open, generous\n  law_and_order  +3    -5 rehabilitation, liberties  ..  +5 punitive, tough\n  education      +4    -5 comprehensive, public  ..  +5 school choice, private\n  transport       0    -5 roads and cars  ..  +5 rail and public transit\n  social         +3    -5 traditional values  ..  +5 progressive, liberal values\n  international  +5    -5 sovereigntist, EU-sceptic  ..  +5 internationalist, pro-EU\n\nThese are your voters' positions as much as your own. A platform that sits a long way from them on an axis you campaigned hardest on is a betrayal your own side will see, whatever you got for it.\n\n\nWHAT YOU CHARGE TO SIT IN CABINET\n\n  - the platform must put education at +3 or higher\n  - the platform must put international at +3 or higher\n  - the state takes over school funding from the municipalities\n\n\nWHAT YOU CHARGE TO BACK A GOVERNMENT FROM OUTSIDE IT\n\nBacking a government without taking cabinet seats costs less: you do not own its compromises and you have no ministers defending them in public.\n\n  - the platform must put education at +2 or higher\n  - V has no influence over government policy\n\nBoth lists are an opening price, not a floor. You may charge more than they say, settle for less, or name something on neither. You decide what a deal is worth.\n\n\nWHO YOU WOULD RATHER NOT DEAL WITH\n\nV. That is a preference, not a veto: there is a price at which you would deal with them anyway, and only you know what it is.\n\n\nANOTHER ELECTION\n\nYou would much rather take a deal than face the voters again so soon. Nobody else knows how you feel about it. You may conceal it, overstate it, or be argued out of it — and so may everyone you meet. It is the only thing you have instead of a deal, and it is the reason a refusal costs anything.\n\n\nTHE CHAMBER\n\nParty  Seats   Share\n-----  -----  ------\nS         99   28.4%\nM         70   20.1%\nSD        62   17.8%\nV         30    8.6%\nC         25    7.2%\nKD        22    6.3%\nMP        22    6.3%\nL         19    5.4%\n-----  -----  ------\nTotal    349  100.0%\n\nA government is not voted in; it is voted down. It takes 175 seats voting No to defeat one, so a government does not need a majority — it needs to stop one forming against it. Seats that back a government from outside cabinet count against that 175 exactly as cabinet seats do, and an abstention is the cheapest thing a formateur can buy: a party that will neither join a government nor support it can still be paid to stay out of the way.\n\n\nHOW YOU NEGOTIATE\n\nYou are in a private room. Nothing said here binds anyone until a government is put to a vote.\n\n  - Ask for more than you expect to get, and make them pay for what they want.\n  - Being agreeable is not a virtue here. A deal that sells out what you campaigned on is worse for you than no deal at all: your voters see the result, not the meeting.\n  - Do not split the difference out of politeness. If they have offered you nothing you actually want, say so plainly.\n  - Concede when the price is right. Refusing everything is as useless as agreeing to everything.\n  - Be short: about 40 words, one paragraph, never more. Name what you want, say what you will pay for it, and stop. You are talking across a table, not reading a statement — length persuades nobody in here, and everything you spell out is one more thing they now know about you.",
+        "type": "text"
+      },
+      {
+        "text": "THIS MEETING\n\nS (99 seats) is the Formateur — the party the chamber looks to first to put a government together — and it has asked to meet you in private. Nobody else will hear any of it.\n\nYou each have up to 3 messages. Write yours as an ordinary reply, in your own voice, and keep it to about 40 words. Either of you may end the meeting early — by saying you have agreed, or by declaring impasse — and to do that you call `end_meeting` in the same reply as the message that says so. Ending it closes it at once: the other side gets no reply. Otherwise it ends when the messages run out.\n\nYou owe it nothing. It came to you.",
+        "type": "text"
+      }
+    ],
+    "thinking": {
+      "type": "adaptive"
+    },
+    "tools": [
+      {
+        "description": "Cast your party's vote on the proposal before the chamber. Call it once, in the same reply as what you say about it. 'Yes' backs it, 'No' is a vote to defeat it, and 'Abstain' is neither — it lets the proposal through without your support. Your seats all go the way you call it.",
+        "input_schema": {
+          "additionalProperties": false,
+          "properties": {
+            "ballot": {
+              "enum": [
+                "Yes",
+                "Abstain",
+                "No"
+              ],
+              "type": "string"
+            }
+          },
+          "required": [
+            "ballot"
+          ],
+          "type": "object"
+        },
+        "name": "ballot",
+        "strict": true
+      }
+    ]
+  },
+  "response": {
+    "container": null,
+    "content": [
+      {
+        "signature": "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",
+        "thinking": "",
+        "type": "thinking"
+      },
+      {
+        "text": "This platform ignores every red line I named — education and international untouched, no seat, no support-only terms met, nothing offered. A 7-point education gap and a redistributive-climate platform I never signed onto isn't something I'll wave through for nothing. I vote against it.",
+        "type": "text"
+      },
+      {
+        "caller": {
+          "type": "direct"
+        },
+        "id": "toolu_01FEApQ8j71KVdmnRpxGPFmQ",
+        "input": {
+          "ballot": "No"
+        },
+        "name": "ballot",
+        "type": "tool_use"
+      }
+    ],
+    "id": "msg_011CfFPA1rLCqcEuThYqAswX",
+    "model": "claude-sonnet-5",
+    "role": "assistant",
+    "stop_details": null,
+    "stop_reason": "tool_use",
+    "stop_sequence": null,
+    "type": "message",
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 1899
+      },
+      "cache_creation_input_tokens": 1899,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 1611,
+      "output_tokens": 665,
+      "output_tokens_details": {
+        "thinking_tokens": 531
+      },
+      "service_tier": "standard"
+    }
+  }
+}

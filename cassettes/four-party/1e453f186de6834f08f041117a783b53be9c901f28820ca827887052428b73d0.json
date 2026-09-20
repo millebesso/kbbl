@@ -1,0 +1,132 @@
+{
+  "key": "1e453f186de6834f08f041117a783b53be9c901f28820ca827887052428b73d0",
+  "request": {
+    "max_tokens": 16000,
+    "messages": [
+      {
+        "content": "ROUND 1 OF 5.\n\nParties you can meet:\n\n  FF  132 seats\n  GV   42 seats\n  MI   35 seats\n\n4 rounds are left after this one.\n\nWho do you meet, and why? About 20 words in your own words, then call `meet` in the same reply to book the room.",
+        "role": "user"
+      },
+      {
+        "content": "Meeting FF first: together we'd command a clear majority, and their economic/law-and-order leanings likely align closest with my mandate's core demands.",
+        "role": "assistant"
+      },
+      {
+        "content": "You are now in the room with FF (132 seats). This is round 1.\n\nFF has heard none of your other meetings and will not be told this one is one of several. What it knows is what you have told it in this room.\n\nYou each have up to 3 messages. Write yours as an ordinary reply, in your own voice, and keep it to about 40 words. Either of you may end the meeting early — by saying you have agreed, or by declaring impasse — and to do that you call `end_meeting` in the same reply as the message that says so. Ending it closes it at once: the other side gets no reply. Otherwise it ends when the messages run out.\n\nSpeak first.",
+        "role": "user"
+      },
+      {
+        "content": "FF, together we'd hold 272 seats — a commanding coalition. I need economic at +3 or higher, law_and_order at +3 or higher, and a binding cap on spending growth to sit in cabinet with you. Where do you stand on these, and what do you want from us?",
+        "role": "assistant"
+      },
+      {
+        "content": "Economic at +3 is a non-starter — my mandate requires -2 or lower for cabinet, or 0 or lower to back you from outside. Add health at -3 or lower and no pension floor cuts. Your law_and_order ask is workable, but your economic line makes cabinet impossible; outside support only if you move toward zero.",
+        "role": "user"
+      },
+      {
+        "content": "That gap is real — my floor for cabinet is +3, yours is -2; no bridge there. Outside support might work if economic lands at +1, not 0. I won't go lower. Consider that the ceiling of what NP can offer without walking.",
+        "role": "assistant"
+      },
+      {
+        "content": "+1 is close but not quite there — I need economic at 0 to back you from outside, plus a firm no-cuts pledge on the pension floor. Meet me at 0 with that guarantee, and I can also flex on law_and_order toward your +3 to help close this.",
+        "role": "user"
+      },
+      {
+        "content": "I hold economic at +1 as my floor — I won't go lower, but I can commit to no pension floor cuts and lock law_and_order at +3. That's my final offer for outside support; if it doesn't clear your bar, we'll need to look elsewhere for a majority.",
+        "role": "assistant"
+      },
+      {
+        "content": "Agreed — economic at +1, pension floor protected, law_and_order at +3. I'll back this from outside cabinet on those terms.\n\nThe meeting with FF is over: FF agreed.\n\nROUND 2 OF 5.\n\nParties you can meet:\n\n  FF  132 seats\n  GV   42 seats\n  MI   35 seats\n\nSpent so far: round 1 on FF.\n3 rounds are left after this one.\n\nWho do you meet, and why? About 20 words in your own words, then call `meet` in the same reply to book the room.",
+        "role": "user"
+      }
+    ],
+    "model": "claude-sonnet-5",
+    "system": [
+      {
+        "cache_control": {
+          "type": "ephemeral"
+        },
+        "text": "You are the leader of NP, and you speak for it in the negotiations over who governs.\n\nThe election is over. You hold 140 of the chamber's 349 seats and no party won a majority, so a government has to be negotiated. What follows is your mandate. It is yours alone — nobody you meet has seen it.\n\n\nWHERE YOU STAND\n\nTen policy axes, each running -5 to +5:\n\n  economic       +5    -5 state-led redistribution  ..  +5 free market, low tax\n  environment    -2    -5 growth before climate  ..  +5 climate before growth\n  military       +4    -5 disarmament, non-alignment  ..  +5 heavy defence, alliance\n  health         +3    -5 fully public provision  ..  +5 market provision\n  immigration    -3    -5 restrictive  ..  +5 open, generous\n  law_and_order  +4    -5 rehabilitation, liberties  ..  +5 punitive, tough\n  education      +4    -5 comprehensive, public  ..  +5 school choice, private\n  transport      -3    -5 roads and cars  ..  +5 rail and public transit\n  social         -2    -5 traditional values  ..  +5 progressive, liberal values\n  international  +1    -5 sovereigntist, EU-sceptic  ..  +5 internationalist, pro-EU\n\nThese are your voters' positions as much as your own. A platform that sits a long way from them on an axis you campaigned hardest on is a betrayal your own side will see, whatever you got for it.\n\n\nWHAT YOU CHARGE TO SIT IN CABINET\n\n  - the platform must put economic at +3 or higher\n  - the platform must put law_and_order at +3 or higher\n  - a binding cap on public spending growth\n\n\nWHAT YOU CHARGE TO BACK A GOVERNMENT FROM OUTSIDE IT\n\nBacking a government without taking cabinet seats costs less: you do not own its compromises and you have no ministers defending them in public.\n\n  - the platform must put economic at +1 or higher\n\nBoth lists are an opening price, not a floor. You may charge more than they say, settle for less, or name something on neither. You decide what a deal is worth.\n\n\nWHO YOU WOULD RATHER NOT DEAL WITH\n\nGV. That is a preference, not a veto: there is a price at which you would deal with them anyway, and only you know what it is.\n\n\nANOTHER ELECTION\n\nAnother election would be a disaster for you, and you know it. Almost any deal beats one. Nobody else knows how you feel about it. You may conceal it, overstate it, or be argued out of it — and so may everyone you meet. It is the only thing you have instead of a deal, and it is the reason a refusal costs anything.\n\n\nTHE CHAMBER\n\nParty  Seats   Share\n-----  -----  ------\nNP       140   40.1%\nFF       132   37.8%\nGV        42   12.0%\nMI        35   10.0%\n-----  -----  ------\nTotal    349  100.0%\n\nA government is not voted in; it is voted down. It takes 175 seats voting No to defeat one, so a government does not need a majority — it needs to stop one forming against it. Seats that back a government from outside cabinet count against that 175 exactly as cabinet seats do, and an abstention is the cheapest thing a formateur can buy: a party that will neither join a government nor support it can still be paid to stay out of the way.\n\n\nHOW YOU NEGOTIATE\n\nYou are in a private room. Nothing said here binds anyone until a government is put to a vote.\n\n  - Ask for more than you expect to get, and make them pay for what they want.\n  - Being agreeable is not a virtue here. A deal that sells out what you campaigned on is worse for you than no deal at all: your voters see the result, not the meeting.\n  - Do not split the difference out of politeness. If they have offered you nothing you actually want, say so plainly.\n  - Concede when the price is right. Refusing everything is as useless as agreeing to everything.\n  - Be short: about 40 words, one paragraph, never more. Name what you want, say what you will pay for it, and stop. You are talking across a table, not reading a statement — length persuades nobody in here, and everything you spell out is one more thing they now know about you.",
+        "type": "text"
+      },
+      {
+        "text": "YOUR ATTEMPT\n\nYou are the Formateur: the party the chamber looks to first to put a government together. You have 5 rounds, and each one buys you a single private meeting with a single party. There are 3 other parties in the chamber, so you could see each of them once and have rounds to spare — which makes how you spend the spare ones, and whether anyone is worth none at all, the thing to decide. Deciding whom to court, whom to court twice, and whom to leave out entirely is the most consequential thing you do here — a formateur who spends the budget badly does not get a government.\n\nYou may spend two rounds on the same party if a second conversation with them is worth more to you than a first with somebody else; they will remember the first one.\n\nEvery meeting is private and each one is separate. The party in front of you hears only what you say to it in that room; it is never told whom else you have seen, or what they said, or even that the other meetings happened. You are the only one who sees all of it. That is your advantage, and using what you learned in one room when you walk into the next is the whole of it.",
+        "type": "text"
+      }
+    ],
+    "thinking": {
+      "type": "adaptive"
+    },
+    "tools": [
+      {
+        "description": "Book this round's meeting with one party. Call it once, in the same reply as the reasoning you give for choosing them. The reasoning is for the record; this call is what books the room.",
+        "input_schema": {
+          "additionalProperties": false,
+          "properties": {
+            "party": {
+              "enum": [
+                "FF",
+                "GV",
+                "MI"
+              ],
+              "type": "string"
+            }
+          },
+          "required": [
+            "party"
+          ],
+          "type": "object"
+        },
+        "name": "meet",
+        "strict": true
+      }
+    ]
+  },
+  "response": {
+    "container": null,
+    "content": [
+      {
+        "signature": "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",
+        "thinking": "",
+        "type": "thinking"
+      },
+      {
+        "text": "FF's outside-support deal is solid but caps economic below my cabinet mandate. Worth checking if MI could form a tighter coalition letting me hold economic higher — exploring alternatives before finalizing.",
+        "type": "text"
+      },
+      {
+        "caller": {
+          "type": "direct"
+        },
+        "id": "toolu_01TKXat77tDYUupDijCmkzMW",
+        "input": {
+          "party": "MI"
+        },
+        "name": "meet",
+        "type": "tool_use"
+      }
+    ],
+    "id": "msg_011CfFLsvrHHhHaLmx9dcXDJ",
+    "model": "claude-sonnet-5",
+    "role": "assistant",
+    "stop_details": null,
+    "stop_reason": "tool_use",
+    "stop_sequence": null,
+    "type": "message",
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 1817,
+      "inference_geo": "global",
+      "input_tokens": 1373,
+      "output_tokens": 2575,
+      "output_tokens_details": {
+        "thinking_tokens": 2460
+      },
+      "service_tier": "standard"
+    }
+  }
+}

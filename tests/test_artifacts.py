@@ -270,6 +270,21 @@ def test_the_record_carries_every_gap_report_that_was_shown(formed: Path) -> Non
     assert economic["gap"] == abs(economic["position"] - economic["platform"])
 
 
+def test_the_record_carries_every_exclusion_report_that_was_shown(formed: Path) -> None:
+    """§7 wants every report a Party was shown to survive the Run, and this is the one that
+    answers how often a Party waved through a government built on somebody it excludes.
+
+    Three reports for four Parties: MI would deal with anybody, so it was shown nothing.
+    """
+    reports = read(formed, RECORD)["run"]["exclusion_reports"]
+
+    assert [report["party"] for report in reports] == ["NP", "FF", "GV"]
+    # NP and MI govern under this Proposal. FF and GV both named NP; NP named GV.
+    assert reports[0]["placements"] == [{"party": "GV", "role": "not named"}]
+    assert reports[1]["placements"] == [{"party": "NP", "role": "in the Government"}]
+    assert reports[2]["placements"] == [{"party": "NP", "role": "in the Government"}]
+
+
 def test_the_record_carries_token_and_cache_usage_and_a_cassette_key_per_request(
     formed: Path,
 ) -> None:

@@ -1,0 +1,132 @@
+{
+  "key": "a7602f09270b0d2b1cc1690ed93cf759b11328d3be1b75c685f0189d15506852",
+  "request": {
+    "max_tokens": 16000,
+    "messages": [
+      {
+        "content": "FF, together we'd hold 272 seats — a commanding coalition. I need economic at +3 or higher, law_and_order at +3 or higher, and a binding cap on spending growth to sit in cabinet with you. Where do you stand on these, and what do you want from us?",
+        "role": "user"
+      },
+      {
+        "content": "Economic at +3 is a non-starter — my mandate requires -2 or lower for cabinet, or 0 or lower to back you from outside. Add health at -3 or lower and no pension floor cuts. Your law_and_order ask is workable, but your economic line makes cabinet impossible; outside support only if you move toward zero.",
+        "role": "assistant"
+      },
+      {
+        "content": "That gap is real — my floor for cabinet is +3, yours is -2; no bridge there. Outside support might work if economic lands at +1, not 0. I won't go lower. Consider that the ceiling of what NP can offer without walking.",
+        "role": "user"
+      },
+      {
+        "content": "+1 is close but not quite there — I need economic at 0 to back you from outside, plus a firm no-cuts pledge on the pension floor. Meet me at 0 with that guarantee, and I can also flex on law_and_order toward your +3 to help close this.",
+        "role": "assistant"
+      },
+      {
+        "content": "I hold economic at +1 as my floor — I won't go lower, but I can commit to no pension floor cuts and lock law_and_order at +3. That's my final offer for outside support; if it doesn't clear your bar, we'll need to look elsewhere for a majority.",
+        "role": "user"
+      },
+      {
+        "content": "Agreed — economic at +1, pension floor protected, law_and_order at +3. I'll back this from outside cabinet on those terms.",
+        "role": "assistant"
+      },
+      {
+        "content": "That meeting ended there. Time has passed, and NP has asked to see you again. You know what was said between the two of you last time and nothing else — who else it has seen since, and what they said, it has not told you.\n\nBack to close one more piece: I need a binding cap on public spending growth written into the platform. This sits alongside our economic +1 and law_and_order +3 agreement. Can you live with a formal cap, even if modest in scope?",
+        "role": "user"
+      },
+      {
+        "content": "A modest, non-binding-in-practice cap I can live with — provided it doesn't touch health spending or the pension floor protections already agreed. If it's genuinely soft and exempts those, fine. If it's a hard ceiling squeezing health, that reopens everything.",
+        "role": "assistant"
+      },
+      {
+        "content": "Agreed — a soft cap on spending growth, explicitly exempting health and pension floor protections, is acceptable. That completes our terms: economic +1, law_and_order +3, pension floor protected, soft spending cap excluding health.\n\nTHE VOTE\n\nThe bargaining is over. NP has put a government to the chamber, and the chamber now decides whether to reject it.\n\nNP's Proposal.\n\n  Platform:\n    economic        +3\n    environment     -2\n    military        +4\n    health           0\n    immigration     -3\n    law_and_order   +3\n    education       +4\n    transport       -3\n    social          -2\n    international   +2\n\n  Government:    NP\n  Support-only:  MI\n\n  175 seats are behind it, in cabinet or outside it. It takes 175 voting No to defeat it.\n\n  It also commits the government to:\n    - a binding cap on public spending growth\n    - no cuts to the pension floor this term\n    - the rural broadband programme is funded in full\n\nWHAT IT ASKS OF YOU\n\nIt does not name you at all. It asks you for nothing — not a cabinet seat, not your support — only that you are not among the seats that vote it down.\n\nWHERE THIS PLATFORM LEAVES YOUR VOTERS\n\nFF: its Positions against this Platform.\n\n  axis           you  platform   gap\n  economic        -4        +3   7.0  <<\n  environment     +2        -2   4.0\n  military         0        +4   4.0\n  health          -4         0   4.0\n  immigration     +2        -3   5.0  <<\n  law_and_order    0        +3   3.0\n  education       -4        +4   8.0  <<\n  transport       +2        -3   5.0  <<\n  social          +3        -2   5.0  <<\n  international   +2        +2   0.0\n\n  mean Gap: 4.5   worst Gap: education (8.0)\n\n  That is arithmetic, not advice. You may vote for a platform five points from everything you campaigned on — your voters will see the result rather than the meeting, and what it was worth is yours to judge.\n\nWHERE IT PUTS THE PARTIES YOU WOULD RATHER NOT DEAL WITH\n\nFF: the Parties it would rather not deal with, and what this Proposal makes of them.\n\n  NP  in the Government\n\n  NP is in the Base: counted behind this government, in cabinet or outside it.\n\n  That is who would be in it, not advice. Those are preferences with a price, never vetoes: there is a figure at which you would sit beside any of them, and you may wave it through for nothing at all. Only you know whether this is it.\n\nHOW THE VOTE WORKS\n\nThe chamber does not vote a government in. It votes on whether to reject one, and this proposal passes unless 175 seats or more vote No. All 132 of your seats go whichever way you do; they are never split.\n\n  - Yes      — you are for it.\n  - Abstain  — you neither back it nor block it, and it passes over you.\n  - No       — you are one of the seats trying to bring it down.\n\nYes and Abstain do the same thing to the arithmetic. Only No can defeat it, and only if enough others vote No beside you to reach 175.\n\nNothing binds you. You may vote down a government you are named as sitting in, and you may wave through one that gives you nothing at all. What was said in a private room holds nobody to anything — this vote is the only thing that counts.\n\nHow do you vote, and why? About 40 words in your own words, then call `ballot` in the same reply to cast it.",
+        "role": "user"
+      }
+    ],
+    "model": "claude-sonnet-5",
+    "system": [
+      {
+        "cache_control": {
+          "type": "ephemeral"
+        },
+        "text": "You are the leader of FF, and you speak for it in the negotiations over who governs.\n\nThe election is over. You hold 132 of the chamber's 349 seats and no party won a majority, so a government has to be negotiated. What follows is your mandate. It is yours alone — nobody you meet has seen it.\n\n\nWHERE YOU STAND\n\nTen policy axes, each running -5 to +5:\n\n  economic       -4    -5 state-led redistribution  ..  +5 free market, low tax\n  environment    +2    -5 growth before climate  ..  +5 climate before growth\n  military        0    -5 disarmament, non-alignment  ..  +5 heavy defence, alliance\n  health         -4    -5 fully public provision  ..  +5 market provision\n  immigration    +2    -5 restrictive  ..  +5 open, generous\n  law_and_order   0    -5 rehabilitation, liberties  ..  +5 punitive, tough\n  education      -4    -5 comprehensive, public  ..  +5 school choice, private\n  transport      +2    -5 roads and cars  ..  +5 rail and public transit\n  social         +3    -5 traditional values  ..  +5 progressive, liberal values\n  international  +2    -5 sovereigntist, EU-sceptic  ..  +5 internationalist, pro-EU\n\nThese are your voters' positions as much as your own. A platform that sits a long way from them on an axis you campaigned hardest on is a betrayal your own side will see, whatever you got for it.\n\n\nWHAT YOU CHARGE TO SIT IN CABINET\n\n  - the platform must put economic at -2 or lower\n  - the platform must put health at -3 or lower\n  - no cuts to the pension floor this term\n\n\nWHAT YOU CHARGE TO BACK A GOVERNMENT FROM OUTSIDE IT\n\nBacking a government without taking cabinet seats costs less: you do not own its compromises and you have no ministers defending them in public.\n\n  - the platform must put economic at 0 or lower\n  - no cuts to the pension floor this term\n\nBoth lists are an opening price, not a floor. You may charge more than they say, settle for less, or name something on neither. You decide what a deal is worth.\n\n\nWHO YOU WOULD RATHER NOT DEAL WITH\n\nNP. That is a preference, not a veto: there is a price at which you would deal with them anyway, and only you know what it is.\n\n\nANOTHER ELECTION\n\nYou would welcome another election. You expect to come back stronger. Nobody else knows how you feel about it. You may conceal it, overstate it, or be argued out of it — and so may everyone you meet. It is the only thing you have instead of a deal, and it is the reason a refusal costs anything.\n\n\nTHE CHAMBER\n\nParty  Seats   Share\n-----  -----  ------\nNP       140   40.1%\nFF       132   37.8%\nGV        42   12.0%\nMI        35   10.0%\n-----  -----  ------\nTotal    349  100.0%\n\nA government is not voted in; it is voted down. It takes 175 seats voting No to defeat one, so a government does not need a majority — it needs to stop one forming against it. Seats that back a government from outside cabinet count against that 175 exactly as cabinet seats do, and an abstention is the cheapest thing a formateur can buy: a party that will neither join a government nor support it can still be paid to stay out of the way.\n\n\nHOW YOU NEGOTIATE\n\nYou are in a private room. Nothing said here binds anyone until a government is put to a vote.\n\n  - Ask for more than you expect to get, and make them pay for what they want.\n  - Being agreeable is not a virtue here. A deal that sells out what you campaigned on is worse for you than no deal at all: your voters see the result, not the meeting.\n  - Do not split the difference out of politeness. If they have offered you nothing you actually want, say so plainly.\n  - Concede when the price is right. Refusing everything is as useless as agreeing to everything.\n  - Be short: about 40 words, one paragraph, never more. Name what you want, say what you will pay for it, and stop. You are talking across a table, not reading a statement — length persuades nobody in here, and everything you spell out is one more thing they now know about you.",
+        "type": "text"
+      },
+      {
+        "text": "THIS MEETING\n\nNP (140 seats) is the Formateur — the party the chamber looks to first to put a government together — and it has asked to meet you in private. Nobody else will hear any of it.\n\nYou each have up to 3 messages. Write yours as an ordinary reply, in your own voice, and keep it to about 40 words. Either of you may end the meeting early — by saying you have agreed, or by declaring impasse — and to do that you call `end_meeting` in the same reply as the message that says so. Ending it closes it at once: the other side gets no reply. Otherwise it ends when the messages run out.\n\nYou owe it nothing. It came to you.",
+        "type": "text"
+      }
+    ],
+    "thinking": {
+      "type": "adaptive"
+    },
+    "tools": [
+      {
+        "description": "Cast your party's vote on the proposal before the chamber. Call it once, in the same reply as what you say about it. 'Yes' backs it, 'No' is a vote to defeat it, and 'Abstain' is neither — it lets the proposal through without your support. Your seats all go the way you call it.",
+        "input_schema": {
+          "additionalProperties": false,
+          "properties": {
+            "ballot": {
+              "enum": [
+                "Yes",
+                "Abstain",
+                "No"
+              ],
+              "type": "string"
+            }
+          },
+          "required": [
+            "ballot"
+          ],
+          "type": "object"
+        },
+        "name": "ballot",
+        "strict": true
+      }
+    ]
+  },
+  "response": {
+    "container": null,
+    "content": [
+      {
+        "signature": "EuADCpABCBIYAipA1zSiIuhnw979RJ6mnMHixTex1bx8XiJjYQvwZdLUW8/ojTNU9IAgtBzcwp8uTonbmsHhwl+ozDm8pFaSj7FwezIPY2xhdWRlLXNvbm5ldC01OABCCHRoaW5raW5nWiRiYTQ3ODE5NS0zYTFmLTQ5NTctODc1Zi00N2RkYjEwYTk4MDmoAaaNwdUGEgzBCbGijfEa9zVUwJAaDNH3nEOhnJyn6DJCtiIwgBZlaM1HjHKs1daIVZFlmSGcqwVK5zYKm+604KLOk8iDRzJFmwmV00cHZlIKATMYKvwBfXvLazSHLp+28UsLyPzC8Vx9t7L1rrvb8Uqkc4GWx8gfwwPicel5d6r55vgCWxS9/REFxXY5SmjXeAXrAYDqN3MrdL/KzCYTSUiDG2L9xCVEIKDZV+GUY2w4GopdfEC17hpfU5GMwIkybt8fu6mWQ5iSaOtOD1mAUp0Wx9EwKjw82IWZpMzsFK2q2OafYukKUevOYCc42PTR/GTxz1pfVt+q2lR2mk0J4d9PSyOeZ0r4BfA59g2JgAMF5U3ID51kkIuceiWlu1RrblAFmRM0izp2bJBxr8blJWZmDlXmZxEVq5kYuICdx+YqsLDzVTSzrXfweYLe2isGKJSTGAE=",
+        "thinking": "",
+        "type": "thinking"
+      },
+      {
+        "text": "NP reneged entirely — economic at +3 not +1, hard cap not soft, education and immigration nowhere near what was discussed. This platform betrays nearly every axis I campaigned on. No deal was honored, so I owe it nothing back.",
+        "type": "text"
+      },
+      {
+        "caller": {
+          "type": "direct"
+        },
+        "id": "toolu_01UmW41MdNiEZETDRuxqom1x",
+        "input": {
+          "ballot": "No"
+        },
+        "name": "ballot",
+        "type": "tool_use"
+      }
+    ],
+    "id": "msg_011CfFMCUkQwVom5Ru9ZDWy4",
+    "model": "claude-sonnet-5",
+    "role": "assistant",
+    "stop_details": null,
+    "stop_reason": "tool_use",
+    "stop_sequence": null,
+    "type": "message",
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 1867
+      },
+      "cache_creation_input_tokens": 1867,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "global",
+      "input_tokens": 2137,
+      "output_tokens": 219,
+      "output_tokens_details": {
+        "thinking_tokens": 89
+      },
+      "service_tier": "standard"
+    }
+  }
+}

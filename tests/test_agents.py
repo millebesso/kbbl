@@ -26,12 +26,23 @@ from conftest import (
 from kbbl.agents import BALLOT, MODEL, AgentError, FormateurAgent, persona
 from kbbl.cassettes import Cassettes
 from kbbl.loop import attempt
-from kbbl.models import Axis, Ballot, Bilateral, Choice, Ending, Judgement, Scenario
+from kbbl.models import (
+    Axis,
+    Ballot,
+    Bilateral,
+    Choice,
+    Ending,
+    Judgement,
+    Proposal,
+    Scenario,
+)
 from kbbl.referee import (
     ROUNDS,
     Price,
+    exclusion_report,
     gap_report,
     price_report,
+    render_exclusion_report,
     render_gap_report,
     render_price_report,
 )
@@ -785,6 +796,55 @@ def test_a_party_in_the_base_is_shown_what_the_platform_pays_of_its_own_price(
     )
     assert "unmet  environment >= +2" in shown["GV"]
     assert "Supporting price" not in shown["MI"]
+
+
+def test_a_party_is_shown_where_the_proposal_puts_the_parties_it_excludes(
+    four_party: Scenario, tmp_path: Path
+) -> None:
+    """§5.4's argument reaching the coalition: KD and L waved through a government holding a
+    Party both of them exclude, and nothing at the Vote had put the two facts side by side."""
+    model = Model(tables=tabled("NP", support_only=["GV"]))
+
+    hold_vote(four_party, model, tmp_path)
+    on_the_table = Proposal(
+        formateur="NP", platform=platform(), government=("NP",), support_only=("GV",)
+    )
+    report = exclusion_report(four_party.party("FF"), on_the_table)
+    assert report is not None
+
+    shown = voting(model)
+    assert "WHERE IT PUTS THE PARTIES YOU WOULD RATHER NOT DEAL WITH" in shown["FF"]
+    assert render_exclusion_report(report) in shown["FF"]
+    assert "NP  in the Government" in shown["FF"]
+    assert "NP  Support-only" not in shown["FF"]
+
+
+def test_the_exclusion_report_asks_for_nothing_but_that_the_party_know(
+    four_party: Scenario, tmp_path: Path
+) -> None:
+    """Feedback, never a constraint (§2): an Exclusion is soft and priced, and a Party is
+    free to wave through a government built on one."""
+    model = Model(tables=tabled("NP", support_only=["GV"]))
+
+    hold_vote(four_party, model, tmp_path)
+
+    shown = voting(model)["FF"]
+    assert "preferences with a price" in shown
+    assert "you may wave it through" in shown
+
+
+def test_a_party_that_names_nobody_is_shown_no_exclusion_report(
+    four_party: Scenario, tmp_path: Path
+) -> None:
+    """MI would deal with anybody, so the section is omitted rather than saying "none" —
+    the way `_who_you_would_rather_not_deal_with` already omits its own."""
+    model = Model(tables=tabled("NP", support_only=["GV"]))
+
+    hold_vote(four_party, model, tmp_path)
+
+    shown = voting(model)
+    assert "WOULD RATHER NOT DEAL WITH" not in shown["MI"]
+    assert "WOULD RATHER NOT DEAL WITH" in shown["NP"]
 
 
 def test_a_party_the_proposal_does_not_name_is_told_it_is_asked_nothing(

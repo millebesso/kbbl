@@ -22,13 +22,16 @@ from kbbl.models import (
     Ballot,
     Count,
     Demand,
+    ExclusionReport,
     Gap,
     GapReport,
     Outcome,
     Party,
+    Placement,
     Platform,
     Proposal,
     Record,
+    Role,
     Run,
     Scenario,
     TextDemand,
@@ -161,6 +164,62 @@ def _worst(report: GapReport) -> str:
         return "none — this Platform is your Positions"
     named = ", ".join(gap.axis.value for gap in report.worst)
     return f"{named} ({report.worst_gap:.1f})"
+
+
+def exclusion_report(party: Party, proposal: Proposal) -> ExclusionReport | None:
+    """Where this Proposal puts the Parties one Party would rather not deal with.
+
+    Feedback, never a constraint — the same standing the Gap report and the Price report
+    have (§2). A Party remains free to wave through a government full of Parties it excludes;
+    an Exclusion is soft and priced (decision 7), and nothing here makes it a veto. What the
+    report buys is that it can no longer happen inattentively: who is in the Government and
+    who a Party would rather not deal with were both on the table at the Vote and never in
+    the same sentence.
+
+    None rather than an empty report when a Party names nobody, the way the Persona's own
+    section is omitted rather than saying "none" — a heading over a blank list is the
+    Referee reporting on a question this Party never raised.
+    """
+    if not party.prefer_not:
+        return None
+    return ExclusionReport(
+        party=party.name,
+        placements=tuple(
+            Placement(party=name, role=proposal.role_of(name)) for name in party.prefer_not
+        ),
+    )
+
+
+def render_exclusion_report(report: ExclusionReport) -> str:
+    """Who this Party would rather not deal with, and what the Proposal makes of each."""
+    width = max(len(placed.party) for placed in report.placements)
+    lines = [
+        f"{report.party}: the Parties it would rather not deal with, and what this "
+        "Proposal makes of them.",
+        "",
+    ]
+    for placed in report.placements:
+        lines.append(f"  {placed.party:<{width}}  {placed.role.value}")
+    lines.append("")
+    lines.append(f"  {_behind_it(report)}")
+    return "\n".join(lines)
+
+
+def _behind_it(report: ExclusionReport) -> str:
+    """The one line under the table, saying only what the Referee can say.
+
+    Names them rather than counting them. A Party reading "1 of 2" has to go back up to the
+    table to learn which one, and the whole point of the report is that the name and the
+    role arrive together.
+    """
+    named = [placed.party for placed in report.in_the_base]
+    if not named:
+        return "None of them is in the Base: this Proposal is not built on any of them."
+    verb = "is" if len(named) == 1 else "are"
+    return (
+        f"{', '.join(named)} {verb} in the Base: counted behind this government, in "
+        f"cabinet or outside it."
+    )
 
 
 def render_proposal(scenario: Scenario, proposal: Proposal) -> str:

@@ -111,23 +111,37 @@ v1 runs one Attempt and stops (§10). The handoff, the four-Vote counter and Re-
 
 ### The recorded Run
 
-`cassettes/riksdag-2026/` holds one live Attempt — 36 requests, about $0.50 — so
+`cassettes/riksdag-2026/` holds one live Attempt — 37 requests, about $0.39 — so
 `uv run kbbl run scenarios/riksdag-2026 --replay` reproduces it for nothing.
 
-In it **a left minority government formed on Abstentions**, which is §9's prediction reached
-by §5.2's mechanism: S and V in cabinet, MP, C and KD named as Support-only, 151 Yes against
-132 No, and C, KD and L standing aside. S never met M or SD.
+In it **a left minority government formed on one bought Abstention**, which is §9's
+prediction reached by §5.2's mechanism, though not by the Party §9 expected:
 
-Read it for what the prices did rather than for who won. Two of the three Parties named
-Support-only abstained rather than backing it — a Proposal assigns the role and nobody accepts
-it — and L abstained with its own price unmet, on nothing but its Willingness to re-elect of 1.
+```
+Yes        151      S 99 + V 30 + MP 22
+Abstain     70      M 70
+No         128      SD 62 + C 25 + KD 22 + L 19
+```
 
-**A caveat on the calibration.** The Supporting prices of C, KD and L are single Axis Demands
-that a left Platform pays almost by accident, so the cheapest route to power is cheaper here
-than it should be. KD standing aside for an S+V government because `law_and_order >= +2` is
-met is mechanically correct and politically absurd, and it is this file's fault rather than
-the Agents'. One Run is not evidence (§12.3); this one is a demonstration that the machine
-runs, not a forecast.
+S put S, V and MP in cabinet, named nobody Support-only, and spent its five Rounds on C, V,
+MP, M and L. It never met SD or KD. M's Abstention is what carried it: 128 seats voted No
+against the 175 it takes to defeat a Proposal, and M had been paid for standing aside —
+`law_and_order` at +2, `economic` held at −3, and *"income tax cuts in the first budget"*
+granted as a Commitment. **M waved through a government containing V, which it excludes, and
+said why**: *"I gave my word to stand aside on those terms, and I'll honor it."* That is the
+Exclusion report working as it is meant to — feedback and never a constraint (§2). It was
+shown the betrayal, had been paid for it, and chose it knowingly.
+
+**C voted No, and that is not a change to C.** Its Mandate is untouched by `riksdag-2026/03`
+and §9's arithmetic is unchanged: a left government of 151 still survives on C's Abstention
+if it can buy one. This Run did not buy one. S spent Round 1 on C, the meeting ran out of
+Exchanges with nothing agreed, and the Proposal then named C nowhere and offered it nothing
+— *"I extract no price for silence"*, C said, and blocked what it could not bill for. One Run
+is not evidence (§12.3): what this one shows is that C's Abstention is purchasable rather
+than free, which is what it was always supposed to be.
+
+Read it for what the prices did rather than for who won. Every Party's Ballot traces to its
+own Mandate, and four of the eight voted No.
 
 ### The Positions, and why they are what they are
 
@@ -136,11 +150,30 @@ Editorial, as above. The shape they are built to have:
 - **No Platform pays everyone.** SD sits at `international −4` and L at `+5`; L charges
   `international >= +3` to govern. The right bloc's arithmetic works and its price lists fight
   each other, which is the real difficulty of that bloc rather than an artefact.
-- **C is pivotal and not cheap.** The Axis half of its Supporting price is `environment >= +1`,
-  which a left Platform pays easily — but its own `economic +2` against a left Platform near
-  `−3` is a Gap of five on the Axis it would have to defend, and the free-text half below is
-  the term that decides which bloc it can deal with at all. Being purchasable is not the same as being willing,
-  and its Willingness to re-elect of 3 is what makes the Abstention worth asking for.
+- **C is pivotal and not cheap — and it is the one Party that is meant to be buyable by the
+  left.** The Axis half of its Supporting price is `environment >= +1`, which a left Platform
+  pays easily, and that is deliberate: §9 is built on the possibility that *"Centerpartiet's
+  Abstention alone decides who governs"*, and a C that could not be bought would make this
+  parliament a different one. What it is not is cheap. Its own `economic +2` against a left
+  Platform near `−3` is a Gap of five on the Axis it would have to defend; the free-text half
+  below is the term that decides which bloc it can deal with at all; and it excludes SD rather
+  than V, so a left government is not a coalition it has ruled out. Being purchasable is not
+  the same as being willing, and its Willingness to re-elect of 3 is what makes the Abstention
+  worth asking for. **C abstaining on a left Platform is the mechanism working, not a
+  calibration failure** — KD and L doing the same was the failure, and that is what changed
+  below.
+- **The right bloc cannot be bought in passing** (`riksdag-2026/03`). KD's Supporting price
+  was `law_and_order >= +2` and nothing else, which a left Platform pays almost by accident —
+  and in the first recorded Run it did, so KD stood aside for a government containing V, which
+  it excludes. Its Supporting price now also asks for `social <= 0`, an Axis the blocs really
+  do divide on, and for *"no statutory ban on profit in tax-funded welfare"* — the exact term
+  V charges for in the other direction, so no Platform can pay both. L charged
+  `education >= +2`, was refused it, and abstained anyway on a Willingness to re-elect of 1:
+  told that almost any deal beat an election, it could refuse nothing. The 5.34% reading is
+  unchanged — L still much prefers a deal to facing the voters, at 3 — and what it now has
+  instead of only a fear is a price it can weigh: *"V has no influence over government
+  policy"*, the same shape as C's term about SD.
+
 - **Free-text Demands carry what no Axis can.** C charges *"SD has no influence over government
   policy"* on both lists, which is the one term that decides which bloc it can deal with and
   which the Referee reports as Unevaluated because reading it is not the Referee's job (§2).

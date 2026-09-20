@@ -13,10 +13,12 @@ from kbbl.models import (
     Axis,
     AxisDemand,
     Party,
+    Platform,
     Positions,
     Scenario,
     TextDemand,
 )
+from kbbl.referee import Price, price_report
 from kbbl.scenario import ScenarioError, load_scenario
 
 
@@ -272,3 +274,54 @@ def test_every_mandate_in_the_real_scenario_survives_a_round_trip(
     assert len(riksdag_2026.parties) == 8
     for party in riksdag_2026.parties:
         assert Party.model_validate_json(party.model_dump_json()) == party
+
+
+def test_no_right_bloc_party_stands_aside_for_a_platform_it_was_paid_nothing_for(
+    riksdag_2026: Scenario,
+) -> None:
+    """riksdag-2026/03: KD abstained on an S+V government because `law_and_order >= +2` was
+    the whole of what it charged to stand aside, and a left Platform paid it in passing.
+
+    The Platform here is S's own Positions — the data, not a Platform invented for the test
+    — so what is checked is that the Supporting price of each right-bloc Party asks for
+    something the left could not concede without noticing. C is deliberately absent: its
+    Abstention is the one §9 is built on, and it charges for it.
+    """
+    left = Platform(**riksdag_2026.party("S").positions.model_dump())
+
+    for name in ("M", "SD", "KD", "L"):
+        paid = price_report(riksdag_2026.party(name), left, Price.SUPPORTING)
+        assert paid.unmet or paid.unevaluated, f"{name}'s Supporting price is free to the left"
+
+
+def test_c_is_still_purchasable_because_that_is_what_the_scenario_is_for(
+    riksdag_2026: Scenario,
+) -> None:
+    """§9's whole premise: a left minority government survives if C abstains. Its Axis
+    Demand is one a left Platform pays, and the free-text half is the term that decides
+    which bloc it can deal with at all — left for the Referee to report Unevaluated (§2)."""
+    left = Platform(**riksdag_2026.party("S").positions.model_dump())
+
+    paid = price_report(riksdag_2026.party("C"), left, Price.SUPPORTING)
+
+    assert [check.demand for check in paid.met] == [
+        AxisDemand(axis=Axis.ENVIRONMENT, op=">=", value=1)
+    ]
+    assert not paid.unmet
+    assert [check.demand for check in paid.unevaluated] == [
+        TextDemand(text="SD has no influence over government policy")
+    ]
+
+
+def test_l_has_something_to_weigh_against_another_election(riksdag_2026: Scenario) -> None:
+    """riksdag-2026/03: at a Willingness to re-elect of 1, L is told almost any deal beats
+    an election, which is an override rather than a pressure — it could refuse nothing.
+
+    The 5.34% reading is kept: L still much prefers a deal to facing the voters. What it
+    now has is a price it can weigh against that, rather than only a fear.
+    """
+    briefed = persona(riksdag_2026, riksdag_2026.party("L"))
+
+    assert "Almost any deal beats one." not in briefed
+    assert "rather take a deal than face the voters" in briefed
+    assert riksdag_2026.party("L").to_support

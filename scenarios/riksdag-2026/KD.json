@@ -36,6 +36,14 @@
       "axis": "law_and_order",
       "op": ">=",
       "value": 2
+    },
+    {
+      "axis": "social",
+      "op": "<=",
+      "value": 0
+    },
+    {
+      "text": "no statutory ban on profit in tax-funded welfare"
     }
   ],
   "willingness_to_re_elect": 5

@@ -32,11 +32,13 @@ from kbbl.models import (
     Demand,
     Ending,
     Exchange,
+    ExclusionReport,
     GapReport,
     Judgement,
     Party,
     Platform,
     Proposal,
+    Role,
     Round,
     Scenario,
     TextDemand,
@@ -47,8 +49,10 @@ from kbbl.referee import (
     BLOCKING_MINORITY,
     ROUNDS,
     Price,
+    exclusion_report,
     gap_report,
     price_report,
+    render_exclusion_report,
     render_gap_report,
     render_price_report,
     render_proposal,
@@ -370,16 +374,23 @@ class FormateurAgent:
         return tuple(self._judge(party, proposal, cassettes) for party in self.scenario.parties)
 
     def _judge(self, party: Party, proposal: Proposal, cassettes: Cassettes) -> Judgement:
-        """One Party's Ballot, cast after it has been shown its own Gap report (§5.4).
+        """One Party's Ballot, cast after it has been shown its own two reports (§5.4).
 
-        The report is computed once and both shown and recorded, so that what `run.json`
+        Each report is computed once and both shown and recorded, so that what `run.json`
         says a Party was looking at is the very table it was handed rather than a second
         reckoning that happens to agree.
+
+        A Party that would deal with anybody has no Exclusion report at all, and is handed
+        None rather than an empty one — the section is then left out, the way its Persona
+        leaves out the section it has nothing to put in.
         """
         side = self._side if party.name == self.party.name else self._voting_room(party)
         shown = gap_report(party, proposal.platform)
         self.ledger.shown(shown)
-        side.hear(_the_vote(self.scenario, proposal, party, shown))
+        standing = exclusion_report(party, proposal)
+        if standing is not None:
+            self.ledger.shown(standing)
+        side.hear(_the_vote(self.scenario, proposal, party, shown, standing))
         response = side.reply(cassettes, tools=[BALLOT_TOOL])
         judgement = _read_judgement(response, party.name)
         side.spoke(judgement.reasoning)
@@ -690,15 +701,27 @@ def _never_courted(formateur: Party) -> str:
     )
 
 
-def _the_vote(scenario: Scenario, proposal: Proposal, party: Party, shown: GapReport) -> str:
-    """What one Party is shown before it votes: the Proposal, and its own two reports.
+def _the_vote(
+    scenario: Scenario,
+    proposal: Proposal,
+    party: Party,
+    shown: GapReport,
+    standing: ExclusionReport | None,
+) -> str:
+    """What one Party is shown before it votes: the Proposal, and its own reports.
 
     The Gap report is §5.4's whole defence and it goes in front of every Party, named or not.
     An Agent asked abstractly to hold its ground drifts; the same Agent shown the number it
     is abandoning on the Axis it campaigned hardest on does not — or does, knowingly, which
     is the most this design ever asks for.
 
-    It arrives already computed because `run.json` keeps a copy of it (§7), and a report
+    The Exclusion report beside it is the same argument about the other half of a Proposal.
+    A Party whose Persona says it would rather not deal with V, voting on a Proposal that
+    names V in its Government, had those two facts in front of it in two places and never in
+    one sentence — and waved the government through. Nothing here stops it doing so again
+    (§2); what it can no longer be is inattentive.
+
+    Both arrive already computed because `run.json` keeps a copy of each (§7), and a report
     computed twice is two reports that could differ.
     """
     sections = [
@@ -712,28 +735,51 @@ def _the_vote(scenario: Scenario, proposal: Proposal, party: Party, shown: GapRe
         + "\n\n  That is arithmetic, not advice. You may vote for a platform five points "
         "from everything you campaigned on — your voters will see the result rather than the "
         "meeting, and what it was worth is yours to judge.",
+        _who_it_puts_you_beside(standing),
         _what_it_pays_of_your_price(proposal, party),
         _how_the_vote_works(party),
     ]
     return "\n\n".join(section for section in sections if section)
 
 
-def _what_it_asks_of_you(proposal: Proposal, party: Party) -> str:
-    """The role the Proposal assigns this Party — including the role of not being named."""
-    if party.name in proposal.government:
-        return (
-            "It puts you in the cabinet. You would own this platform in public, and your "
-            "ministers would be the ones defending it."
-        )
-    if party.name in proposal.support_only:
-        return (
-            "It names you as backing the government from outside the cabinet. No seats at "
-            "that table, and your seats counted behind it all the same."
-        )
+def _who_it_puts_you_beside(standing: ExclusionReport | None) -> str:
+    """Where this Proposal puts the Parties this one would rather not deal with.
+
+    Empty for a Party that named nobody, so the section drops out of the briefing entirely
+    rather than announcing that there is nothing to say — the same silence
+    `_who_you_would_rather_not_deal_with` keeps in the Persona.
+    """
+    if standing is None:
+        return ""
     return (
+        "WHERE IT PUTS THE PARTIES YOU WOULD RATHER NOT DEAL WITH\n\n"
+        + render_exclusion_report(standing)
+        + "\n\n  That is who would be in it, not advice. Those are preferences with a "
+        "price, never vetoes: there is a figure at which you would sit beside any of them, "
+        "and you may wave it through for nothing at all. Only you know whether this is it."
+    )
+
+
+_WHAT_EACH_ROLE_ASKS = {
+    Role.GOVERNMENT: (
+        "It puts you in the cabinet. You would own this platform in public, and your "
+        "ministers would be the ones defending it."
+    ),
+    Role.SUPPORT_ONLY: (
+        "It names you as backing the government from outside the cabinet. No seats at "
+        "that table, and your seats counted behind it all the same."
+    ),
+    Role.UNNAMED: (
         "It does not name you at all. It asks you for nothing — not a cabinet seat, not your "
         "support — only that you are not among the seats that vote it down."
-    )
+    ),
+}
+"""What each of a Proposal's three roles asks of the Party it is given to."""
+
+
+def _what_it_asks_of_you(proposal: Proposal, party: Party) -> str:
+    """The role the Proposal assigns this Party — including the role of not being named."""
+    return _WHAT_EACH_ROLE_ASKS[proposal.role_of(party.name)]
 
 
 def _what_it_pays_of_your_price(proposal: Proposal, party: Party) -> str:
@@ -754,13 +800,18 @@ def _what_it_pays_of_your_price(proposal: Proposal, party: Party) -> str:
     )
 
 
+_WHAT_EACH_ROLE_CHARGES = {
+    Role.GOVERNMENT: Price.GOVERNING,
+    Role.SUPPORT_ONLY: Price.SUPPORTING,
+    Role.UNNAMED: None,
+}
+"""Which price list each role puts a Party on. None is not a missing entry: a Party the
+Proposal never names is charging nothing, because it is being asked for nothing."""
+
+
 def _price_asked_of(proposal: Proposal, party: Party) -> Price | None:
     """Which of a Party's two price lists this Proposal is asking it to charge on."""
-    if party.name in proposal.government:
-        return Price.GOVERNING
-    if party.name in proposal.support_only:
-        return Price.SUPPORTING
-    return None
+    return _WHAT_EACH_ROLE_CHARGES[proposal.role_of(party.name)]
 
 
 def _how_the_vote_works(party: Party) -> str:

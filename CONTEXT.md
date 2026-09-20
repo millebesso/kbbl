@@ -185,6 +185,15 @@ report and never a verdict — a Party may waive a Demand it named, or walk away
 Referee has just called met.
 _Avoid_: demand check, satisfaction report, price check, scorecard
 
+**Exclusion report**:
+The table the Referee shows a Party before it judges a Proposal, naming each Party it would
+rather not deal with and whether that Party is in the Government, Support-only, or not named.
+The Gap report says what a Platform costs a Party's voters; this says who it would be
+governing beside, and it exists because the two were on the table at the same Vote and never
+in the same sentence. Feedback like the other two: an Exclusion is soft and priced, so a
+Party may wave through a government full of Parties it excludes — knowingly.
+_Avoid_: veto check, coalition check, betrayal report, conflict report
+
 **Unevaluated**:
 What the Referee says about a free-text Demand. Not unknown for want of trying: it is not the
 Referee's to read, and the only alternative is the Referee inventing a fact for an Agent to
@@ -271,8 +280,9 @@ without calling the model.
 _Avoid_: fixture, mock, snapshot, tape, VCR
 
 **Ledger**:
-The Run record as it is written — the one place an Exchange, a Ballot, a Gap report or a
-request's cost is entered, at the moment it happens rather than when the Attempt ends. A Run
+The Run record as it is written — the one place an Exchange, a Ballot, a report a Party was
+shown or a request's cost is entered, at the moment it happens rather than when the Attempt
+ends. A Run
 that breaks mid-Bilateral keeps everything it has already paid for.
 _Avoid_: recorder, logger, collector, accumulator, buffer
 
@@ -296,10 +306,10 @@ _Avoid_: log, output, report
 
 **Record**:
 The complete structured record of one Run, written as `run.json`: every Exchange, every
-Choice and its reasoning, the Proposal, every Ballot, every Gap report shown, and what each
-request cost. Counted in batches, read by nobody — the Transcript is the one that is read. It
-carries the Referee's arithmetic beside it and stands alone: aggregating a batch is a loop and
-a `Counter`, never a re-instrumentation.
+Choice and its reasoning, the Proposal, every Ballot, every report a Party was shown, and
+what each request cost. Counted in batches, read by nobody — the Transcript is the one that
+is read. It carries the Referee's arithmetic beside it and stands alone: aggregating a batch
+is a loop and a `Counter`, never a re-instrumentation.
 _Avoid_: dump, log, trace, export
 
 **Result**:

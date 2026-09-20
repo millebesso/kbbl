@@ -45,27 +45,27 @@ Five Rounds do not reach everybody, so choosing whom to court is the central str
 Attempt prints as a Transcript:
 
 ```
-Round 3 of 5 — NP meets GV
+Round 4 of 5 — NP meets GV
 --------------------------
 
 Why NP chose GV
-    MI deal secures NP+MI at exactly 175, mathematically safe against any No coalition.
-    Now I want insurance — test whether GV will abstain or offer outside support
-    cheaply, padding my margin without touching my core platform.
+    My government is already secure with FF and MI's outside support (307 seats, well
+    past the 175 threshold to survive). Worth testing GV once — no commitment needed,
+    but their price and position may prove useful leverage or a fallback option.
 
 NP:
-    I'm gauging the field before committing to a shape. Would GV consider abstaining on
-    a government led by NP, rather than voting it down? What would make that worthwhile
-    for you, without asking you to join cabinet or back us outright?
+    GV, I'm forming a government and exploring options. I don't need your seats to
+    survive, so I'm not offering cabinet or major concessions. If you'd back us from
+    outside on modest terms, I'm listening — otherwise this is a short meeting.
 
 GV:
-    Abstention is on the table if the platform sets environment at +2 or higher — that's
-    my floor for staying out of your way without owning your programme. Below that, I've
-    no reason not to vote you down.
+    NP, GV won't back a government blind to our terms. If you want our support from
+    outside, environment at +2 or higher is the floor — non-negotiable. Below that, we
+    abstain or oppose. If you're not offering that, this is indeed short.
 
     ...
 
-Ended: NP declared impasse, after 5 Exchanges.
+Ended: NP declared impasse, after 3 Exchanges.
 ```
 
 That is an excerpt from the committed Cassettes — `--replay` prints the whole of it.
@@ -82,17 +82,21 @@ without costing the chamber a Vote. Everything the Referee reads is an enumerate
 argument; the prose beside it is for the Transcript and is never parsed.
 
 Before each Party judges the Proposal it is shown its own **Gap report**: how far this
-Platform sits from what it campaigned on, its worst betrayals marked by name. Parties in the
-Proposal also see what it pays of their own price list. Both are feedback and neither binds —
-a Party may vote down a government it is named as sitting in, and one the Proposal ignores
-entirely may wave it through. That report is the only thing standing between this design and
-a mushy grand coalition every run (§5.4), so the first live Attempt was read for exactly it:
+Platform sits from what it campaigned on, its worst betrayals marked by name. Beside it, an
+**Exclusion report** naming each Party it would rather not deal with and whether the Proposal
+puts that Party in the Government, Support-only, or nowhere. Parties in the Proposal also see
+what it pays of their own price list. All three are feedback and none binds — a Party may vote
+down a government it is named as sitting in, one the Proposal ignores entirely may wave it
+through, and a Party may hand a government to somebody it excludes. Those reports are the
+only thing standing between this design and a mushy grand coalition every run (§5.4), so the
+first live Attempt was read for exactly it:
 
 ```
 GV votes No:
-    This platform is nowhere near my mandate on environment, transport, or social — a
-    betrayal of everything we campaigned on. NP offered nothing for our cooperation.
-    We're not obligated to spare them the consequences of that. Voting No.
+    This platform betrays everything GV campaigned on — environment, transport, social
+    values all gutted. NP already has the seats to pass it without us, and no vote of
+    mine changes that math. I won't own this by abstaining or backing it: No, on
+    principle, for the record.
 
 ...
 
@@ -117,7 +121,7 @@ uv run kbbl run fixtures/four-party --replay --out out/
 ```
 
 ```
-out/run-20260920-061332/
+out/run-20260920-204846/
   transcript.md    everything above, start to finish — read closely, never counted
   run.json         the complete record — counted in batches, read by nobody
   result.json      the outcome and a timestamp
@@ -128,14 +132,14 @@ rather than settling one (§9): comparing a Run against the real government shou
 
 ```json
 { "scenario": "four-party", "formateur": "NP", "outcome": "formed",
-  "at": "2026-09-20T06:13:32.715813Z", "government": ["NP", "MI"], "support_only": [],
+  "at": "2026-09-20T20:48:46.450107Z", "government": ["NP"], "support_only": ["MI"],
   "count": { "yes": 175, "abstain": 0, "no": 174, "base_seats": 175, "passed": true } }
 ```
 
 `run.json` holds everything an Agent said, was shown, or decided: every Exchange, which Party
 the Formateur chose each Round and why, the Proposal, every Ballot with its reasoning, every
-Gap report that was put in front of a Party, and the token and cache usage and Cassette key of
-all 31 requests. It carries the chamber and the Referee's count beside the record, so a batch
+report that was put in front of a Party, and the token and cache usage and Cassette key of
+all 28 requests. It carries the chamber and the Referee's count beside the record, so a batch
 aggregation never has to load a Scenario or re-count a Vote:
 
 ```python
