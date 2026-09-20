@@ -18,6 +18,7 @@ import pytest
 from conftest import (
     CASSETTES,
     FOUR_PARTY,
+    RIKSDAG_2026,
     Model,
     leaks,
     positions,
@@ -33,12 +34,25 @@ from kbbl.loop import attempt
 from kbbl.referee import ROUNDS
 from kbbl.scenario import load_scenario
 
-COMMITTED = CASSETTES / "four-party"
+RECORDED = [FOUR_PARTY, RIKSDAG_2026]
+"""Every Scenario a live Attempt has been recorded against.
 
-NOT_RECORDED = (
-    f"no committed Cassettes in {COMMITTED}; record them with "
-    "`uv run kbbl run fixtures/four-party`"
-)
+Both drawers are audited the same way, because the asymmetry §5.1 calls the game is easier to
+break in a chamber of eight than in one of four: five Rounds reach more rooms, and two of them
+here are with a Party the Formateur met twice.
+"""
+
+
+def drawer(scenario: Path) -> Path:
+    """Where a Scenario's recording lives, laid out the way the command lays it out."""
+    return CASSETTES / scenario.name
+
+
+def not_recorded(scenario: Path) -> str:
+    return (
+        f"no committed Cassettes in {drawer(scenario)}; record them with "
+        f"`uv run kbbl run {scenario.relative_to(CASSETTES.parent)}`"
+    )
 
 
 def recorded(tmp_path: Path, model: Model) -> list[str]:
@@ -198,17 +212,18 @@ def test_a_malformed_mandate_fails_without_a_stack_trace(
     assert "Traceback" not in captured.err
 
 
+@pytest.mark.parametrize("directory", RECORDED, ids=lambda path: path.name)
 def test_the_committed_cassettes_replay_a_real_attempt(
-    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    directory: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    """The recorded Run itself, replayed — the check that the Cassettes on disk still fit."""
-    if not COMMITTED.is_dir():
-        pytest.skip(NOT_RECORDED)
+    """Each recorded Run itself, replayed — the check that the Cassettes on disk still fit."""
+    if not drawer(directory).is_dir():
+        pytest.skip(not_recorded(directory))
 
     code = main(
         [
             "run",
-            str(FOUR_PARTY),
+            str(directory),
             "--replay",
             "--cassettes",
             str(CASSETTES),
@@ -219,26 +234,28 @@ def test_the_committed_cassettes_replay_a_real_attempt(
 
     out = capsys.readouterr()
     assert code == 0, out.err
-    assert f"Round {ROUNDS} of {ROUNDS} — NP meets" in out.out
+    assert f"Round {ROUNDS} of {ROUNDS} — " in out.out
 
 
-def test_the_recorded_run_shows_no_party_a_bilateral_it_was_not_in() -> None:
+@pytest.mark.parametrize("directory", RECORDED, ids=lambda path: path.name)
+def test_the_recorded_run_shows_no_party_a_bilateral_it_was_not_in(directory: Path) -> None:
     """The asymmetry, audited against the requests a live Run actually sent (§5.1).
 
-    The scripted equivalent lives in `test_loop.py`. This one is over the recording: what
-    reached the model, rather than what the stand-in was handed.
+    The scripted equivalent lives in `test_loop.py`. This one is over the recordings: what
+    reached the model, rather than what the stand-in was handed — and over both of them,
+    because eight Parties give a leak more rooms to happen in than four.
     """
-    if not COMMITTED.is_dir():
-        pytest.skip(NOT_RECORDED)
+    if not drawer(directory).is_dir():
+        pytest.skip(not_recorded(directory))
 
-    scenario = load_scenario(FOUR_PARTY)
+    scenario = load_scenario(directory)
     run = attempt(
         scenario,
         formateur=scenario.parties[0],
-        cassettes=Cassettes(COMMITTED, replay=True),
+        cassettes=Cassettes(drawer(directory), replay=True),
     )
 
-    assert leaks(recorded_requests(COMMITTED), run) == []
+    assert leaks(recorded_requests(drawer(directory)), run) == []
 
 
 def test_the_module_entry_point_runs_a_scenario(replay: list[str]) -> None:

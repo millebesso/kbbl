@@ -109,6 +109,26 @@ procedure rather than the arithmetic.
 v1 runs one Attempt and stops (§10). The handoff, the four-Vote counter and Re-election are
 `riksdag-2026/02`.
 
+### The recorded Run
+
+`cassettes/riksdag-2026/` holds one live Attempt — 36 requests, about $0.50 — so
+`uv run kbbl run scenarios/riksdag-2026 --replay` reproduces it for nothing.
+
+In it **a left minority government formed on Abstentions**, which is §9's prediction reached
+by §5.2's mechanism: S and V in cabinet, MP, C and KD named as Support-only, 151 Yes against
+132 No, and C, KD and L standing aside. S never met M or SD.
+
+Read it for what the prices did rather than for who won. Two of the three Parties named
+Support-only abstained rather than backing it — a Proposal assigns the role and nobody accepts
+it — and L abstained with its own price unmet, on nothing but its Willingness to re-elect of 1.
+
+**A caveat on the calibration.** The Supporting prices of C, KD and L are single Axis Demands
+that a left Platform pays almost by accident, so the cheapest route to power is cheaper here
+than it should be. KD standing aside for an S+V government because `law_and_order >= +2` is
+met is mechanically correct and politically absurd, and it is this file's fault rather than
+the Agents'. One Run is not evidence (§12.3); this one is a demonstration that the machine
+runs, not a forecast.
+
 ### The Positions, and why they are what they are
 
 Editorial, as above. The shape they are built to have:

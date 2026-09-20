@@ -168,9 +168,14 @@ Replay needs no credentials at all: the API client is only built on the live pat
 persona, a briefing or the model changes the request, so `--replay` will miss and say so — a
 miss is the honest answer, not a bug.
 
-A whole Attempt is around 30 calls, and `cassettes/four-party/` holds one of 31. Changing a
-persona, a briefing or the schema re-keys every one of them, so the recording is replaced
-rather than patched: delete the drawer and run live again.
+A whole Attempt is around 30 calls, and `cassettes/four-party/` holds one of 31.
+`cassettes/riksdag-2026/` holds one of 36 against the real parliament — eight Parties cost
+eight Ballots rather than four, and no more Exchanges, because a Bilateral is capped at three
+each way whatever the chamber size. At `claude-sonnet-5` list prices that Attempt came to
+about **$0.50**, computed from the token counts `run.json` records.
+
+Changing a persona, a briefing or the schema re-keys every Cassette, so a recording is
+replaced rather than patched: delete the drawer and run live again.
 
 ## Development
 

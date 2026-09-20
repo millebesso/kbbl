@@ -35,11 +35,7 @@ author's reading and must be labelled as such.
 
 **Blocked by:** None — v1 is complete and the loader already takes this.
 
-**Status:** ready-for-agent
-
-**Remaining:** the data, the documentation and the tests are done and committed. The four
-unticked boxes all need one live Run, which spends real API credit and was deliberately
-deferred — see the Comments. Do not redo the work above.
+**Status:** done
 
 - [x] `scenarios/riksdag-2026/` holds eight mandates whose seats match §9 exactly: S 99, M 70, SD 62, V 30, C 25, KD 22, MP 22, L 19
 - [x] They load through `load_scenario` unchanged — one load path, never two (§9, §11.6)
@@ -49,10 +45,10 @@ deferred — see the Comments. Do not redo the work above.
 - [x] `uv run kbbl run scenarios/riksdag-2026` prints the chamber, and the Referee's own Blocking-minority output shows the §9 arithmetic — that the right bloc alone does not reach 175 — rather than this ticket asserting it in prose
 - [x] Formateur order under largest-first is S → M → SD → V, and §5.3's known divergence from the Speaker's real discretion is documented where a reader of the Scenario will meet it (§12.2)
 - [x] The Formateur is told it cannot meet everybody — seven other Parties and five Rounds is the case `_what_the_budget_buys` was written for, and this is the first Scenario where it fires (§5.1)
-- [ ] One live Run is recorded to Cassettes and replays byte-identical
-- [ ] **What the Run actually cost is measured and recorded**, not assumed: §6's ~130 calls / ~$1.56 is a design-time estimate, and v1's four-Party Attempt was 31. Eight Parties means more Exchanges per Round and eight Ballots per Vote
-- [ ] **Read the Transcript: do eight Personas still hold their ground, or does the extra room to manoeuvre produce the grand coalition §12.1 warns about?** Record the judgement in this file's Comments
-- [ ] `transcript.md` is still readable at this length — §10 flags eight Parties as "a lot of transcript to read", and `kbbl-v1/06` left the four-space indent question open because four Parties never made it hurt
+- [x] One live Run is recorded to Cassettes and replays byte-identical
+- [x] **What the Run actually cost is measured and recorded**, not assumed: §6's ~130 calls / ~$1.56 is a design-time estimate, and v1's four-Party Attempt was 31. Eight Parties means more Exchanges per Round and eight Ballots per Vote
+- [x] **Read the Transcript: do eight Personas still hold their ground, or does the extra room to manoeuvre produce the grand coalition §12.1 warns about?** Record the judgement in this file's Comments
+- [x] `transcript.md` is still readable at this length — §10 flags eight Parties as "a lot of transcript to read", and `kbbl-v1/06` left the four-space indent question open because four Parties never made it hurt
 
 ## Comments
 
@@ -129,3 +125,98 @@ Handed forward:
 - **Nothing yet reads a Transcript of eight Parties**, so §10's worry that eight is "a lot of
   transcript to read" and `kbbl-v1/06`'s open question about the four-space indent are both
   still untested. They need the live Run.
+
+---
+
+## The Run
+
+**A government formed, and it is the one §9 predicted.** The recording is committed in
+`cassettes/riksdag-2026/` — 36 requests, one Attempt — and `--replay` reproduces
+`transcript.md` and `run.json` byte for byte, with `result.json` differing only in its
+timestamp.
+
+```
+Yes        151      S 99 + V 30 + MP 22
+Abstain     66      C 25 + KD 22 + L 19
+No         132      M 70 + SD 62
+
+132 seats voted No, and it takes 175 to defeat a Proposal. It passes.
+```
+
+That is §9's sentence reached by the mechanism §5.2 describes: *"a left minority government of
+151 survives if C abstains — the entire right bloc is 173, two seats short."* S tabled a left
+platform (economic −4, health −4, a statutory profit ban, SD locked out) and bought its
+survival with Abstentions rather than support. The Formateur never met M or SD at all, and
+spent its five Rounds on V, MP, C, L and KD.
+
+### What it cost
+
+**36 requests, $0.50.** Computed from the `usage` `kbbl-v1/06` put in `run.json`, at
+`claude-sonnet-5` list prices — not read off a bill, so treat it as the right order of
+magnitude rather than an invoice.
+
+| | tokens |
+| --- | ---: |
+| input | 66,760 |
+| output | 11,152 |
+| cache write | 31,437 |
+| cache read | 38,074 |
+
+§6's estimate was **~130 calls / ~$1.56**, and the gap is a scope difference rather than an
+error: §6 is costing a whole Run of four Attempts, and v1 runs one. Four Attempts at this rate
+is ~144 calls and ~$2.00, so §6 is about right for what it was measuring and **one Attempt on
+eight Parties costs about the same as one on four** — 36 requests against v1's 31. The eight
+Parties cost eight Ballots rather than four; they do not cost more Exchanges.
+
+### §12.1 — did eight Personas hold their ground?
+
+**Yes, and the extra room to manoeuvre did not produce a mushy grand coalition.** Every Ballot
+is traceable to the Mandate that cast it:
+
+- **M voted No and said why it could afford to**: *"We were never courted, so we owe them no
+  cover."* §5.1's asymmetry reaching all the way into the Vote.
+- **SD voted No** naming immigration −1 and law_and_order +2 against its own red lines.
+- **C and KD abstained on prices that were genuinely met** — the Referee agrees: C's
+  `environment >= +1` and KD's `law_and_order >= +2` are both paid by this Platform. Neither
+  drifted; both did what their Mandate said.
+- **L abstained with its price unmet.** `education >= +2` against a Platform at −1, and it said
+  so: *"This platform betrays nearly everything L campaigned on… We won't own this by voting
+  Yes, but we also won't be the ones forcing another election."* That is the Willingness to
+  re-elect of 1 doing exactly the work §3 gives it — the only outside option in the model, and
+  the reason a refusal costs something.
+
+**The Proposal looked like the §12.1 failure and the Vote was not.** S named five of eight
+Parties in its Base and claimed 198 seats; only 151 voted Yes. Two of the three Parties it
+named Support-only abstained rather than endorsed, which is `CONTEXT.md`'s Base entry
+demonstrated live: *"A Proposal assigns the role; nobody accepts it."* And the Platform is not
+centrist mush — S's own Gap report scores 0.5, so it conceded almost nothing and paid for
+survival in Abstentions instead.
+
+**The finding is about the Mandates, not the Agents.** KD abstaining on an S+V government for
+`law_and_order >= +2` is mechanically correct and politically absurd, and that is a price
+*this ticket wrote*. The Supporting prices of C, KD and L are single Axis Demands that a left
+Platform can pay almost by accident, which makes the cheapest route to power too cheap. The
+Agents held the line; the editorial calibration did not give them enough to hold.
+
+### `transcript.md` at eight Parties
+
+**Readable, and barely longer than four.** 280 lines and 11,137 bytes against the four-Party
+Run's 9,871 — because a Bilateral is capped at three Exchanges each way whatever the chamber
+size, and only the Ballots scale with the Parties. §10's worry that eight Parties is "a lot of
+transcript to read" is not borne out for one Attempt; it will be for four.
+
+Exactly **one line** exceeds 88 characters, at 89, and it is not prose: `render_proposal`
+builds its seat sentence with an f-string rather than through `_wrap`. Pre-existing and
+cosmetic. `kbbl-v1/06`'s open question about the four-space indent stays open — nothing about
+this length forced it.
+
+### Handed forward
+
+- **The Supporting prices of C, KD and L are too cheap**, as argued above. Re-calibrating them
+  is editorial work, and it should be done before anyone reads a Run as a prediction rather
+  than as a demonstration that the machine runs.
+- **`render_proposal`'s seat sentence is not wrapped**, so it can exceed the Transcript width
+  by a character or two when the Base runs to three digits.
+- **One Attempt is not the prediction.** S formed a government on its first try, so the
+  handoff, the four-Vote counter and Re-election never fired — `riksdag-2026/02`. A Run that
+  ends on Attempt 1 cannot show whether largest-first diverges from the Speaker (§12.2).
