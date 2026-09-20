@@ -662,3 +662,20 @@ def test_an_exclusion_the_proposal_leaves_out_is_reported_as_left_out(
 
     assert "  NP  not named" in rendered
     assert "None of them is in the Base" in rendered
+
+
+def test_a_partys_role_and_the_base_are_the_same_answer(four_party: Scenario) -> None:
+    """`Proposal.base` and `Proposal.role_of` say who is behind a Proposal in two ways, and
+    `ExclusionReport.in_the_base` trusts that they agree. This is what says they do."""
+    proposal = proposed("NP", support_only=("MI",))
+
+    named = {name for name in proposal.base}
+    by_role = {
+        party.name
+        for party in four_party.parties
+        if proposal.role_of(party.name) is not Role.UNNAMED
+    }
+
+    assert named == by_role == {"NP", "MI"}
+    report = reported(four_party.party("FF"), proposal)
+    assert all(placed.party in named for placed in report.in_the_base)

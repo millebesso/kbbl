@@ -185,9 +185,15 @@ report and never a verdict — a Party may waive a Demand it named, or walk away
 Referee has just called met.
 _Avoid_: demand check, satisfaction report, price check, scorecard
 
+**Placement**:
+One Party a Proposal names — or does not — and which of the three roles it gives that Party:
+the Government, Support-only, or not named at all. Not being named is a role rather than the
+absence of one: it is the Party whose Abstention is the cheapest thing a Formateur can buy.
+_Avoid_: role, slot, position, assignment
+
 **Exclusion report**:
-The table the Referee shows a Party before it judges a Proposal, naming each Party it would
-rather not deal with and whether that Party is in the Government, Support-only, or not named.
+The table the Referee shows a Party before it judges a Proposal: one Placement for each Party
+it would rather not deal with.
 The Gap report says what a Platform costs a Party's voters; this says who it would be
 governing beside, and it exists because the two were on the table at the same Vote and never
 in the same sentence. Feedback like the other two: an Exclusion is soft and priced, so a
@@ -282,8 +288,7 @@ _Avoid_: fixture, mock, snapshot, tape, VCR
 **Ledger**:
 The Run record as it is written — the one place an Exchange, a Ballot, a report a Party was
 shown or a request's cost is entered, at the moment it happens rather than when the Attempt
-ends. A Run
-that breaks mid-Bilateral keeps everything it has already paid for.
+ends. A Run that breaks mid-Bilateral keeps everything it has already paid for.
 _Avoid_: recorder, logger, collector, accumulator, buffer
 
 **Outcome**:

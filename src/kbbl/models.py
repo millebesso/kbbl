@@ -460,7 +460,7 @@ class ExclusionReport(Strict):
     between them at the moment a Ballot was cast. §5.4's argument — that an Agent asked
     abstractly to hold its ground drifts, and the same Agent shown the number it is
     abandoning does not — is about policy distance only because that is the form the risk
-    was first met in. It applies unchanged to a coalition betrayal.
+    was first met in. It applies unchanged to who a Proposal would have it govern beside.
 
     Held as data rather than rendered on the spot for the reason `GapReport` is: §7 wants
     every report a Party was shown to survive into `run.json`, where a batch can count how

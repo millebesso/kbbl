@@ -188,7 +188,7 @@ An agent asked abstractly to "hold your ground" drifts. The same agent shown *"y
 points from your voters on your signature issue"* behaves differently. It remains free to
 accept — this is feedback, not a constraint.
 
-**The same argument applies to the coalition, and needed its own report.** A party's
+**The same argument applies to who is in the government, and needed its own report.** A party's
 exclusions and the parties a proposal names are both in front of it at the vote, and until
 `riksdag-2026/03` nothing put them in one sentence: KD and L waved through a government
 containing a party both of them exclude, neither mentioning it. So the referee also shows

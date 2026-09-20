@@ -201,11 +201,11 @@ def render_exclusion_report(report: ExclusionReport) -> str:
     for placed in report.placements:
         lines.append(f"  {placed.party:<{width}}  {placed.role.value}")
     lines.append("")
-    lines.append(f"  {_behind_it(report)}")
+    lines.append(f"  {_who_is_in_the_base(report)}")
     return "\n".join(lines)
 
 
-def _behind_it(report: ExclusionReport) -> str:
+def _who_is_in_the_base(report: ExclusionReport) -> str:
     """The one line under the table, saying only what the Referee can say.
 
     Names them rather than counting them. A Party reading "1 of 2" has to go back up to the

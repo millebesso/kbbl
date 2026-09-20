@@ -204,6 +204,59 @@ records; the dollars are a reading of a price list on a date.
 - **The report is shown at the Vote and is not in the Transcript.** Neither is the Gap report:
   what a Party was shown lives in `run.json`, and the Transcript is what was said.
 
+### Found in review, and fixed
+
+- **"coalition" is on `CONTEXT.md`'s _Avoid_ line** under Government, Base *and* Grouping, and
+  two new sentences used it in exactly that sense — §5.4's new paragraph and `ExclusionReport`'s
+  docstring. Both now say what they mean. "Grand coalition" stays: it is §12.1's own fixed
+  phrase for the failure mode, not a name for a Proposal's Government.
+
+- **`Placement` reached `run.json` without reaching the glossary.** `CONTEXT.md` names the
+  atom beside the report the way it names **Gap** beside **Gap report**, and the Exclusion
+  report entry is written in terms of it — type and glossary had disagreed on the word.
+
+- **`Ledger.shown` filed anything that was not a Gap report under Exclusion reports.** A third
+  kind of report would have landed there silently; it is now an explicit `elif` with
+  `assert_never`, so the next one is a type error at the Ledger rather than a mis-filed report
+  in the Record.
+
+- **`Proposal.base` and `Proposal.role_of` agreed by construction only**, and
+  `ExclusionReport.in_the_base` trusts that they agree. A Referee invariant now says so — free,
+  like the rest of them (§8).
+
+- **`standing` and `_behind_it` were names that needed their docstrings to decode.** The
+  parameter is `excluded`, the summary line is `_who_is_in_the_base`. Neither is in a briefing,
+  so no Cassette was re-keyed.
+
+- **`scenarios/README.md` asserted C's Abstention beside a Run in which C voted No.** The claim
+  was right about the design and wrong about the evidence in the same section; it now says what
+  it is claiming — an Abstention C has been *paid* for — and points at what the Run actually
+  did.
+
+### Left alone, on purpose
+
+- **The briefing volunteers too much** (found in review, not fixed). The Exclusion report's
+  closing line reads *"there is a figure at which you would sit beside any of them, and you may
+  wave it through for nothing at all"*. The Persona's own version is narrower — *"there is a
+  price at which you would deal with them anyway"* — and the Gap report's equivalent stays flat
+  (*"That is arithmetic, not advice"*). Volunteering the zero-price option in the one report
+  built to reduce drift pushes the wrong way, however carefully the sentence ends.
+
+  The replacement is one line: *"That is who would be in it, not advice. Nothing here binds
+  you: an exclusion is a preference with a price, never a veto, and only you know what that
+  price is."*
+
+  **It is not applied because it re-keys both Cassette drawers** — every Vote request carries
+  this text — and that is another ~$0.77 of re-recording on top of this ticket's. Nothing in
+  the recorded Run suggests the current wording did harm: KD and L voted No, and the one Party
+  that stood aside had been paid in a Bilateral. Land it with the next change that re-records
+  anyway (`riksdag-2026/02` changes briefings).
+
+- **`docs/kbbl.md` was edited although the ticket only asked for `CONTEXT.md`.** §5.4 describes
+  the anti-drift feedback and §7 lists what `run.json` holds; leaving both describing one
+  report while the code shows two would make the one source of truth wrong. `spec.md` says
+  there is one, so it was kept true.
+
 ### Handed forward
 
 - **Nothing checks that a Proposal's Commitments are consistent with each other.** S's

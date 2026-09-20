@@ -387,10 +387,10 @@ class FormateurAgent:
         side = self._side if party.name == self.party.name else self._voting_room(party)
         shown = gap_report(party, proposal.platform)
         self.ledger.shown(shown)
-        standing = exclusion_report(party, proposal)
-        if standing is not None:
-            self.ledger.shown(standing)
-        side.hear(_the_vote(self.scenario, proposal, party, shown, standing))
+        excluded = exclusion_report(party, proposal)
+        if excluded is not None:
+            self.ledger.shown(excluded)
+        side.hear(_the_vote(self.scenario, proposal, party, shown, excluded))
         response = side.reply(cassettes, tools=[BALLOT_TOOL])
         judgement = _read_judgement(response, party.name)
         side.spoke(judgement.reasoning)
@@ -706,7 +706,7 @@ def _the_vote(
     proposal: Proposal,
     party: Party,
     shown: GapReport,
-    standing: ExclusionReport | None,
+    excluded: ExclusionReport | None,
 ) -> str:
     """What one Party is shown before it votes: the Proposal, and its own reports.
 
@@ -735,25 +735,25 @@ def _the_vote(
         + "\n\n  That is arithmetic, not advice. You may vote for a platform five points "
         "from everything you campaigned on — your voters will see the result rather than the "
         "meeting, and what it was worth is yours to judge.",
-        _who_it_puts_you_beside(standing),
+        _who_it_puts_you_beside(excluded),
         _what_it_pays_of_your_price(proposal, party),
         _how_the_vote_works(party),
     ]
     return "\n\n".join(section for section in sections if section)
 
 
-def _who_it_puts_you_beside(standing: ExclusionReport | None) -> str:
+def _who_it_puts_you_beside(excluded: ExclusionReport | None) -> str:
     """Where this Proposal puts the Parties this one would rather not deal with.
 
     Empty for a Party that named nobody, so the section drops out of the briefing entirely
     rather than announcing that there is nothing to say — the same silence
     `_who_you_would_rather_not_deal_with` keeps in the Persona.
     """
-    if standing is None:
+    if excluded is None:
         return ""
     return (
         "WHERE IT PUTS THE PARTIES YOU WOULD RATHER NOT DEAL WITH\n\n"
-        + render_exclusion_report(standing)
+        + render_exclusion_report(excluded)
         + "\n\n  That is who would be in it, not advice. Those are preferences with a "
         "price, never vetoes: there is a figure at which you would sit beside any of them, "
         "and you may wave it through for nothing at all. Only you know whether this is it."

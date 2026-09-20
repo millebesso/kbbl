@@ -13,6 +13,8 @@ an end of its own or merely stopped.
 
 from __future__ import annotations
 
+from typing import assert_never
+
 from kbbl.models import (
     Bilateral,
     Choice,
@@ -115,11 +117,16 @@ class Ledger:
         One verb for one act, and the kind of report decides which list it lands in. Two
         methods would have let a caller file a report under the wrong heading, which is the
         only way these can go wrong: a Ledger never reads either one back.
+
+        Spelled out rather than left to an `else`, so that a third kind of report is a type
+        error here rather than a report quietly filed under the second.
         """
         if isinstance(report, GapReport):
             self._gap_reports.append(report)
-        else:
+        elif isinstance(report, ExclusionReport):
             self._exclusion_reports.append(report)
+        else:
+            assert_never(report)
 
     def judged(self, judgement: Judgement) -> None:
         """One Party's Ballot, and what it said casting it."""

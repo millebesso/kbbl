@@ -157,11 +157,14 @@ Editorial, as above. The shape they are built to have:
   parliament a different one. What it is not is cheap. Its own `economic +2` against a left
   Platform near `−3` is a Gap of five on the Axis it would have to defend; the free-text half
   below is the term that decides which bloc it can deal with at all; and it excludes SD rather
-  than V, so a left government is not a coalition it has ruled out. Being purchasable is not
+  than V, so a left government is not a Government it has ruled out. Being purchasable is not
   the same as being willing, and its Willingness to re-elect of 3 is what makes the Abstention
-  worth asking for. **C abstaining on a left Platform is the mechanism working, not a
-  calibration failure** — KD and L doing the same was the failure, and that is what changed
-  below.
+  worth asking for. **An Abstention C has been paid for is the mechanism working, not a
+  calibration failure** — KD and L standing aside for prices a left Platform paid in passing
+  was the failure, and that is what changed below. Note what the recorded Run does with that
+  distinction: C was courted, agreed nothing, was named nowhere in the Proposal and **voted
+  No** — *"I extract no price for silence."* Its Abstention is purchasable, which was never
+  the same as free.
 - **The right bloc cannot be bought in passing** (`riksdag-2026/03`). KD's Supporting price
   was `law_and_order >= +2` and nothing else, which a left Platform pays almost by accident —
   and in the first recorded Run it did, so KD stood aside for a government containing V, which
